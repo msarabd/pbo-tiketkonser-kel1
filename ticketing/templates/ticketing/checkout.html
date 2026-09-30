@@ -2,24 +2,34 @@
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-6">
-        <div class="card shadow border-warning mb-3">
-            <div class="card-header bg-warning text-dark fw-bold">
-                Selesaikan Pembayaran Anda
-            </div>
-            <div class="card-body">
-                <h5 class="card-title">{{ hold.category.concert.name }}</h5>
-                <p class="card-text">
-                    <strong>Kategori:</strong> {{ hold.category.name }}<br>
-                    <strong>Jumlah:</strong> {{ hold.quantity }} Tiket<br>
-                    <strong>Total Tagihan:</strong> Rp {{ total }}
-                </p>
-                <hr>
-                <p class="text-danger small">Tiket ini ditahan untuk Anda. Harap segera bayar. Jika melebihi batas 15 menit, tiket akan dilepas kembali.</p>
+        <div class="card shadow border-0" style="border-radius: 15px; border-top: 5px solid #FFD700 !important;">
+            <div class="card-body p-5 text-center">
+                <span class="badge bg-dark mb-3">Pesanan #{{ pesanan.id|stringformat:"s"|slice:":8" }}</span>
+                <h3 class="fw-bold mb-1">Menunggu Pembayaran</h3>
+                <p class="text-secondary">Selesaikan pembayaran untuk mengamankan tiket Anda.</p>
                 
-                <!-- Tombol Bayar (Simulasi) -->
-                <form action="{% url 'process_payment' hold.id %}" method="POST">
+                <div class="bg-light p-3 rounded text-start mb-4">
+                    <p class="mb-1 small">Total Tagihan:</p>
+                    <h2 class="fw-bold text-dark mb-0">Rp {{ pesanan.total_harga }}</h2>
+                </div>
+                
+                <div class="text-start mb-4">
+                    <h6 class="fw-bold">Rincian Tiket:</h6>
+                    <ul class="list-group list-group-flush">
+                        {% for item in items %}
+                        <li class="list-group-item bg-transparent px-0 d-flex justify-content-between">
+                            <span>{{ item.category.nama_kategori }} 
+                                {% if item.seat %}(Kursi: {{ item.seat.kode_kursi }}){% endif %}
+                            </span>
+                            <strong>Rp {{ item.harga_satuan }}</strong>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                
+                <form action="{% url 'pay_order' pesanan.id %}" method="POST">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-success w-100">Simulasi Bayar Lunas</button>
+                    <button type="submit" class="btn w-100 fw-bold text-white py-2" style="background-color: #112250;">Simulasi Bayar Lunas (QRIS)</button>
                 </form>
             </div>
         </div>

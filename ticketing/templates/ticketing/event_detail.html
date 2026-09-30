@@ -1,0 +1,62 @@
+{% extends 'ticketing/base.html' %}
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mb-4">
+        <div class="card shadow-sm" style="border-radius: 15px; border-top: 5px solid #112250;">
+            <div class="card-body p-5">
+                <h2 class="fw-bold">{{ event.nama_konser }}</h2>
+                <h5 class="text-secondary mb-4">{{ event.artis }}</h5>
+                <hr>
+                <div class="row mt-4">
+                    <div class="col-6">
+                        <p class="mb-1 text-muted small">Waktu Acara</p>
+                        <h6 class="fw-bold">{{ event.tanggal|date:"l, d F Y" }}</h6>
+                        <p>{{ event.tanggal|date:"H:i" }} WIB</p>
+                    </div>
+                    <div class="col-6">
+                        <p class="mb-1 text-muted small">Lokasi</p>
+                        <h6 class="fw-bold">{{ event.venue.nama }}</h6>
+                        <p>{{ event.venue.kota }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <h4 class="fw-bold mb-3">Pilih Tiket</h4>
+        <div class="list-group">
+            {% for category in categories %}
+            <div class="list-group-item p-3 mb-2 shadow-sm" style="border: 1px solid #FFD700; border-radius: 10px;">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="fw-bold mb-0">{{ category.nama_kategori }}</h6>
+                    <span class="badge text-dark" style="background-color: #FFD700;">Rp {{ category.harga }}</span>
+                </div>
+                <p class="small text-muted mb-3">Sisa Kuota: {{ category.kuota }}</p>
+                
+                <!-- Potongan kode di dalam loop for category in categories -->
+                <p class="small text-muted mb-3">Sisa Kuota: {{ category.kuota }}</p>
+                
+                <!-- KABEL 1: Form untuk menembak fungsi book_ticket -->
+                <form action="{% url 'book_ticket' category.id %}" method="POST">
+                    {% csrf_token %}
+                    <div class="input-group input-group-sm mb-2">
+                        <span class="input-group-text bg-dark text-white border-0">Jumlah</span>
+                        <!-- Batasi maksimal 5 tiket per transaksi agar sistem tidak dibombardir -->
+                        <input type="number" name="quantity" value="1" min="1" max="5" class="form-control text-center" required>
+                    </div>
+                    
+                    {% if category.kuota > 0 %}
+                        <button type="submit" class="btn btn-sm w-100 text-white fw-bold shadow-sm" style="background-color: #FF8C00; border: none;">Pesan Sekarang</button>
+                    {% else %}
+                        <button type="button" class="btn btn-sm w-100 text-white fw-bold bg-secondary border-0" disabled>Kategori Habis</button>
+                    {% endif %}
+                </form>
+            </div>
+            {% empty %}
+            <p class="text-danger">Kategori tiket belum diatur oleh penyelenggara.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

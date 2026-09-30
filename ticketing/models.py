@@ -1,88 +1,69 @@
 from django.db import models
-from django.contrib.auth.models import User
-from django.utils import timezone
-from datetime import timedelta
-from django.db.models import Sum
-import qrcode
-from io import BytesIO
-from django.core.files import File
+from django.contrib.auth.models import AbstractUser
+import uuid
 
-class Concert(models.Model):
-    name = models.CharField(max_length=200)
-    venue = models.CharField(max_length=200)
-    city = models.CharField(max_length=100, default='Jakarta')
-    genre = models.CharField(max_length=50, default='Pop')
-    date = models.DateTimeField()
-    description = models.TextField()
-    # Ini atribut baru wajib untuk fotomu
-    poster = models.ImageField(upload_to='concert_posters/', blank=True, null=True) 
+# --- INHERITANCE: User -> Buyer & Organizer ---
+class User(AbstractUser):
+    # AbstractUser Django sudah memiliki id, nama (first_name), dan email.
+    # Kita tambahkan noHp sesuai spesifikasi Class Diagram
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    no_hp = models.CharField(max_length=15, blank=True)
+    is_organizer = models.BooleanField(default=False)
 
-    def __str__(self):
-        return self.name
-    
+class Venue(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    nama = models.CharField(max_length=200)
+    kota = models.CharField(max_length=100)
+
+class Event(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    venue = models.ForeignKey(Venue, on_delete=models.CASCADE)
+    nama_konser = models.CharField(max_length=200)
+    artis = models.CharField(max_length=200)
+    tanggal = models.DateTimeField()
+    tipe = models.CharField(max_length=50) # misal: Konser, Festival
+    poster = models.ImageField(upload_to='event_posters/', null=True, blank=True)
+    organizer = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'is_organizer': True})
+
 class TicketCategory(models.Model):
-    concert = models.ForeignKey(Concert, on_delete=models.CASCADE)
-    name = models.CharField(max_length=50)
-    price = models.DecimalField(max_digits=10, decimal_places=2)
-    total_quota = models.IntegerField()
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    event = models.ForeignKey(Event, on_delete=models.CASCADE)
+    nama_kategori = models.CharField(max_length=100)
+    harga = models.IntegerField()
+    kuota = models.IntegerField()
+    pakai_kursi = models.BooleanField(default=False)
 
-    def __str__(self):
-        return f"{self.concert.name} - {self.name}"
-
-    def get_available_tickets(self):
-        # 1. Hitung total tiket yang sudah lunas (PAID)
-        sold_tickets = self.order_set.filter(status='PAID').aggregate(Sum('quantity'))['quantity__sum'] or 0
-        
-        # 2. Hitung total tiket yang sedang 'ditahan' dan BELUM kedaluwarsa
-        # Batas waktu adalah sekarang dikurangi 15 menit. 
-        time_threshold = timezone.now() - timedelta(minutes=15)
-        active_holds = self.tickethold_set.filter(held_at__gte=time_threshold).aggregate(Sum('quantity'))['quantity__sum'] or 0
-        
-        # 3. Ketersediaan = Kuota Total - (Terjual + Sedang Ditahan)
-        return self.total_quota - (sold_tickets + active_holds)
-
-class TicketHold(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+# Class Seat merepresentasikan kursi spesifik (jika pakai_kursi = True)
+class Seat(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     category = models.ForeignKey(TicketCategory, on_delete=models.CASCADE)
-    quantity = models.IntegerField()
-    held_at = models.DateTimeField(auto_now_add=True)
-    
-    def is_expired(self):
-        # Mengembalikan True jika waktu saat ini sudah melewati batas 15 menit dari held_at
-        return timezone.now() > self.held_at + timedelta(minutes=15)
+    kode_kursi = models.CharField(max_length=10) # Misal: A1, B2
+    status = models.CharField(max_length=20, default='TERSEDIA') # TERSEDIA, DITAHAN, TERJUAL
 
 class Order(models.Model):
-    STATUS_CHOICES = [
-        ('PENDING', 'Pending'), 
-        ('PAID', 'Paid'), 
-        ('FAILED', 'Failed')
-    ]
-    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    waktu_pesan = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=20, default='PENDING')
+    total_harga = models.IntegerField(default=0)
+
+class OrderItem(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    order = models.ForeignKey(Order, on_delete=models.CASCADE)
     category = models.ForeignKey(TicketCategory, on_delete=models.CASCADE)
-    quantity = models.IntegerField()
-    total_price = models.DecimalField(max_digits=10, decimal_places=2)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
-    created_at = models.DateTimeField(auto_now_add=True)
-    qr_code = models.ImageField(upload_to='qrcodes/', blank=True, null=True)
+    seat = models.ForeignKey(Seat, on_delete=models.SET_NULL, null=True, blank=True)
+    harga_satuan = models.IntegerField()
 
-    def calculate_total(self):
-        # OOP dasar: Objek Order menghitung harganya sendiri dengan mengambil harga dari relasi Category
-        self.total_price = self.category.price * self.quantity
-        self.save()
+# --- INTERFACE & POLYMORPHISM: MetodePembayaran ---
+class Payment(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    order = models.OneToOneField(Order, on_delete=models.CASCADE)
+    metode = models.CharField(max_length=50) # QRIS atau Virtual Account
+    status_bayar = models.CharField(max_length=20, default='UNPAID')
+    kode_referensi = models.CharField(max_length=100, blank=True)
 
-    def generate_qr(self):
-        # Hanya buat QR jika belum ada QR dan status sudah dibayar
-        if not self.qr_code and self.status == 'PAID':
-            # Data yang disimpan di dalam QR
-            qr_data = f"ORDER-{self.id}-USER-{self.user.id}-CAT-{self.category.name}"
-            
-            # Generate gambar QR
-            img = qrcode.make(qr_data)
-            buffer = BytesIO()
-            img.save(buffer, format="PNG")
-            
-            # Simpan ke field database
-            file_name = f"tiket_{self.id}_{self.user.username}.png"
-            self.qr_code.save(file_name, File(buffer), save=False)
-            self.save()
+class Ticket(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    order_item = models.OneToOneField(OrderItem, on_delete=models.CASCADE)
+    kode_qr = models.CharField(max_length=255, unique=True)
+    sudah_dipakai = models.BooleanField(default=False)

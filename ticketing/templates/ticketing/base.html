@@ -3,20 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TiketOOP - Sistem Pemesanan Tiket</title>
+    <title>KonserKU - Sistem Pemesanan Tiket</title>
     <!-- Memanggil Bootstrap 5 lewat jaringan (CDN) -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body style="background-color: #121212; color: #ffffff;">
-    
+
     <!-- Navbar Standar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
         <div class="container">
-            <a class="navbar-brand fw-bold" href="{% url 'concert_list' %}">TiketOOP</a>
+            <a class="navbar-brand fw-bold" href="{% url 'event_list' %}">KonserKU</a>
             <div class="d-flex text-white align-items-center">
                 {% if user.is_authenticated %}
                     <span class="me-3">Halo, {{ user.username }}!</span>
-                    <a href="{% url 'ticket_history' %}" class="btn btn-outline-light btn-sm">Pesanan Saya</a> 
+                    
+                    <!-- UBAH BAGIAN INI -->
+                    {% if request.resolver_match.url_name == 'ticket_history' %}
+                        <a href="{% url 'event_list' %}" class="btn btn-outline-light btn-sm">Halaman Utama</a>
+                    {% else %}
+                        <a href="{% url 'ticket_history' %}" class="btn btn-outline-light btn-sm">Pesanan Saya</a>
+                    {% endif %}
+                    
                 {% else %}
                     <span class="me-3">Anda belum login</span>
                 {% endif %}

@@ -21,9 +21,9 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('tickets/', include('ticketing.urls')),
+    path('tickets/', include('ticketing.urls')), # Sesuaikan dengan nama rute aplikasimu
 ]
 
-# Wajib ditambahkan agar gambar QR code bisa terbuka di browser lokal
+# Tambahkan baris ini di paling bawah
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

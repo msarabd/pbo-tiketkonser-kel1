@@ -1,99 +1,73 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponseBadRequest
-from .models import Concert, TicketHold, Order
-from .services import hold_ticket_for_user
-from django.core.exceptions import ValidationError
+from django.shortcuts import render, get_object_or_404
+from .models import Event
 
-def concert_list(request):
-    concerts = Concert.objects.prefetch_related('ticketcategory_set').all()
-    
-    # Menangkap permintaan dari form frontend
-    search_query = request.GET.get('search', '')
-    city_query = request.GET.get('city', '')
-    genre_query = request.GET.get('genre', '')
-    
-    # Mengeksekusi filter OOP pada database
-    if search_query:
-        concerts = concerts.filter(name__icontains=search_query)
-    if city_query:
-        concerts = concerts.filter(city__icontains=city_query)
-    if genre_query:
-        concerts = concerts.filter(genre__icontains=genre_query)
-        
-    return render(request, 'ticketing/concert_list.html', {
-        'concerts': concerts,
-        'search_query': search_query,
-    })
+def event_list(request):
+    # Mengambil semua event. 
+    # select_related digunakan untuk mengambil data Venue sekaligus, mencegah query lambat (N+1 problem)
+    events = Event.objects.select_related('venue').all()
+    return render(request, 'ticketing/event_list.html', {'events': events})
 
-def book_ticket(request, category_id):
-    if request.method == 'POST':
-        if not request.user.is_authenticated:
-            return HttpResponseBadRequest("Tolak: Anda harus login.")
-        
-        quantity = int(request.POST.get('quantity', 1))
-        try:
-            hold = hold_ticket_for_user(request.user, category_id, quantity)
-            # PERUBAHAN: Jangan kembalikan teks, tapi redirect ke halaman checkout
-            return redirect('checkout', hold_id=hold.id)
-        except ValidationError as e:
-            return HttpResponseBadRequest(str(e))
-    return HttpResponseBadRequest("Metode tidak diizinkan.")
-
-def checkout(request, hold_id):
-    # Cari tiket yang ditahan, pastikan milik user yang sedang login
-    hold = get_object_or_404(TicketHold, id=hold_id, user=request.user)
-    
-    # OOP in action: Cek apakah waktu 15 menit sudah habis
-    if hold.is_expired():
-        hold.delete() # Kembalikan tiket ke kuota publik
-        return HttpResponseBadRequest("Waktu pembayaran Anda habis. Tiket telah dilepas.")
-    
-    # Hitung sementara untuk ditampilkan di layar (bukan untuk disimpan ke DB)
-    total_sementara = hold.category.price * hold.quantity
-    
-    return render(request, 'ticketing/checkout.html', {'hold': hold, 'total': total_sementara})
-
-def process_payment(request, hold_id):
-    """Simulasi gerbang pembayaran dan finalisasi OOP"""
-    if request.method == 'POST':
-        hold = get_object_or_404(TicketHold, id=hold_id, user=request.user)
-        
-        if hold.is_expired():
-            hold.delete()
-            return HttpResponseBadRequest("Terlambat. Waktu habis saat memproses pembayaran.")
-
-        # FINALISASI OOP: Buat objek Order di memori
-        pesanan = Order(
-            user=hold.user, 
-            category=hold.category, 
-            quantity=hold.quantity, 
-            status='PAID'
-        )
-        
-        # Panggil method OOP untuk menghitung harga (Aman dari manipulasi hacker)
-        pesanan.calculate_total()
-        
-        # Panggil method OOP untuk membuat QR Code
-        pesanan.generate_qr()
-        
-        # Hapus objek penahanan karena sudah resmi jadi pesanan lunas
-        hold.delete()
-        
-        return redirect('order_success', order_id=pesanan.id)
-
-def order_success(request, order_id):
-    pesanan = get_object_or_404(Order, id=order_id, user=request.user)
-    return render(request, 'ticketing/success.html', {'pesanan': pesanan})
-
-def ticket_history(request):
-    # Mengambil semua pesanan LUNAS milik pengguna yang sedang login
-    pesanan_lunas = Order.objects.filter(user=request.user, status='PAID').order_by('-created_at')
-    return render(request, 'ticketing/history.html', {'pesanan_lunas': pesanan_lunas})
+def event_detail(request, event_id):
+    # UUID digunakan sebagai parameter pengaman
+    event = get_object_or_404(Event, id=event_id)
+    categories = event.ticketcategory_set.all()
+    return render(request, 'ticketing/event_detail.html', {'event': event, 'categories': categories})
 
 from django.contrib.auth.decorators import login_required
+from django.shortcuts import redirect
+from django.contrib import messages
+from django.core.exceptions import ValidationError
+from .services import book_ticket_securely
+from .models import Order
 
-@login_required(login_url='/admin/login/') # Memaksa user login, jika belum lempar ke halaman login admin
+@login_required(login_url='/admin/login/')
+def book_ticket(request, category_id):
+    if request.method == 'POST':
+        # Tangkap jumlah yang diinput pengguna dari form HTML
+        quantity = request.POST.get('quantity', 1)
+        
+        try:
+            # KABEL 2: Eksekusi mesin utama dari services.py
+            pesanan = book_ticket_securely(request.user, category_id, quantity)
+            
+            # Jika lolos Race Condition, lempar ke halaman pembayaran
+            return redirect('checkout', order_id=pesanan.id)
+            
+        except ValidationError as e:
+            # Jika overselling atau kuota tidak cukup, tangkap errornya
+            messages.error(request, e.message)
+            return redirect(request.META.get('HTTP_REFERER', '/'))
+            
+    return redirect('event_list')
+
+@login_required(login_url='/admin/login/')
+def checkout(request, order_id):
+    # Kunci pesanan hanya untuk user yang sedang login agar tidak bisa diintip orang lain
+    pesanan = get_object_or_404(Order, id=order_id, user=request.user, status='PENDING')
+    items = pesanan.orderitem_set.all()
+    
+    return render(request, 'ticketing/checkout.html', {'pesanan': pesanan, 'items': items})
+
+from .services import process_payment_and_issue_tickets
+
+@login_required(login_url='/admin/login/')
+def pay_order(request, order_id):
+    if request.method == 'POST':
+        try:
+            # Panggil layanan pembayaran
+            process_payment_and_issue_tickets(request.user, order_id)
+            # Jika sukses, lempar ke halaman riwayat pesanan
+            return redirect('ticket_history')
+        except ValidationError as e:
+            messages.error(request, e.message)
+            return redirect('checkout', order_id=order_id)
+    return redirect('event_list')
+
+@login_required(login_url='/admin/login/')
 def ticket_history(request):
-    # Logika OOP: Ambil Order, filter berdasarkan user yang request, filter status lunas, urutkan dari yang terbaru
-    pesanan_lunas = Order.objects.filter(user=request.user, status='PAID').order_by('-created_at')
+    # Ambil pesanan yang LUNAS, beserta relasi Item dan Tiketnya agar tidak lambat
+    pesanan_lunas = Order.objects.filter(
+        user=request.user, status='PAID'
+    ).prefetch_related('orderitem_set__ticket', 'orderitem_set__category__event').order_by('-waktu_pesan')
+    
     return render(request, 'ticketing/history.html', {'pesanan_lunas': pesanan_lunas})
