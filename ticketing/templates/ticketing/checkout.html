@@ -1,0 +1,28 @@
+{% extends 'ticketing/base.html' %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow border-warning mb-3">
+            <div class="card-header bg-warning text-dark fw-bold">
+                Selesaikan Pembayaran Anda
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">{{ hold.category.concert.name }}</h5>
+                <p class="card-text">
+                    <strong>Kategori:</strong> {{ hold.category.name }}<br>
+                    <strong>Jumlah:</strong> {{ hold.quantity }} Tiket<br>
+                    <strong>Total Tagihan:</strong> Rp {{ total }}
+                </p>
+                <hr>
+                <p class="text-danger small">Tiket ini ditahan untuk Anda. Harap segera bayar. Jika melebihi batas 15 menit, tiket akan dilepas kembali.</p>
+                
+                <!-- Tombol Bayar (Simulasi) -->
+                <form action="{% url 'process_payment' hold.id %}" method="POST">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success w-100">Simulasi Bayar Lunas</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

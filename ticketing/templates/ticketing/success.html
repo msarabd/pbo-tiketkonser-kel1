@@ -1,0 +1,25 @@
+{% extends 'ticketing/base.html' %}
+{% block content %}
+<div class="text-center mt-5">
+    <h1 class="text-success fw-bold">Pembayaran Berhasil!</h1>
+    <p class="lead">ID Pesanan Anda: #{{ pesanan.id }}</p>
+    
+    <div class="card d-inline-block shadow mt-3 p-4">
+        <h4>E-Ticket VIP</h4>
+        <p>{{ pesanan.category.concert.name }} - {{ pesanan.category.name }}</p>
+        <p>{{ pesanan.quantity }} Orang</p>
+        
+        <hr>
+        {% if pesanan.qr_code %}
+            <!-- Menampilkan gambar QR Code yang dihasilkan Django -->
+            <img src="{{ pesanan.qr_code.url }}" alt="QR Code Tiket" style="width: 200px; height: 200px;">
+        {% else %}
+            <p class="text-danger">Gagal memuat QR Code.</p>
+        {% endif %}
+    </div>
+    
+    <div class="mt-4">
+        <a href="{% url 'concert_list' %}" class="btn btn-primary">Kembali ke Daftar Konser</a>
+    </div>
+</div>
+{% endblock %}
