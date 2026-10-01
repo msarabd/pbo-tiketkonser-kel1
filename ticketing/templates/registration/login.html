@@ -1,0 +1,42 @@
+{% extends 'ticketing/base.html' %}
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5">
+        <div class="card shadow-sm border-0" style="border-radius: 15px; border-top: 5px solid #FF8C00 !important; background-color: #ffffff;">
+            <div class="card-body p-5">
+                <div class="text-center mb-4">
+                    <h2 class="fw-bold text-dark mb-1">Masuk ke KonserKU</h2>
+                    <p class="text-secondary small">Silakan masuk untuk melanjutkan pemesanan</p>
+                </div>
+
+                {% if form.errors %}
+                    <div class="alert alert-danger p-2 small">
+                        Username atau password salah. Silakan coba lagi.
+                    </div>
+                {% endif %}
+                
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="mb-3 text-dark">
+                        <label class="form-label small fw-bold">Username</label>
+                        <input type="text" name="username" class="form-control" required autofocus>
+                    </div>
+                    
+                    <div class="mb-3 text-dark">
+                        <label class="form-label small fw-bold">Password</label>
+                        <input type="password" name="password" class="form-control" required>
+                    </div>
+                    
+                    <button type="submit" class="btn w-100 fw-bold text-white py-2 mt-3" style="background-color: #112250; border-radius: 8px;">Masuk</button>
+                </form>
+
+                <!-- Tambahkan bagian ini di bawah tag </form> -->
+                <div class="text-center mt-4 border-top pt-3">
+                    <span class="small text-secondary">Belum punya akun?</span>
+                    <a href="{% url 'register' %}" class="small fw-bold text-decoration-none" style="color: #FF8C00;"> Daftar sekarang</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

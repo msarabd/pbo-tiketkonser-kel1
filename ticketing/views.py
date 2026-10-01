@@ -1,5 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from .models import Event
+from .forms import CustomUserCreationForm
+from django.contrib.auth import login
 
 def event_list(request):
     # Mengambil semua event. 
@@ -20,7 +22,7 @@ from django.core.exceptions import ValidationError
 from .services import book_ticket_securely
 from .models import Order
 
-@login_required(login_url='/admin/login/')
+@login_required(login_url='login')
 def book_ticket(request, category_id):
     if request.method == 'POST':
         # Tangkap jumlah yang diinput pengguna dari form HTML
@@ -40,7 +42,7 @@ def book_ticket(request, category_id):
             
     return redirect('event_list')
 
-@login_required(login_url='/admin/login/')
+@login_required(login_url='login')
 def checkout(request, order_id):
     # Kunci pesanan hanya untuk user yang sedang login agar tidak bisa diintip orang lain
     pesanan = get_object_or_404(Order, id=order_id, user=request.user, status='PENDING')
@@ -50,7 +52,7 @@ def checkout(request, order_id):
 
 from .services import process_payment_and_issue_tickets
 
-@login_required(login_url='/admin/login/')
+@login_required(login_url='login')
 def pay_order(request, order_id):
     if request.method == 'POST':
         try:
@@ -63,7 +65,7 @@ def pay_order(request, order_id):
             return redirect('checkout', order_id=order_id)
     return redirect('event_list')
 
-@login_required(login_url='/admin/login/')
+@login_required(login_url='login')
 def ticket_history(request):
     # Ambil pesanan yang LUNAS, beserta relasi Item dan Tiketnya agar tidak lambat
     pesanan_lunas = Order.objects.filter(
@@ -71,3 +73,20 @@ def ticket_history(request):
     ).prefetch_related('orderitem_set__ticket', 'orderitem_set__category__event').order_by('-waktu_pesan')
     
     return render(request, 'ticketing/history.html', {'pesanan_lunas': pesanan_lunas})
+
+def register(request):
+    if request.user.is_authenticated:
+        return redirect('event_list')
+
+    if request.method == 'POST':
+        # Gunakan CustomUserCreationForm, bukan UserCreationForm bawaan
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            messages.success(request, f"Akun {user.username} berhasil didaftarkan!")
+            return redirect('event_list')
+    else:
+        form = CustomUserCreationForm()
+
+    return render(request, 'registration/register.html', {'form': form})

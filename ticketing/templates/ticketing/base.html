@@ -4,39 +4,59 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KonserKU - Sistem Pemesanan Tiket</title>
-    <!-- Memanggil Bootstrap 5 lewat jaringan (CDN) -->
+    <!-- Bootstrap 5 CDN -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body style="background-color: #121212; color: #ffffff;">
+<body style="background-color: #121212; color: #ffffff; min-height: 100vh; display: flex; flex-direction: column;">
 
-    <!-- Navbar Standar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+    <!-- Navbar Utama -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4 shadow-sm">
         <div class="container">
-            <a class="navbar-brand fw-bold" href="{% url 'event_list' %}">KonserKU</a>
+            <a class="navbar-brand fw-bold fs-4" href="{% url 'event_list' %}">Konser<span style="color: #FF8C00;">KU</span></a>
+            
             <div class="d-flex text-white align-items-center">
                 {% if user.is_authenticated %}
-                    <span class="me-3">Halo, {{ user.username }}!</span>
+                    <span class="me-3 fw-semibold">Halo, {{ user.username }}!</span>
                     
-                    <!-- UBAH BAGIAN INI -->
                     {% if request.resolver_match.url_name == 'ticket_history' %}
-                        <a href="{% url 'event_list' %}" class="btn btn-outline-light btn-sm">Halaman Utama</a>
+                        <a href="{% url 'event_list' %}" class="btn btn-outline-light btn-sm me-2">Halaman Utama</a>
                     {% else %}
-                        <a href="{% url 'ticket_history' %}" class="btn btn-outline-light btn-sm">Pesanan Saya</a>
+                        <a href="{% url 'ticket_history' %}" class="btn btn-outline-light btn-sm me-2">Pesanan Saya</a>
                     {% endif %}
-                    
+
+                    <!-- Form Logout dengan proteksi POST -->
+                    <form action="{% url 'logout' %}" method="POST" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-danger">Keluar</button>
+                    </form>
+
                 {% else %}
-                    <span class="me-3">Anda belum login</span>
+                    <!-- Tombol Login Pengunjung -->
+                    <a href="{% url 'login' %}" class="btn fw-bold btn-sm text-dark px-4" style="background-color: #FFD700; border-radius: 6px;">Login</a>
                 {% endif %}
             </div>
         </div>
     </nav>
 
-    <!-- Konten Dinamis akan disuntikkan di sini -->
+    <!-- Penampung Pesan Notifikasi (Error / Sukses) -->
     <div class="container">
-        {% block content %}
-        {% endblock %}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
     </div>
 
+    <!-- Konten Dinamis Halaman -->
+    <main class="container flex-grow-1">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Script Bootstrap 5 -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

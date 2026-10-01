@@ -1,0 +1,57 @@
+{% extends 'ticketing/base.html' %}
+{% block content %}
+<style>
+    /* Styling otomatis untuk input bawaan UserCreationForm */
+    .register-card input {
+        display: block;
+        width: 100%;
+        padding: 0.375rem 0.75rem;
+        font-size: 1rem;
+        border-radius: 0.375rem;
+        border: 1px solid #ced4da;
+        margin-bottom: 0.5rem;
+    }
+    .register-card ul {
+        font-size: 0.75rem;
+        color: #6c757d;
+        padding-left: 1.2rem;
+    }
+</style>
+
+<div class="row justify-content-center mt-4 mb-5">
+    <div class="col-md-6 col-lg-5">
+        <div class="card register-card shadow-sm border-0" style="border-radius: 15px; border-top: 5px solid #FF8C00 !important; background-color: #ffffff;">
+            <div class="card-body p-4 p-md-5">
+                <div class="text-center mb-4">
+                    <h2 class="fw-bold text-dark mb-1">Daftar Akun Baru</h2>
+                    <p class="text-secondary small">Buat akun untuk memesan tiket di KonserKU</p>
+                </div>
+
+                <form method="POST">
+                    {% csrf_token %}
+                    
+                    {% for field in form %}
+                        <div class="mb-3 text-dark text-start">
+                            <label class="form-label small fw-bold mb-1">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.help_text %}
+                                <div class="form-text small text-muted mb-1">{{ field.help_text|safe }}</div>
+                            {% endif %}
+                            {% for error in field.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                    
+                    <button type="submit" class="btn w-100 fw-bold text-white py-2 mt-2" style="background-color: #112250; border-radius: 8px;">Daftar Sekarang</button>
+                </form>
+
+                <div class="text-center mt-4 border-top pt-3">
+                    <span class="small text-secondary">Sudah punya akun?</span>
+                    <a href="{% url 'login' %}" class="small fw-bold text-decoration-none" style="color: #FF8C00;"> Masuk di sini</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
