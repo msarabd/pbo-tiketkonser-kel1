@@ -1,0 +1,71 @@
+{% extends 'ticketing/base.html' %}
+{% block content %}
+<div class="container py-5" style="max-width: 800px;">
+    <h2 class="fw-bold text-white mb-4 border-bottom pb-3" style="border-color: #FF8C00 !important;">Halaman FORUM</h2>
+    
+    <!-- Kolom Pencarian Putih -->
+    <div class="mb-4">
+        <input type="text" id="search-input" class="form-control rounded-pill border-2 px-4 py-2 bg-white text-dark shadow-sm" placeholder="🔍 Cari forum konser..." style="border-color: #FF8C00;" autocomplete="off">
+    </div>
+
+    <!-- List Forum -->
+    <div class="list-group shadow-sm" id="forum-list-container">
+        {% for event in events %}
+        <a href="{% url 'forum_room' event.id %}" class="list-group-item list-group-item-action d-flex align-items-center p-3 forum-item mb-2 rounded-3" style="border-left: 5px solid #FF8C00; background-color: #ffffff;">
+            
+            <!-- Foto Poster Konser Sebagai Avatar Profil -->
+            <div class="rounded-circle overflow-hidden d-flex justify-content-center align-items-center me-3 shadow-sm flex-shrink-0" 
+                 style="width: 52px; height: 52px; border: 2px solid #FF8C00; background-color: #112250;">
+                {% if event.poster %}
+                    <img src="{{ event.poster.url }}" alt="{{ event.nama_konser }}" style="width: 100%; height: 100%; object-fit: cover;">
+                {% else %}
+                    <span class="fw-bold fs-5 text-white">{{ event.nama_konser|slice:":1"|upper }}</span>
+                {% endif %}
+            </div>
+            
+            <div class="flex-grow-1">
+                <h5 class="mb-0 fw-bold text-dark forum-title">{{ event.nama_konser }}</h5>
+                <small class="text-secondary">Klik untuk bergabung dengan pembeli lainnya...</small>
+            </div>
+        </a>
+        {% empty %}
+        <div class="text-center py-5 text-secondary">
+            Kamu belum memiliki akses forum. Beli tiket konser terlebih dahulu!
+        </div>
+        {% endfor %}
+        
+        <!-- Notifikasi saat hasil search kosong -->
+        <div id="no-search-results" class="text-center py-4 text-secondary" style="display: none;">
+            Forum konser tidak ditemukan.
+        </div>
+    </div>
+</div>
+
+<script>
+    // Live Search Otomatis
+    const searchInput = document.getElementById('search-input');
+    const forumItems = document.querySelectorAll('.forum-item');
+    const noResults = document.getElementById('no-search-results');
+
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const keyword = this.value.toLowerCase().trim();
+            let visibleCount = 0;
+
+            forumItems.forEach(item => {
+                const title = item.querySelector('.forum-title').textContent.toLowerCase();
+                if (title.includes(keyword)) {
+                    item.style.setProperty('display', 'flex', 'important');
+                    visibleCount++;
+                } else {
+                    item.style.setProperty('display', 'none', 'important');
+                }
+            });
+
+            if (forumItems.length > 0) {
+                noResults.style.display = (visibleCount === 0) ? 'block' : 'none';
+            }
+        });
+    }
+</script>
+{% endblock %}

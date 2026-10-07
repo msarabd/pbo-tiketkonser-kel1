@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 import uuid
@@ -67,3 +68,20 @@ class Ticket(models.Model):
     order_item = models.OneToOneField(OrderItem, on_delete=models.CASCADE)
     kode_qr = models.CharField(max_length=255, unique=True)
     sudah_dipakai = models.BooleanField(default=False)
+
+class ForumMessage(models.Model):
+    # Relasi ke Event. 1 Event punya 1 room chat.
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='forum_messages')
+    sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    
+    # Isi pesan (Teks dan Gambar)
+    message = models.TextField(blank=True, null=True)
+    image = models.ImageField(upload_to='forum_images/', blank=True, null=True)
+    
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['timestamp'] # Urutkan dari pesan terlama ke terbaru
+
+    def __str__(self):
+        return f"{self.sender.username} di {self.event.nama_konser}"

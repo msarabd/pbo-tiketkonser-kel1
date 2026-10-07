@@ -1,4 +1,3 @@
-
 # Panduan Kolaborasi Proyek KonserKU (TiketWee)
 
 Panduan operasional ini khusus dirancang untuk kelompok kerja Anda di mana file database SQLite (`db.sqlite3`) disertakan di dalam repositori Git agar seluruh anggota tim dapat langsung menggunakan data konser, venue, dan akun yang sama tanpa harus mengisi ulang dari awal.

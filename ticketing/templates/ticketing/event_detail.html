@@ -1,55 +1,93 @@
 {% extends 'ticketing/base.html' %}
 {% block content %}
-<div class="row">
+<div class="row align-items-start">
+    <!-- 1. Bagian Kiri: Dapat di-scroll (Detail Konser & Google Maps) -->
     <div class="col-md-8 mb-4">
-        <div class="card shadow-sm" style="border-radius: 15px; border-top: 5px solid #112250;">
-            <div class="card-body p-5">
-                <h2 class="fw-bold">{{ event.nama_konser }}</h2>
-                <h5 class="text-secondary mb-4">{{ event.artis }}</h5>
-                <hr>
-                <div class="row mt-4">
-                    <div class="col-6">
-                        <p class="mb-1 text-muted small">Waktu Acara</p>
-                        <h6 class="fw-bold">{{ event.tanggal|date:"l, d F Y" }}</h6>
-                        <p>{{ event.tanggal|date:"H:i" }} WIB</p>
+        <!-- Kartu Detail Acara + Poster Konser -->
+        <div class="card shadow-sm border-0 mb-4" style="border-radius: 15px; border-top: 5px solid #FF8C00 !important; background-color: #ffffff;">
+            <div class="card-body p-4 p-md-5">
+                <div class="row align-items-start">
+                    <!-- Teks Informasi Konser -->
+                    <div class="col-md-7 pe-md-4 mb-4 mb-md-0">
+                        <span class="badge mb-2 text-white" style="background-color: #112250;">{{ event.tipe }}</span>
+                        <h2 class="fw-bold text-dark mb-1">{{ event.nama_konser }}</h2>
+                        <h5 class="text-secondary mb-3">{{ event.artis }}</h5>
+                        
+                        <hr class="border-secondary opacity-25 my-3">
+                        
+                        <div class="row mt-2">
+                            <div class="col-6">
+                                <p class="mb-1 text-muted small fw-semibold">Waktu Acara</p>
+                                <h6 class="fw-bold text-dark mb-1">{{ event.tanggal|date:"l, d F Y" }}</h6>
+                                <p class="text-secondary small mb-0">{{ event.tanggal|date:"H:i" }} WIB</p>
+                            </div>
+                            <div class="col-6">
+                                <p class="mb-1 text-muted small fw-semibold">Lokasi</p>
+                                <h6 class="fw-bold text-dark mb-1">{{ event.venue.nama }}</h6>
+                                <p class="text-secondary small mb-0">{{ event.venue.kota }}</p>
+                            </div>
+                        </div>
                     </div>
-                    <div class="col-6">
-                        <p class="mb-1 text-muted small">Lokasi</p>
-                        <h6 class="fw-bold">{{ event.venue.nama }}</h6>
-                        <p>{{ event.venue.kota }}</p>
+
+                    <!-- Poster Konser -->
+                    <div class="col-md-5">
+                        <div class="w-100 rounded-3 overflow-hidden shadow-sm" style="border: 2px solid #FF8C00; height: 330px; background-color: #0d0d0e;">
+                            {% if event.poster %}
+                                <img src="{{ event.poster.url }}" alt="{{ event.nama_konser }}" class="w-100 h-100" style="object-fit: cover; display: block;">
+                            {% else %}
+                                <div class="w-100 h-100 d-flex align-items-center justify-content-center text-secondary">
+                                    Tidak ada poster
+                                </div>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- Google Maps Interaktif -->
+        <div class="card shadow-sm border-0" style="border-radius: 15px; overflow: hidden; background-color: #161618; border: 1px solid #28282b;">
+            <div class="card-header border-bottom border-secondary py-3 d-flex align-items-center justify-content-between" style="background-color: #0d0d0e;">
+                <span class="fw-bold text-white fs-6">📍 Lokasi Peta Acara</span>
+                <small class="text-secondary">{{ event.venue.nama }}, {{ event.venue.kota }}</small>
+            </div>
+            <div class="card-body p-0">
+                <iframe 
+                    width="100%" 
+                    height="360" 
+                    style="border:0; display: block;" 
+                    loading="lazy" 
+                    allowfullscreen 
+                    referrerpolicy="no-referrer-when-downgrade"
+                    src="https://maps.google.com/maps?q={{ event.venue.nama|urlencode }}+{{ event.venue.kota|urlencode }}&hl=id&z=16&output=embed">
+                </iframe>
+            </div>
+        </div>
     </div>
 
-    <div class="col-md-4">
-        <h4 class="fw-bold mb-3">Pilih Tiket</h4>
-        <div class="list-group">
+    <!-- 2. Bagian Kanan: Menempel Diam Saat Kiri Di-scroll (Sticky Panel) -->
+    <div class="col-md-4" style="position: sticky; top: 20px; z-index: 10;">
+        <h4 class="fw-bold mb-3 text-white">Pilih Tiket</h4>
+        <div class="list-group" style="max-height: calc(100vh - 100px); overflow-y: auto; padding-right: 4px;">
             {% for category in categories %}
-            <div class="list-group-item p-3 mb-2 shadow-sm" style="border: 1px solid #FFD700; border-radius: 10px;">
+            <div class="list-group-item p-3 mb-3 shadow-sm" style="border: 1px solid #FFD700; border-radius: 12px; background-color: #ffffff;">
                 <div class="d-flex justify-content-between align-items-center mb-2">
-                    <h6 class="fw-bold mb-0">{{ category.nama_kategori }}</h6>
-                    <span class="badge text-dark" style="background-color: #FFD700;">Rp {{ category.harga }}</span>
+                    <h6 class="fw-bold mb-0 text-dark">{{ category.nama_kategori }}</h6>
+                    <span class="badge text-dark fw-bold" style="background-color: #FFD700;">Rp {{ category.harga }}</span>
                 </div>
                 <p class="small text-muted mb-3">Sisa Kuota: {{ category.kuota }}</p>
                 
-                <!-- Potongan kode di dalam loop for category in categories -->
-                <p class="small text-muted mb-3">Sisa Kuota: {{ category.kuota }}</p>
-                
-                <!-- KABEL 1: Form untuk menembak fungsi book_ticket -->
                 <form action="{% url 'book_ticket' category.id %}" method="POST">
                     {% csrf_token %}
-                    <div class="input-group input-group-sm mb-2">
+                    <div class="input-group input-group-sm mb-3">
                         <span class="input-group-text bg-dark text-white border-0">Jumlah</span>
-                        <!-- Batasi maksimal 5 tiket per transaksi agar sistem tidak dibombardir -->
                         <input type="number" name="quantity" value="1" min="1" max="5" class="form-control text-center" required>
                     </div>
                     
                     {% if category.kuota > 0 %}
-                        <button type="submit" class="btn btn-sm w-100 text-white fw-bold shadow-sm" style="background-color: #FF8C00; border: none;">Pesan Sekarang</button>
+                        <button type="submit" class="btn btn-sm w-100 text-white fw-bold shadow-sm py-2" style="background-color: #FF8C00; border-radius: 6px; border: none;">Pesan Sekarang</button>
                     {% else %}
-                        <button type="button" class="btn btn-sm w-100 text-white fw-bold bg-secondary border-0" disabled>Kategori Habis</button>
+                        <button type="button" class="btn btn-sm w-100 text-white fw-bold bg-secondary border-0 py-2" style="border-radius: 6px;" disabled>Kategori Habis</button>
                     {% endif %}
                 </form>
             </div>
