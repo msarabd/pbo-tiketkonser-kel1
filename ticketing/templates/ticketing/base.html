@@ -48,7 +48,7 @@
     <div class="container">
         {% if messages %}
             {% for message in messages %}
-                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show shadow-sm" role="alert">
                     {{ message }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
@@ -57,10 +57,17 @@
     </div>
 
     <!-- Konten Dinamis Halaman -->
-    <main class="container flex-grow-1">
+    <main class="container flex-grow-1 pb-5">
         {% block content %}
         {% endblock %}
     </main>
+
+    <!-- Footer Opsional (Agar halaman tidak terputus kosong di bawah) -->
+    <footer class="mt-auto py-3 bg-dark text-center text-secondary" style="border-top: 1px solid #28282b;">
+        <div class="container">
+            <small>&copy; 2026 KonserKU. Hak Cipta Dilindungi.</small>
+        </div>
+    </footer>
 
     <!-- Script Bootstrap 5 -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

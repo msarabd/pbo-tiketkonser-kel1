@@ -6,11 +6,11 @@ from .models import User, Venue, Event, TicketCategory, Seat, Order, OrderItem, 
 class CustomUserAdmin(UserAdmin):
     # Menambahkan field kustom (no_hp dan is_organizer) ke halaman edit user
     fieldsets = UserAdmin.fieldsets + (
-        ('Informasi Tambahan PBO', {'fields': ('no_hp', 'is_organizer')}),
+        ('Informasi Tambahan PBO', {'fields': ('no_hp',)}),
     )
     # Menambahkan field kustom ke halaman tambah user
     add_fieldsets = UserAdmin.add_fieldsets + (
-        ('Informasi Tambahan PBO', {'fields': ('no_hp', 'is_organizer')}),
+        ('Informasi Tambahan PBO', {'fields': ('no_hp',)}),
     )
 
 # Pendaftaran tabel lainnya

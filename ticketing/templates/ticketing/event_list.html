@@ -103,9 +103,11 @@
                 <div class="card shadow-sm h-100" style="border: 1px solid #FFD700; border-radius: 15px; overflow: hidden; background-color: #fff;">
                     
                     {% if event.poster %}
-                        <img src="{{ event.poster.url }}" class="card-img-top" alt="{{ event.nama_konser }}" style="height: 260px; object-fit: cover;" draggable="false">
+                        <div class="card-img-top bg-dark d-flex align-items-center justify-content-center" style="aspect-ratio: 21/9; overflow: hidden;">
+                            <img src="{{ event.poster.url }}" alt="{{ event.nama_konser }}" style="width: 100%; height: 100%; object-fit: contain;" draggable="false">
+                        </div>
                     {% else %}
-                        <div class="card-img-top bg-dark d-flex align-items-center justify-content-center" style="height: 260px;">
+                        <div class="card-img-top bg-dark d-flex align-items-center justify-content-center" style="aspect-ratio: 21/9;">
                             <span class="text-secondary">Tidak ada poster</span>
                         </div>
                     {% endif %}

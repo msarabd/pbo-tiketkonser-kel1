@@ -12,40 +12,109 @@
         <!-- Kartu Detail Acara + Poster Konser -->
         <div class="card shadow-sm border-0 mb-4" style="border-radius: 15px; border-top: 5px solid #FF8C00 !important; background-color: #ffffff;">
             <div class="card-body p-4 p-md-5">
-                <div class="row align-items-start">
-                    <!-- Teks Informasi Konser -->
-                    <div class="col-md-7 pe-md-4 mb-4 mb-md-0">
-                        <span class="badge mb-2 text-white" style="background-color: #112250;">{{ event.tipe }}</span>
+                
+                <!-- 1. BARIS ATAS: Kiri (Info) & Kanan (Banner) dengan align-items-end -->
+                <div class="row align-items-end">
+                    <!-- Teks Informasi Konser (Kiri) -->
+                    <div class="col-md-7 pe-md-4 mb-3 mb-md-0">
+                        <span class="badge mb-2 text-white" style="background-color: #112250; font-size: 0.85rem; padding: 6px 12px;">{{ event.tipe }}</span>
                         <h2 class="fw-bold text-dark mb-1">{{ event.nama_konser }}</h2>
-                        <h5 class="text-secondary mb-3">{{ event.artis }}</h5>
-                        
-                        <hr class="border-secondary opacity-25 my-3">
-                        
-                        <div class="row mt-2">
-                            <div class="col-6">
-                                <p class="mb-1 text-muted small fw-semibold">Waktu Acara</p>
-                                <h6 class="fw-bold text-dark mb-1">{{ event.tanggal|date:"l, d F Y" }}</h6>
-                                <p class="text-secondary small mb-0">{{ event.tanggal|date:"H:i" }} WIB</p>
-                            </div>
-                            <div class="col-6">
-                                <p class="mb-1 text-muted small fw-semibold">Lokasi</p>
-                                <h6 class="fw-bold text-dark mb-1">{{ event.venue.nama }}</h6>
-                                <p class="text-secondary small mb-0">{{ event.venue.kota }}</p>
-                            </div>
-                        </div>
+                        <!-- mb-0 agar tidak ada celah kosong di bawah nama artis -->
+                        <h5 class="text-secondary mb-0">{{ event.artis }}</h5>
                     </div>
 
-                    <!-- Poster Konser -->
+                    <!-- Poster Konser (Kanan) -->
                     <div class="col-md-5">
-                        <div class="w-100 rounded-3 overflow-hidden shadow-sm" style="border: 2px solid #FF8C00; height: 330px; background-color: #0d0d0e;">
+                        <div class="w-100 rounded-3 overflow-hidden shadow-sm" style="border: 2px solid #FF8C00;">
                             {% if event.poster %}
-                                <img src="{{ event.poster.url }}" alt="{{ event.nama_konser }}" class="w-100 h-100" style="object-fit: cover; display: block;">
+                                <img src="{{ event.poster.url }}" alt="{{ event.nama_konser }}" style="width: 100%; height: auto; display: block;">
                             {% else %}
-                                <div class="w-100 h-100 d-flex align-items-center justify-content-center text-secondary">
+                                <div class="w-100 d-flex align-items-center justify-content-center text-secondary bg-light" style="min-height: 120px;">
                                     Tidak ada poster
                                 </div>
                             {% endif %}
                         </div>
+                    </div>
+                </div>
+
+                <!-- 2. GARIS PEMISAH: Sekarang berada persis di bawah dasar Banner & Artis -->
+                <hr class="border-secondary opacity-25 my-4">
+                
+                <!-- 3. BARIS BAWAH: Waktu & Lokasi Acara -->
+                <div class="row">
+                    <div class="col-6 col-md-4">
+                        <p class="mb-1 text-muted small fw-semibold">Waktu Acara</p>
+                        <h6 class="fw-bold text-dark mb-1">{{ event.tanggal|date:"l, d F Y" }}</h6>
+                        <p class="text-secondary small mb-0">{{ event.tanggal|date:"H:i" }} WIB</p>
+                    </div>
+                    <div class="col-6 col-md-4">
+                        <p class="mb-1 text-muted small fw-semibold">Lokasi</p>
+                        <h6 class="fw-bold text-dark mb-1">{{ event.venue.nama }}</h6>
+                        <p class="text-secondary small mb-0">{{ event.venue.kota }}</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- BARU: Nav Tabs Deskripsi & Syarat Ketentuan -->
+        <div class="card shadow-sm border-0 mb-4 custom-event-tabs" style="border-radius: 15px; background-color: #ffffff; overflow: hidden;">
+            
+            <!-- CSS Kustom Khusus untuk Tab Ini -->
+            <style>
+                .custom-event-tabs .nav-tabs {
+                    border-bottom: 1px solid #dee2e6;
+                }
+                .custom-event-tabs .nav-link {
+                    color: #6c757d; /* Abu-abu redup (inactive) */
+                    border: none;
+                    background-color: transparent;
+                    font-weight: 600;
+                    padding: 1rem 1.5rem;
+                }
+                .custom-event-tabs .nav-link:hover {
+                    color: #495057;
+                    border: none;
+                }
+                .custom-event-tabs .nav-link.active {
+                    color: #212529 !important; /* Gelap tegas (active) */
+                    border: none;
+                    border-bottom: 3px solid #FFC107 !important; /* Garis kuning khas KonserKU */
+                    background-color: transparent;
+                }
+            </style>
+
+            <div class="card-header bg-white border-bottom-0 pt-3 pb-0 px-3">
+                <ul class="nav nav-tabs" id="eventInfoTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="deskripsi-tab" data-bs-toggle="tab" data-bs-target="#deskripsi" type="button" role="tab" aria-controls="deskripsi" aria-selected="true">
+                            DESKRIPSI
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="snk-tab" data-bs-toggle="tab" data-bs-target="#snk" type="button" role="tab" aria-controls="snk" aria-selected="false">
+                            SYARAT & KETENTUAN
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body p-4 bg-light">
+                <div class="tab-content" id="eventInfoTabContent">
+                    <!-- Tab Deskripsi -->
+                    <div class="tab-pane fade show active text-dark" id="deskripsi" role="tabpanel" aria-labelledby="deskripsi-tab">
+                        {% if event.deskripsi %}
+                            {{ event.deskripsi|linebreaks }}
+                        {% else %}
+                            <p class="text-muted fst-italic mb-0">Deskripsi konser belum ditambahkan.</p>
+                        {% endif %}
+                    </div>
+                    <!-- Tab Syarat & Ketentuan -->
+                    <div class="tab-pane fade text-dark" id="snk" role="tabpanel" aria-labelledby="snk-tab">
+                        {% if event.syarat_ketentuan %}
+                            {{ event.syarat_ketentuan|linebreaks }}
+                        {% else %}
+                            <p class="text-muted fst-italic mb-0">Syarat dan ketentuan belum ditambahkan.</p>
+                        {% endif %}
                     </div>
                 </div>
             </div>
