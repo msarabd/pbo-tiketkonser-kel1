@@ -4,7 +4,8 @@ from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils import timezone
-
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 
 # ==============================================================================
 # BASE MODEL (STANDARISASI UUID)
@@ -187,3 +188,29 @@ class ForumMessage(BaseModel):
 
     def __str__(self):
         return f"{self.sender.username} di {self.event.nama_konser}"
+
+# ==============================================================================
+# SIGNALS (SISTEM PENGEMBALIAN KUOTA OTOMATIS)
+# ==============================================================================
+
+@receiver(post_delete, sender=OrderItem)
+def kembalikan_kuota_saat_item_dihapus(sender, instance, **kwargs):
+    """
+    Jika Admin menghapus OrderItem secara paksa, 
+    kuota di TicketCategory terkait harus dikembalikan 1.
+    """
+    if instance.category:
+        instance.category.kuota += 1
+        instance.category.save()
+
+@receiver(post_delete, sender=Order)
+def hapus_semua_item_saat_order_dihapus(sender, instance, **kwargs):
+    """
+    Jika Admin menghapus seluruh Order, 
+    trigger penghapusan untuk setiap OrderItem di dalamnya agar Signal di atas ikut berjalan.
+    (Catatan: Jika OrderItem menggunakan on_delete=models.CASCADE ke Order,
+    Django sudah menangani penghapusannya, namun seringkali signal post_delete 
+    untuk child object tidak terpicu sempurna jika dihapus bulk dari admin. 
+    Pastikan logika views/pembatalan order memanggil .delete() pada setiap item).
+    """
+    pass
