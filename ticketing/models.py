@@ -16,15 +16,12 @@ class BaseModel(models.Model):
     class Meta:
         abstract = True
 
-
 # ==============================================================================
 # USER MODEL (CUSTOM USER)
 # ==============================================================================
 class User(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     no_hp = models.CharField(max_length=15, blank=True)
-    # is_organizer sudah dihapus secara permanen.
-
 
 # ==============================================================================
 # VENUE
@@ -33,9 +30,11 @@ class Venue(BaseModel):
     nama = models.CharField(max_length=200)
     kota = models.CharField(max_length=100)
 
+    class Meta:
+        unique_together = ('nama', 'kota')
+
     def __str__(self):
         return f"{self.nama} ({self.kota})"
-
 
 # ==============================================================================
 # EVENT (TERPUSAT KHUSUS MUSIK)
@@ -58,10 +57,11 @@ class Event(BaseModel):
         default=EventType.FESTIVAL,
     )
     poster = models.ImageField(upload_to="event_posters/", null=True, blank=True)
-    
-    # Penambahan kolom teks dinamis
     deskripsi = models.TextField(blank=True, null=True)
     syarat_ketentuan = models.TextField(blank=True, null=True)
+
+    class Meta:
+        unique_together = ('nama_konser', 'tanggal')
 
     @property
     def time_status(self):
@@ -92,7 +92,6 @@ class Event(BaseModel):
     def __str__(self):
         return f"{self.nama_konser} oleh {self.artis}"
 
-
 # ==============================================================================
 # TIKET & KURSI
 # ==============================================================================
@@ -102,6 +101,9 @@ class TicketCategory(BaseModel):
     harga = models.IntegerField()
     kuota = models.IntegerField()
     pakai_kursi = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ('event', 'nama_kategori')
 
     @property
     def is_available(self):
@@ -122,7 +124,6 @@ class Seat(BaseModel):
 
     def __str__(self):
         return f"{self.kode_kursi} [{self.status}]"
-
 
 # ==============================================================================
 # ORDER & TRANSAKSI
@@ -170,7 +171,6 @@ class Ticket(BaseModel):
     def __str__(self):
         return f"Tiket {self.kode_qr[:8]}... | Status Dipakai: {self.sudah_dipakai}"
 
-
 # ==============================================================================
 # FORUM DISKUSI
 # ==============================================================================
@@ -192,25 +192,12 @@ class ForumMessage(BaseModel):
 # ==============================================================================
 # SIGNALS (SISTEM PENGEMBALIAN KUOTA OTOMATIS)
 # ==============================================================================
-
 @receiver(post_delete, sender=OrderItem)
 def kembalikan_kuota_saat_item_dihapus(sender, instance, **kwargs):
-    """
-    Jika Admin menghapus OrderItem secara paksa, 
-    kuota di TicketCategory terkait harus dikembalikan 1.
-    """
     if instance.category:
         instance.category.kuota += 1
         instance.category.save()
 
 @receiver(post_delete, sender=Order)
 def hapus_semua_item_saat_order_dihapus(sender, instance, **kwargs):
-    """
-    Jika Admin menghapus seluruh Order, 
-    trigger penghapusan untuk setiap OrderItem di dalamnya agar Signal di atas ikut berjalan.
-    (Catatan: Jika OrderItem menggunakan on_delete=models.CASCADE ke Order,
-    Django sudah menangani penghapusannya, namun seringkali signal post_delete 
-    untuk child object tidak terpicu sempurna jika dihapus bulk dari admin. 
-    Pastikan logika views/pembatalan order memanggil .delete() pada setiap item).
-    """
     pass

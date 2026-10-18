@@ -3,6 +3,9 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login
 from django.contrib import messages
 from django.core.exceptions import ValidationError
+from django.utils import timezone
+from django.db.models import Count, Q
+from datetime import timedelta
 import re
 
 from .models import Event, Order, ForumMessage, OrderItem
@@ -25,8 +28,24 @@ def sensor_pesan(teks):
     return teks
 
 def event_list(request):
-    events = Event.objects.select_related('venue').all()
-    return render(request, 'ticketing/event_list.html', {'events': events})
+    batas_kadaluarsa = timezone.now() - timedelta(days=3)
+    
+    # Base query untuk semua event yang belum expired (batas H+3)
+    valid_events = Event.objects.select_related('venue').filter(tanggal__gte=batas_kadaluarsa)
+    
+    # 1. LARIS MANIS: Ambil 3 event dengan total tiket (OrderItem) berstatus PAID paling banyak
+    top_events = valid_events.annotate(
+        sold_tickets=Count('ticketcategory__orderitem', filter=Q(ticketcategory__orderitem__order__status='PAID'))
+    ).order_by('-sold_tickets')[:3]
+    
+    # 2. EVENT TERDEKAT: Ambil 8 event terdekat yang belum berlalu
+    closest_events = valid_events.filter(tanggal__gte=timezone.now()).order_by('tanggal')[:8]
+
+    return render(request, 'ticketing/event_list.html', {
+        'events': valid_events,         # Untuk carousel Rekomendasi
+        'top_events': top_events,       # Untuk section Laris Manis
+        'closest_events': closest_events# Untuk section Event Terdekat
+    })
 
 def event_detail(request, event_id):
     event = get_object_or_404(Event, id=event_id)

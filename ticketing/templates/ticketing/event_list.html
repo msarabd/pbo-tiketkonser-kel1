@@ -1,101 +1,67 @@
 {% extends 'ticketing/base.html' %}
 {% block content %}
 
-<!-- CSS Swiper v8 -->
+<!-- CSS Swiper v8 & Custom Styles -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.css" />
 
 <style>
-    /* Wrapper luar dengan posisi relatif untuk menampung tombol panah */
-    .swiper-outer-container {
-        position: relative;
-        width: 100%;
-    }
+    /* --- SWIPER STYLES --- */
+    .swiper-outer-container { position: relative; width: 100%; }
+    .event-swiper { width: 100%; padding-top: 15px; padding-bottom: 50px; overflow: hidden; }
+    .swiper-slide { width: 350px; height: auto; opacity: 0.35; filter: blur(3px); transition: opacity 0.4s ease, filter 0.4s ease; }
+    .swiper-slide-active { opacity: 1; filter: blur(0); z-index: 10; }
+    .swiper-wrapper { cursor: grab; }
+    .swiper-wrapper:active { cursor: grabbing; }
 
-    /* Wadah utama Swiper */
-    .event-swiper {
-        width: 100%;
-        padding-top: 15px;
-        padding-bottom: 50px;
-        overflow: hidden;
-    }
-
-    /* Ukuran kartu */
-    .swiper-slide {
-        width: 350px;
-        height: auto;
-        opacity: 0.35;
-        filter: blur(3px);
-        transition: opacity 0.4s ease, filter 0.4s ease;
-    }
-
-    /* Kartu tengah fokus dan tajam */
-    .swiper-slide-active {
-        opacity: 1;
-        filter: blur(0);
-        z-index: 10;
-    }
-
-    /* Interaksi kursor */
-    .swiper-wrapper {
-        cursor: grab;
-    }
-    .swiper-wrapper:active {
-        cursor: grabbing;
-    }
-
-    /* Kustomisasi Tombol Navigasi Kiri & Kanan ala Game */
     .custom-nav-btn {
-        width: 52px;
-        height: 52px;
-        background: rgba(17, 34, 80, 0.75); /* Biru gelap semi-transparan */
-        border: 2px solid #FF8C00;          /* Aksen oranye */
-        border-radius: 50%;
-        color: #FF8C00;
-        backdrop-filter: blur(4px);
-        transition: all 0.3s ease;
-        z-index: 30;
+        width: 52px; height: 52px; background: rgba(17, 34, 80, 0.75); border: 2px solid #FF8C00;
+        border-radius: 50%; color: #FF8C00; backdrop-filter: blur(4px); transition: all 0.3s ease; z-index: 30;
     }
-
-    .custom-nav-btn::after {
-        font-size: 20px;
-        font-weight: bold;
-    }
-
-    .custom-nav-btn:hover {
-        background: #FF8C00;
-        color: #ffffff;
-        transform: scale(1.1);
-        box-shadow: 0 0 15px rgba(255, 140, 0, 0.6);
-    }
-
-    /* Posisikan tombol di pinggir kiri dan kanan layar */
-    .swiper-button-prev {
-        left: 20px;
-    }
-    .swiper-button-next {
-        right: 20px;
-    }
+    .custom-nav-btn::after { font-size: 20px; font-weight: bold; }
+    .custom-nav-btn:hover { background: #FF8C00; color: #ffffff; transform: scale(1.1); box-shadow: 0 0 15px rgba(255, 140, 0, 0.6); }
+    .swiper-button-prev { left: 20px; }
+    .swiper-button-next { right: 20px; }
 
     @keyframes pulse {
         0% { transform: scale(1); }
         50% { transform: scale(1.05); }
         100% { transform: scale(1); }
     }
+
+    /* --- EFEK HOVER & ANTI-CROP EVENT TERDEKAT --- */
+    .terdekat-img-wrapper {
+        height: 140px; 
+        padding: 12px; 
+        display: flex;
+        align-items: center; 
+        justify-content: center;
+        overflow: hidden;
+        background-color: #fff;
+    }
+    .terdekat-img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain; 
+        border-radius: 6px;
+        transition: transform 0.4s ease; 
+    }
+    .terdekat-card:hover .terdekat-img {
+        transform: scale(1.08); 
+    }
 </style>
 
 <!-- Banner Utama -->
-<div class="p-4 mb-1 rounded-3 shadow-sm" style="background: linear-gradient(135deg, #FFF9F0 0%, #FFFFFF 100%); border-left: 5px solid #FF8C00;">
-    <h1 class="display-6 fw-bold text-dark mb-1">Konser <span style="color: #FF8C00;">KU</span></h1>
-    <p class="fs-6 text-secondary mb-0">Geser atau gunakan tombol panah / keyboard untuk memilih konser.</p>
+<div class="p-4 mb-4 rounded-3 shadow-sm" style="background: linear-gradient(135deg, #FFF9F0 0%, #FFFFFF 100%); border-left: 5px solid #FF8C00;">
+    <h1 class="display-6 fw-bold text-dark mb-0">Konser <span style="color: #FF8C00;">KU</span></h1>
 </div>
+
+<!-- Tulisan Rekomendasi Konser -->
+<h4 class="fw-bold mb-3 mt-4 text-white">Rekomendasi Konser</h4>
 
 <!-- Container Pembungkus Swiper & Tombol Navigasi -->
 <div class="swiper-outer-container">
-    
-    <!-- Tombol Navigasi Kiri -->
     <div class="swiper-button-prev custom-nav-btn"></div>
     
-    <!-- Wadah Swiper -->
     <div class="swiper event-swiper">
         <div class="swiper-wrapper">
             {% for event in events %}
@@ -113,14 +79,9 @@
                     {% endif %}
 
                     <div class="card-body d-flex flex-column p-4">
-                        
-                        <!-- Kontainer Flexbox untuk menyejajarkan dua elemen -->
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            
-                            <!-- Label Kategori Konser Asli (Kiri) -->
                             <span class="badge" style="background-color: #112250; font-size: 0.8rem;">{{ event.tipe }}</span>
                             
-                            <!-- Label Status Waktu (Kanan) -->
                             {% if event.time_status == 'UPCOMING' %}
                                 <span class="badge text-dark fw-bold border border-2 border-warning bg-transparent">UPCOMING</span>
                             {% elif event.time_status == 'LIVE' %}
@@ -150,90 +111,160 @@
             {% endfor %}
         </div>
     </div>
-
-    <!-- Tombol Navigasi Kanan -->
     <div class="swiper-button-next custom-nav-btn"></div>
 </div>
 
-<!-- JS Swiper v8 dari CDN -->
+
+<!-- BAGIAN LARIS MANIS -->
+<div class="text-center mt-5 mb-4">
+    <h4 class="fw-bold text-white mb-1">Laris Manis</h4>
+    <p class="small text-secondary">Kumpulan event-event laris manis di KonserKU yang mungkin kamu sukai</p>
+</div>
+
+<div class="d-flex w-100 gap-3 mb-5" style="height: 320px;">
+    {% for event in top_events %}
+    <div class="laris-card position-relative overflow-hidden shadow-sm" 
+         onclick="window.location.href='{% url 'event_detail' event.id %}'"
+         style="border-radius: 12px; transition: flex-grow 0.8s cubic-bezier(0.25, 1, 0.5, 1); cursor: pointer; flex-basis: 0; flex-grow: 1;">
+         
+         {% if event.poster %}
+             <img src="{{ event.poster.url }}" alt="{{ event.nama_konser }}" class="position-absolute top-0 start-0 w-100 h-100" style="object-fit: cover; z-index: 0;">
+         {% else %}
+             <img src="https://via.placeholder.com/800x400?text=No+Poster" alt="{{ event.nama_konser }}" class="position-absolute top-0 start-0 w-100 h-100" style="object-fit: cover; z-index: 0;">
+         {% endif %}
+
+         <div style="position: absolute; bottom: 0; left: 0; right: 0; height: 60%; background: linear-gradient(to top, rgba(0,0,0,0.95), transparent); z-index: 1;"></div>
+         
+         <div class="laris-content position-absolute text-white" style="bottom: 20px; left: 20px; right: 20px; opacity: 0; transition: opacity 0.5s ease; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; z-index: 2;">
+             <h5 class="fw-bold mb-1">{{ event.nama_konser }}</h5>
+             <p class="small mb-0"><i class="bi bi-geo-alt-fill text-warning"></i> {{ event.venue.kota }}</p>
+         </div>
+    </div>
+    {% empty %}
+    <p class="text-secondary w-100 text-center">Belum ada data event yang terjual.</p>
+    {% endfor %}
+</div>
+
+
+<!-- BAGIAN EVENT TERDEKAT -->
+<h4 class="fw-bold text-white mt-5 mb-4">Event Terdekat</h4>
+<div class="row row-cols-1 row-cols-sm-2 row-cols-md-4 g-4 mb-5">
+    {% for event in closest_events %}
+    <div class="col">
+        <div class="card h-100 shadow-sm border-0 terdekat-card" style="border-radius: 12px; overflow: hidden; background-color: #fff;">
+            
+            <div class="terdekat-img-wrapper position-relative">
+                {% if event.poster %}
+                    <img src="{{ event.poster.url }}" class="terdekat-img" alt="{{ event.nama_konser }}">
+                {% else %}
+                    <img src="https://via.placeholder.com/400x200?text=No+Poster" class="terdekat-img" alt="{{ event.nama_konser }}">
+                {% endif %}
+            </div>
+
+            <div class="card-body p-3 d-flex flex-column text-dark">
+                <h6 class="card-title fw-bold mb-2 text-truncate" title="{{ event.nama_konser }}">{{ event.nama_konser }}</h6>
+                <p class="small text-secondary mb-1"><i class="bi bi-calendar-event"></i> {{ event.tanggal|date:"d M Y" }}</p>
+                
+                <!-- Kontainer Harga dan Status Waktu -->
+                <div class="mt-auto d-flex justify-content-between align-items-center mt-2">
+                    <p class="small text-dark fw-bold mb-0">
+                        {% if event.ticketcategory_set.exists %}
+                            Rp {{ event.ticketcategory_set.first.harga }}
+                        {% else %}
+                            Harga belum tersedia
+                        {% endif %}
+                    </p>
+                    
+                    {% if event.time_status == 'UPCOMING' %}
+                        <span class="badge text-dark fw-bold border border-2 border-warning bg-transparent" style="font-size: 0.7rem;">UPCOMING</span>
+                    {% elif event.time_status == 'LIVE' %}
+                        <span class="badge text-danger fw-bold border border-2 border-danger bg-transparent" style="animation: pulse 1.5s infinite; font-size: 0.7rem;">🔴 LIVE</span>
+                    {% elif event.time_status == 'EXPIRED' %}
+                        <span class="badge text-secondary fw-bold border border-2 border-secondary bg-transparent" style="font-size: 0.7rem;">EXPIRED</span>
+                    {% endif %}
+                </div>
+
+            </div>
+            <a href="{% url 'event_detail' event.id %}" class="stretched-link"></a>
+        </div>
+    </div>
+    {% empty %}
+        <p class="text-secondary w-100 text-center">Belum ada event terdekat.</p>
+    {% endfor %}
+</div>
+
+
+<!-- JS UNTUK SWIPER & ANIMASI LARIS MANIS -->
 <script src="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        
+        // --- LOGIKA SWIPER ---
         const totalSlides = document.querySelectorAll('.event-swiper .swiper-slide').length;
-        if (totalSlides === 0) return;
+        if (totalSlides > 0) {
+            const isLoopActive = totalSlides >= 6;
+            let audioCtx = null;
+            function playMenuSound() {
+                try {
+                    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    if (audioCtx.state === 'suspended') audioCtx.resume();
 
-        const isLoopActive = totalSlides >= 6;
-
-        // Efek Suara Web Audio API
-        let audioCtx = null;
-        function playMenuSound() {
-            try {
-                if (!audioCtx) {
-                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                }
-                if (audioCtx.state === 'suspended') {
-                    audioCtx.resume();
-                }
-
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(440, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.05);
-
-                gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
-
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.05);
-            } catch (e) {
-                // Abaikan jika browser belum menerima interaksi pengguna
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.05);
+                    gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.05);
+                } catch (e) {}
             }
+
+            new Swiper('.event-swiper', {
+                effect: 'coverflow',
+                grabCursor: true,
+                centeredSlides: true,
+                slidesPerView: 'auto',
+                speed: 600,
+                coverflowEffect: { rotate: 0, stretch: 0, depth: 130, modifier: 1.3, slideShadows: false },
+                loop: isLoopActive,
+                loopedSlides: isLoopActive ? totalSlides : null,
+                resistance: true,
+                resistanceRatio: 0.65,
+                navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' },
+                keyboard: { enabled: true, onlyInViewport: true },
+                on: { slideChange: function() { playMenuSound(); } }
+            });
         }
 
-        const swiper = new Swiper('.event-swiper', {
-            effect: 'coverflow',
-            grabCursor: true,
-            centeredSlides: true,
-            slidesPerView: 'auto',
-            speed: 600,
+        // --- LOGIKA ANIMASI LARIS MANIS ---
+        const larisCards = document.querySelectorAll('.laris-card');
+        if (larisCards.length > 0) {
+            let activeIdx = 0;
             
-            coverflowEffect: {
-                rotate: 0,
-                stretch: 0,
-                depth: 130,
-                modifier: 1.3,
-                slideShadows: false
-            },
-
-            loop: isLoopActive,
-            loopedSlides: isLoopActive ? totalSlides : null,
-            loopFillGroupWithBlank: false,
-
-            resistance: true,
-            resistanceRatio: 0.65,
-            initialSlide: 0,
-
-            navigation: {
-                nextEl: '.swiper-button-next',
-                prevEl: '.swiper-button-prev',
-            },
-
-            keyboard: {
-                enabled: true,
-                onlyInViewport: true,
-            },
-
-            on: {
-                slideChange: function() {
-                    playMenuSound();
-                }
+            function updateActiveCard() {
+                larisCards.forEach((card, index) => {
+                    if (index === activeIdx) {
+                        card.style.flexGrow = '8'; 
+                        card.querySelector('.laris-content').style.opacity = '1'; 
+                    } else {
+                        card.style.flexGrow = '1'; 
+                        card.querySelector('.laris-content').style.opacity = '0'; 
+                    }
+                });
             }
-        });
+            
+            updateActiveCard(); 
+            
+            setInterval(() => {
+                activeIdx = (activeIdx + 1) % larisCards.length;
+                updateActiveCard();
+            }, 3000);
+        }
+
     });
 </script>
 

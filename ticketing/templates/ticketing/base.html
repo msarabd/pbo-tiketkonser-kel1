@@ -6,6 +6,8 @@
     <title>KonserKU - Sistem Pemesanan Tiket</title>
     <!-- Bootstrap 5 CDN -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons CDN -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 </head>
 <body style="background-color: #121212; color: #ffffff; min-height: 100vh; display: flex; flex-direction: column;">
 
@@ -18,26 +20,22 @@
                 {% if user.is_authenticated %}
                     <span class="me-3 fw-semibold">Halo, {{ user.username }}!</span>
                     
-                    <!-- Kondisi Tombol: 'Pesanan Saya' HANYA muncul di Beranda (event_list) -->
                     {% if request.resolver_match.url_name == 'event_list' %}
                         <a href="{% url 'ticket_history' %}" class="btn btn-outline-light btn-sm me-2">Pesanan Saya</a>
                     {% else %}
                         <a href="{% url 'event_list' %}" class="btn btn-outline-light btn-sm me-2">Halaman Utama</a>
                     {% endif %}
 
-                    <!-- Tombol Forum Diskusi -->
                     <a href="{% url 'forum_list' %}" class="btn btn-sm me-2 fw-semibold {% if request.resolver_match.url_name == 'forum_list' or request.resolver_match.url_name == 'forum_room' %}text-white{% else %}text-dark{% endif %}" style="background-color: #FF8C00; border-radius: 6px;">
                         Forum Diskusi
                     </a>
 
-                    <!-- Form Logout -->
                     <form action="{% url 'logout' %}" method="POST" class="d-inline">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-sm btn-danger">Keluar</button>
                     </form>
 
                 {% else %}
-                    <!-- Tombol Login Pengunjung -->
                     <a href="{% url 'login' %}" class="btn fw-bold btn-sm text-dark px-4" style="background-color: #FFD700; border-radius: 6px;">Login</a>
                 {% endif %}
             </div>
@@ -62,10 +60,19 @@
         {% endblock %}
     </main>
 
-    <!-- Footer Opsional (Agar halaman tidak terputus kosong di bawah) -->
-    <footer class="mt-auto py-3 bg-dark text-center text-secondary" style="border-top: 1px solid #28282b;">
-        <div class="container">
-            <small>&copy; 2026 KonserKU. Hak Cipta Dilindungi.</small>
+    <!-- Footer Baru -->
+    <footer class="mt-auto py-4 text-white" style="background-color: #212529; border-top: 1px solid #2c3034;">
+        <div class="container d-flex flex-column flex-md-row justify-content-between align-items-center">
+            <small class="mb-3 mb-md-0">&copy; 2026 KonserKU. Hak Cipta Dilindungi.</small>
+            <div class="d-flex gap-4 fs-5">
+                <i class="bi bi-whatsapp" style="cursor: pointer;"></i>
+                <i class="bi bi-instagram" style="cursor: pointer;"></i>
+                <i class="bi bi-tiktok" style="cursor: pointer;"></i>
+                <i class="bi bi-twitter-x" style="cursor: pointer;"></i>
+                <i class="bi bi-linkedin" style="cursor: pointer;"></i>
+                <i class="bi bi-youtube" style="cursor: pointer;"></i>
+                <i class="bi bi-facebook" style="cursor: pointer;"></i>
+            </div>
         </div>
     </footer>
 
