@@ -18,7 +18,9 @@
             
             <div class="d-flex text-white align-items-center">
                 {% if user.is_authenticated %}
-                    <span class="me-3 fw-semibold">Halo, {{ user.username }}!</span>
+                    <a href="{% url 'accounts:profile' %}" class="btn btn-outline-warning btn-sm me-3 fw-bold" style="border-radius: 6px;">
+                        <i class="bi bi-person-circle"></i> {{ user.username }}
+                    </a>
                     
                     {% if request.resolver_match.url_name == 'event_list' %}
                         <a href="{% url 'ticket_history' %}" class="btn btn-outline-light btn-sm me-2">Pesanan Saya</a>

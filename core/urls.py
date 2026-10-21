@@ -5,12 +5,17 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('tickets/', include('ticketing.urls')),
     
-    # Rute autentikasi bawaan Django (login, logout, dll.)
+    # Rute aplikasi autentikasi buatanmu (Register, Profil, Edit Profil)
+    path('accounts/', include('accounts.urls')), 
+    
+    # Rute bawaan Django untuk Login, Logout, dan Password Reset
     path('accounts/', include('django.contrib.auth.urls')), 
+    
+    # Rute aplikasi tiketmu yang lama
+    path('tickets/', include('ticketing.urls')), 
 ]
 
-# Konfigurasi penyajian file statis dan media (upload foto) saat mode pengembangan
+# Wajib ditambahkan agar Django bisa melayani file gambar/media saat tahap development
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

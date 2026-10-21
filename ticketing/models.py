@@ -1,7 +1,6 @@
 from datetime import timedelta
 import uuid
 from django.conf import settings
-from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils import timezone
 from django.db.models.signals import post_delete
@@ -15,13 +14,6 @@ class BaseModel(models.Model):
 
     class Meta:
         abstract = True
-
-# ==============================================================================
-# USER MODEL (CUSTOM USER)
-# ==============================================================================
-class User(AbstractUser):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    no_hp = models.CharField(max_length=15, blank=True)
 
 # ==============================================================================
 # VENUE

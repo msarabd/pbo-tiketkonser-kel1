@@ -1,15 +1,6 @@
 from django import forms
 from django.core.exceptions import NON_FIELD_ERRORS
-from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth import get_user_model
 from .models import Venue, Event, TicketCategory
-
-User = get_user_model()
-
-class CustomUserCreationForm(UserCreationForm):
-    class Meta(UserCreationForm.Meta):
-        model = User
-        fields = ('username',)
 
 class VenueForm(forms.ModelForm):
     class Meta:

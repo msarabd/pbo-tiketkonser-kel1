@@ -1,0 +1,65 @@
+{% extends 'ticketing/base.html' %}
+{% block content %}
+<div class="row justify-content-center mt-4 mb-5">
+    <div class="col-md-6 col-lg-5">
+        <div class="card shadow-lg border-0" style="border-radius: 20px; overflow: hidden; background-color: #1a1a1d; border: 1px solid #28282b;">
+            <!-- Cover/Header -->
+            <div style="height: 120px; background: linear-gradient(135deg, #FF8C00, #FFD700);"></div>
+            
+            <div class="card-body text-center position-relative pt-0 px-4 pb-5">
+                <!-- Profile Picture -->
+                <div class="position-relative d-inline-block shadow-sm" style="margin-top: -60px;">
+                    {% if profile.profile_picture %}
+                        <img src="{{ profile.profile_picture.url }}" alt="Profile" class="rounded-circle border border-4 object-fit-cover" style="width: 120px; height: 120px; border-color: #1a1a1d !important; background-color: #112250;">
+                    {% else %}
+                        <div class="rounded-circle border border-4 d-flex align-items-center justify-content-center fw-bold text-white display-5" style="width: 120px; height: 120px; border-color: #1a1a1d !important; background-color: #112250;">
+                            {{ profile.user.username|slice:":1"|upper }}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <h3 class="fw-bold text-white mt-3 mb-0">{{ profile.user.username }}</h3>
+                <p class="text-secondary small mb-3">
+                    {% if profile.gender == 'L' %}Laki-laki{% elif profile.gender == 'P' %}Perempuan{% endif %}
+                    {% if profile.birth_date %} • {{ profile.birth_date|timesince|slice:":2" }} Tahun{% endif %}
+                </p>
+
+                <!-- Bio Section -->
+                <div class="text-start text-light bg-dark p-3 rounded-3 mb-4 border border-secondary border-opacity-25 shadow-sm">
+                    <h6 class="fw-bold mb-2" style="color: #FFD700;">Tentang Saya</h6>
+                    <p class="mb-0 small" style="line-height: 1.5;">
+                        {% if profile.bio %}
+                            {{ profile.bio }}
+                        {% else %}
+                            <span class="fst-italic text-secondary">Belum ada bio. Tambahkan cerita konsermu!</span>
+                        {% endif %}
+                    </p>
+                </div>
+
+                <!-- Labels/Filters (Litmatch Vibe) -->
+                <div class="d-flex flex-wrap justify-content-center gap-2 mb-4">
+                    {% if profile.concert_vibe %}
+                        <span class="badge px-3 py-2 rounded-pill text-white" style="background-color: #e91e63; font-size: 0.8rem;">
+                            🎵 {{ profile.get_concert_vibe_display }}
+                        </span>
+                    {% endif %}
+                    {% if profile.social_energy %}
+                        <span class="badge px-3 py-2 rounded-pill text-white" style="background-color: #00bcd4; font-size: 0.8rem;">
+                            ⚡ {{ profile.get_social_energy_display }}
+                        </span>
+                    {% endif %}
+                    {% if profile.matching_goal %}
+                        <span class="badge px-3 py-2 rounded-pill text-white" style="background-color: #4caf50; font-size: 0.8rem;">
+                            🎯 {{ profile.get_matching_goal_display }}
+                        </span>
+                    {% endif %}
+                </div>
+
+                <a href="{% url 'accounts:edit_profile' %}" class="btn w-100 fw-bold text-dark py-2 shadow-sm" style="background-color: #FFD700; border-radius: 10px;">
+                    Edit Profil
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends 'ticketing/base.html' %}
+{% block content %}
+<div class="row justify-content-center mt-4 mb-5">
+    <div class="col-md-6 col-lg-5">
+        
+        <a href="{% url 'accounts:profile' %}" class="text-white text-decoration-none mb-3 d-inline-block fw-bold fs-6">&larr; Batal Edit</a>
+
+        <div class="card shadow-sm border-0" style="border-radius: 15px; border-top: 5px solid #FF8C00 !important; background-color: #ffffff;">
+            <div class="card-body p-4 p-md-5">
+                <div class="text-center mb-4">
+                    <h3 class="fw-bold text-dark mb-1">Edit Profil</h3>
+                    <p class="text-secondary small">Lengkapi filter ini agar lebih mudah mendapat teman konser.</p>
+                </div>
+
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    {% for field in form %}
+                        <div class="mb-3 text-dark text-start">
+                            <label class="form-label small fw-bold mb-1">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.help_text %}
+                                <div class="form-text small text-muted mb-1">{{ field.help_text|safe }}</div>
+                            {% endif %}
+                            {% for error in field.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                    
+                    <button type="submit" class="btn w-100 fw-bold text-white py-2 mt-3" style="background-color: #112250; border-radius: 8px;">Simpan Perubahan</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

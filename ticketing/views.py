@@ -9,7 +9,6 @@ from datetime import timedelta
 import re
 
 from .models import Event, Order, ForumMessage, OrderItem
-from .forms import CustomUserCreationForm
 from .services import book_ticket_securely, process_payment_and_issue_tickets
 
 # --- LOGIKA SENSOR ---

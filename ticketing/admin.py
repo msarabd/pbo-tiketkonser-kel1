@@ -1,16 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import User, Venue, Event, TicketCategory, Seat, Order, OrderItem, Payment, Ticket
+from .models import Venue, Event, TicketCategory, Seat, Order, OrderItem, Payment, Ticket
 from .forms import VenueForm, EventForm, TicketCategoryForm
-
-@admin.register(User)
-class CustomUserAdmin(UserAdmin):
-    fieldsets = UserAdmin.fieldsets + (
-        ('Informasi Tambahan PBO', {'fields': ('no_hp',)}),
-    )
-    add_fieldsets = UserAdmin.add_fieldsets + (
-        ('Informasi Tambahan PBO', {'fields': ('no_hp',)}),
-    )
 
 @admin.register(Venue)
 class VenueAdmin(admin.ModelAdmin):
