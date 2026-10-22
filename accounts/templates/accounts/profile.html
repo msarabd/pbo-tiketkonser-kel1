@@ -1,65 +1,144 @@
 {% extends 'ticketing/base.html' %}
 {% block content %}
-<div class="row justify-content-center mt-4 mb-5">
-    <div class="col-md-6 col-lg-5">
-        <div class="card shadow-lg border-0" style="border-radius: 20px; overflow: hidden; background-color: #1a1a1d; border: 1px solid #28282b;">
-            <!-- Cover/Header -->
-            <div style="height: 120px; background: linear-gradient(135deg, #FF8C00, #FFD700);"></div>
+
+<!-- WRAPPER BACKGROUND DINAMIS -->
+<div class="container-fluid d-flex align-items-center justify-content-center py-5" style="
+    {% if profile.background_image %}
+        background: linear-gradient(rgba(17, 17, 17, 0.75), rgba(17, 17, 17, 0.95)), url('{{ profile.background_image.url }}') center/cover no-repeat fixed;
+    {% else %}
+        background-color: #111111;
+    {% endif %}
+    min-height: 90vh; 
+    margin-top: -1.5rem;
+">
+    <div class="row justify-content-center w-100">
+        <div class="col-md-8 col-lg-6 col-xl-4">
             
-            <div class="card-body text-center position-relative pt-0 px-4 pb-5">
-                <!-- Profile Picture -->
-                <div class="position-relative d-inline-block shadow-sm" style="margin-top: -60px;">
+            <div class="card shadow-lg border-0 bg-dark" style="border-radius: 20px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1) !important; box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;">
+                
+                <!-- Bagian Foto Besar (Tinder Style) -->
+                <div class="position-relative" style="height: 500px; background-color: #000;">
                     {% if profile.profile_picture %}
-                        <img src="{{ profile.profile_picture.url }}" alt="Profile" class="rounded-circle border border-4 object-fit-cover" style="width: 120px; height: 120px; border-color: #1a1a1d !important; background-color: #112250;">
+                        <img src="{{ profile.profile_picture.url }}" alt="Profile" 
+                             id="rotatable-profile-pic"
+                             class="w-100 h-100 object-fit-cover"
+                             style="cursor: pointer;">
                     {% else %}
-                        <div class="rounded-circle border border-4 d-flex align-items-center justify-content-center fw-bold text-white display-5" style="width: 120px; height: 120px; border-color: #1a1a1d !important; background-color: #112250;">
+                        <div class="w-100 h-100 d-flex align-items-center justify-content-center display-1 fw-bold text-secondary" style="background: linear-gradient(135deg, #2b2b2b, #1a1a1d);">
                             {{ profile.user.username|slice:":1"|upper }}
                         </div>
                     {% endif %}
-                </div>
-                
-                <h3 class="fw-bold text-white mt-3 mb-0">{{ profile.user.username }}</h3>
-                <p class="text-secondary small mb-3">
-                    {% if profile.gender == 'L' %}Laki-laki{% elif profile.gender == 'P' %}Perempuan{% endif %}
-                    {% if profile.birth_date %} • {{ profile.birth_date|timesince|slice:":2" }} Tahun{% endif %}
-                </p>
 
-                <!-- Bio Section -->
-                <div class="text-start text-light bg-dark p-3 rounded-3 mb-4 border border-secondary border-opacity-25 shadow-sm">
-                    <h6 class="fw-bold mb-2" style="color: #FFD700;">Tentang Saya</h6>
-                    <p class="mb-0 small" style="line-height: 1.5;">
+                    <!-- Indikator Banyak Foto -->
+                    <div class="position-absolute top-0 w-100 d-flex gap-1 p-2" id="photo-indicators" style="z-index: 10;">
+                    </div>
+
+                    <!-- Gradient Overlay untuk Teks di atas gambar -->
+                    <div class="position-absolute bottom-0 w-100 p-3 pt-5" style="background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 60%, transparent 100%); pointer-events: none;">
+                        <h2 class="fw-bold text-white mb-0" style="text-shadow: 1px 1px 4px rgba(0,0,0,1);">
+                            {{ profile.user.username }}
+                            {% if profile.age %}
+                                <span class="fw-normal fs-4"> {{ profile.age }}</span>
+                            {% endif %}
+                        </h2>
+                        
+                        {% if profile.nama_ktp %}
+                        <div class="text-info small fw-bold mt-1 d-flex align-items-center gap-1">
+                            <i class="bi bi-patch-check-fill fs-6" style="color: #FF8C00;"></i> 
+                            <span class="text-white opacity-75">Terverifikasi: {{ profile.nama_ktp }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Bagian Bio & Tags -->
+                <div class="card-body p-4 text-light" style="background-color: #1a1a1d;">
+                    
+                    <h6 class="fw-bold text-uppercase mb-2" style="color: #FF8C00; font-size: 0.75rem; letter-spacing: 1px;">Tentang Saya</h6>
+                    <p class="mb-4 text-white opacity-75" style="line-height: 1.6; font-size: 0.95rem;">
                         {% if profile.bio %}
                             {{ profile.bio }}
                         {% else %}
-                            <span class="fst-italic text-secondary">Belum ada bio. Tambahkan cerita konsermu!</span>
+                            <span class="fst-italic">Belum ada bio. Tambahkan cerita konsermu!</span>
                         {% endif %}
                     </p>
-                </div>
 
-                <!-- Labels/Filters (Litmatch Vibe) -->
-                <div class="d-flex flex-wrap justify-content-center gap-2 mb-4">
-                    {% if profile.concert_vibe %}
-                        <span class="badge px-3 py-2 rounded-pill text-white" style="background-color: #e91e63; font-size: 0.8rem;">
-                            🎵 {{ profile.get_concert_vibe_display }}
-                        </span>
-                    {% endif %}
-                    {% if profile.social_energy %}
-                        <span class="badge px-3 py-2 rounded-pill text-white" style="background-color: #00bcd4; font-size: 0.8rem;">
-                            ⚡ {{ profile.get_social_energy_display }}
-                        </span>
-                    {% endif %}
-                    {% if profile.matching_goal %}
-                        <span class="badge px-3 py-2 rounded-pill text-white" style="background-color: #4caf50; font-size: 0.8rem;">
-                            🎯 {{ profile.get_matching_goal_display }}
-                        </span>
-                    {% endif %}
-                </div>
+                    <h6 class="fw-bold text-uppercase mb-2" style="color: #FF8C00; font-size: 0.75rem; letter-spacing: 1px;">Gaya & Minat</h6>
+                    <div class="d-flex flex-wrap gap-2 mb-4">
+                        {% if profile.gender %}
+                            <span class="badge rounded-pill px-3 py-2 fw-normal" style="background-color: #2b2b2b; color: #e0e0e0; border: 1px solid #444; font-size: 0.85rem;">
+                                👤 {% if profile.gender == 'L' %}Laki-laki{% else %}Perempuan{% endif %}
+                            </span>
+                        {% endif %}
+                        {% if profile.concert_vibe %}
+                            <span class="badge rounded-pill px-3 py-2 fw-normal" style="background-color: #2b2b2b; color: #e0e0e0; border: 1px solid #444; font-size: 0.85rem;">
+                                🎵 {{ profile.get_concert_vibe_display }}
+                            </span>
+                        {% endif %}
+                        {% if profile.social_energy %}
+                            <span class="badge rounded-pill px-3 py-2 fw-normal" style="background-color: #2b2b2b; color: #e0e0e0; border: 1px solid #444; font-size: 0.85rem;">
+                                ⚡ {{ profile.get_social_energy_display }}
+                            </span>
+                        {% endif %}
+                        {% if profile.matching_goal %}
+                            <span class="badge rounded-pill px-3 py-2 fw-normal" style="background-color: #2b2b2b; color: #e0e0e0; border: 1px solid #444; font-size: 0.85rem;">
+                                🎯 {{ profile.get_matching_goal_display }}
+                            </span>
+                        {% endif %}
+                    </div>
 
-                <a href="{% url 'accounts:edit_profile' %}" class="btn w-100 fw-bold text-dark py-2 shadow-sm" style="background-color: #FFD700; border-radius: 10px;">
-                    Edit Profil
-                </a>
+                    <a href="{% url 'accounts:edit_profile' %}" class="btn w-100 fw-bold py-3 rounded-pill mt-2 shadow" style="background: linear-gradient(45deg, #FF8C00, #d84315); color: white; border: none; letter-spacing: 0.5px;">
+                        <i class="bi bi-pencil-fill me-2"></i> Edit Profil
+                    </a>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const imgElement = document.getElementById('rotatable-profile-pic');
+        const indicatorContainer = document.getElementById('photo-indicators');
+        if (!imgElement) return;
+
+        const availablePics = [
+            "{% if profile.profile_picture %}{{ profile.profile_picture.url }}{% endif %}",
+            "{% if profile.profile_picture_2 %}{{ profile.profile_picture_2.url }}{% endif %}",
+            "{% if profile.profile_picture_3 %}{{ profile.profile_picture_3.url }}{% endif %}"
+        ].filter(url => url.trim() !== "");
+
+        let currentIndex = 0;
+
+        if (availablePics.length > 1) {
+            for(let i = 0; i < availablePics.length; i++) {
+                let bar = document.createElement('div');
+                bar.className = 'flex-grow-1 rounded-pill';
+                bar.style.height = '4px';
+                bar.style.backgroundColor = i === 0 ? '#ffffff' : 'rgba(255,255,255,0.3)';
+                bar.style.transition = 'background-color 0.3s ease';
+                bar.style.boxShadow = '0 1px 2px rgba(0,0,0,0.5)';
+                indicatorContainer.appendChild(bar);
+            }
+
+            imgElement.addEventListener('click', function(e) {
+                const rect = imgElement.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                
+                if (clickX > rect.width / 2) {
+                    currentIndex = (currentIndex + 1) % availablePics.length;
+                } else {
+                    currentIndex = (currentIndex - 1 + availablePics.length) % availablePics.length;
+                }
+                
+                imgElement.src = availablePics[currentIndex];
+                
+                const bars = indicatorContainer.children;
+                for(let i = 0; i < bars.length; i++) {
+                    bars[i].style.backgroundColor = i === currentIndex ? '#ffffff' : 'rgba(255,255,255,0.3)';
+                }
+            });
+        }
+    });
+</script>
 {% endblock %}

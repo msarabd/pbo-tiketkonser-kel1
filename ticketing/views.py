@@ -1,6 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth import login
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.utils import timezone
@@ -10,6 +9,7 @@ import re
 
 from .models import Event, Order, ForumMessage, OrderItem
 from .services import book_ticket_securely, process_payment_and_issue_tickets
+from accounts.models import UserProfile  # Tambahan krusial
 
 # --- LOGIKA SENSOR ---
 def sensor_pesan(teks):
@@ -28,22 +28,18 @@ def sensor_pesan(teks):
 
 def event_list(request):
     batas_kadaluarsa = timezone.now() - timedelta(days=3)
-    
-    # Base query untuk semua event yang belum expired (batas H+3)
     valid_events = Event.objects.select_related('venue').filter(tanggal__gte=batas_kadaluarsa)
     
-    # 1. LARIS MANIS: Ambil 3 event dengan total tiket (OrderItem) berstatus PAID paling banyak
     top_events = valid_events.annotate(
         sold_tickets=Count('ticketcategory__orderitem', filter=Q(ticketcategory__orderitem__order__status='PAID'))
     ).order_by('-sold_tickets')[:3]
     
-    # 2. EVENT TERDEKAT: Ambil 8 event terdekat yang belum berlalu
     closest_events = valid_events.filter(tanggal__gte=timezone.now()).order_by('tanggal')[:8]
 
     return render(request, 'ticketing/event_list.html', {
-        'events': valid_events,         # Untuk carousel Rekomendasi
-        'top_events': top_events,       # Untuk section Laris Manis
-        'closest_events': closest_events# Untuk section Event Terdekat
+        'events': valid_events,
+        'top_events': top_events,
+        'closest_events': closest_events
     })
 
 def event_detail(request, event_id):
@@ -53,6 +49,14 @@ def event_detail(request, event_id):
 
 @login_required(login_url='login')
 def book_ticket(request, category_id):
+    # BLOK VALIDASI PROFIL
+    profile, created = UserProfile.objects.get_or_create(user=request.user)
+    
+    if not profile.nik or not profile.profile_picture:
+        messages.warning(request, "Akses ditolak. Kamu wajib mengisi NIK dan mengunggah Foto Profil Utama sebelum memesan tiket.")
+        return redirect('accounts:edit_profile')
+
+    # BLOK PEMESANAN
     if request.method == 'POST':
         quantity = request.POST.get('quantity', 1)
         try:
@@ -87,21 +91,7 @@ def ticket_history(request):
     ).prefetch_related('orderitem_set__ticket', 'orderitem_set__category__event').order_by('-waktu_pesan')
     return render(request, 'ticketing/history.html', {'pesanan_lunas': pesanan_lunas})
 
-def register(request):
-    if request.user.is_authenticated:
-        return redirect('event_list')
-
-    if request.method == 'POST':
-        form = CustomUserCreationForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            login(request, user)
-            messages.success(request, f"Akun {user.username} berhasil didaftarkan!")
-            return redirect('event_list')
-    else:
-        form = CustomUserCreationForm()
-
-    return render(request, 'registration/register.html', {'form': form})
+# FUNGSI REGISTER SUDAH DIHAPUS DARI SINI KARENA BUKAN TEMPATNYA
 
 @login_required
 def forum_list(request):

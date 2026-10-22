@@ -1,25 +1,28 @@
 import uuid
+from datetime import date
 from django.db import models
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ValidationError
+from PIL import Image
 
-# ==============================================================================
-# USER MODEL (Pindahan dari ticketing)
-# ==============================================================================
 class User(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     no_hp = models.CharField(max_length=15, blank=True)
 
-# ==============================================================================
-# USER PROFILE (Untuk filter cari teman)
-# ==============================================================================
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     
-    bio = models.TextField(max_length=500, blank=True, null=True, help_text="Ceritakan sedikit tentang dirimu.")
-    profile_picture = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
+    nik = models.CharField(max_length=16, blank=True, null=True, help_text="Nomor Induk Kependudukan 16 digit")
+    nama_ktp = models.CharField(max_length=100, blank=True, null=True)
     
-    # Kategori Filter Pencarian Teman
+    background_image = models.ImageField(upload_to='profile_bgs/', blank=True, null=True)
+    profile_picture = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
+    profile_picture_2 = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
+    profile_picture_3 = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
+    
+    bio = models.TextField(max_length=500, blank=True, null=True, help_text="Ceritakan sedikit tentang dirimu.")
+    
     VIBE_CHOICES = [
         ('fancam', 'Tim Fancam / Dokumentasi'),
         ('sing_along', 'Tim Sing-along'),
@@ -49,5 +52,35 @@ class UserProfile(models.Model):
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES, blank=True, null=True)
     birth_date = models.DateField(blank=True, null=True)
 
+    @property
+    def age(self):
+        if self.birth_date:
+            today = date.today()
+            return today.year - self.birth_date.year - ((today.month, today.day) < (self.birth_date.month, self.birth_date.day))
+        return None
+
     def __str__(self):
         return f"Profil dari {self.user.username}"
+
+    def save(self, *args, **kwargs):
+        image_fields = [self.profile_picture, self.profile_picture_2, self.profile_picture_3, self.background_image]
+
+        for field in image_fields:
+            if field and not getattr(field, '_committed', True):
+                try:
+                    img = Image.open(field.file)
+                    img.verify()
+                except Exception:
+                    raise ValidationError("Salah satu file yang diunggah rusak atau bukan format gambar yang valid.")
+
+        super().save(*args, **kwargs)
+
+        for field in image_fields:
+            if field and hasattr(field, 'path'):
+                try:
+                    img = Image.open(field.path)
+                    if img.height > 800 or img.width > 800:
+                        img.thumbnail((800, 800), Image.Resampling.LANCZOS)
+                        img.save(field.path, quality=85, optimize=True)
+                except Exception:
+                    pass

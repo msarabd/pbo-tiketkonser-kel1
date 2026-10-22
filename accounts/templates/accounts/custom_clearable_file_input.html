@@ -1,0 +1,25 @@
+<!-- accounts/templates/accounts/custom_clearable_file_input.html -->
+{% if widget.is_initial %}
+<div class="d-flex align-items-center justify-content-between p-2 mb-2 rounded bg-light border" style="font-size: 0.85rem;">
+    <!-- Sisi Kiri: Badge & Nama File dengan Batas Panjang -->
+    <div class="d-flex align-items-center gap-2 overflow-hidden me-2" style="max-width: 75%;">
+        <span class="badge bg-secondary px-2 py-1" style="font-size: 0.7rem;">File Aktif</span>
+        <a href="{{ widget.value.url }}" target="_blank" class="text-truncate text-decoration-none fw-semibold text-primary" title="{{ widget.value.name }}">
+            {{ widget.value.name }}
+        </a>
+    </div>
+    
+    <!-- Sisi Kanan: Opsi Hapus -->
+    {% if not widget.required %}
+    <div class="form-check m-0 flex-shrink-0">
+        <input type="checkbox" name="{{ widget.checkbox_name }}" id="{{ widget.checkbox_id }}" class="form-check-input" {% if widget.attrs.disabled %}disabled{% endif %}>
+        <label for="{{ widget.checkbox_id }}" class="form-check-label text-danger fw-semibold small">Hapus</label>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- Baris Baru: Input Pilih File -->
+<div class="w-100">
+    <input type="{{ widget.type }}" name="{{ widget.name }}" class="form-control" {% include "django/forms/widgets/attrs.html" %}>
+</div>

@@ -8,7 +8,7 @@
         <div class="card shadow-sm border-0" style="border-radius: 15px; border-top: 5px solid #FF8C00 !important; background-color: #ffffff;">
             <div class="card-body p-4 p-md-5">
                 <div class="text-center mb-4">
-                    <h3 class="fw-bold text-dark mb-1">Edit Profil</h3>
+                    <h3 class="fw-bold text-dark mb-1">EDIT PROFIL</h3>
                     <p class="text-secondary small">Lengkapi filter ini agar lebih mudah mendapat teman konser.</p>
                 </div>
 
@@ -17,7 +17,13 @@
                     
                     {% for field in form %}
                         <div class="mb-3 text-dark text-start">
-                            <label class="form-label small fw-bold mb-1">{{ field.label }}</label>
+                            <label class="form-label small fw-bold mb-1">
+                                {{ field.label }}
+                                <!-- Menampilkan bintang merah jika field wajib diisi -->
+                                {% if field.field.required %}
+                                    <span class="text-danger">*</span>
+                                {% endif %}
+                            </label>
                             {{ field }}
                             {% if field.help_text %}
                                 <div class="form-text small text-muted mb-1">{{ field.help_text|safe }}</div>

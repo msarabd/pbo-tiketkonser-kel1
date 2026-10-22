@@ -48,11 +48,94 @@
     .terdekat-card:hover .terdekat-img {
         transform: scale(1.08); 
     }
+
+    /* --- BANNER INTERAKTIF TARIK CARI TEMAN --- */
+    .banner-container {
+        position: relative;
+        background: linear-gradient(135deg, #FFF9F0 0%, #FFFFFF 100%);
+        border-left: 5px solid #FF8C00;
+        border-radius: 12px;
+        min-height: 90px;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1.25rem 1.75rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    .banner-drawer {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 320px;
+        background: #112250;
+        border-left: 4px solid #FF8C00;
+        transform: translateX(calc(100% - 46px));
+        transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        display: flex;
+        align-items: center;
+        z-index: 10;
+    }
+
+    .banner-drawer.is-pulled {
+        transform: translateX(0);
+    }
+
+    .pull-handle {
+        width: 46px;
+        height: 100%;
+        background-color: #FF8C00;
+        color: #ffffff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        user-select: none;
+        transition: background-color 0.2s ease;
+    }
+
+    .pull-handle:hover {
+        background-color: #e07b00;
+    }
+
+    .pull-handle i {
+        font-size: 1.25rem;
+        transition: transform 0.3s ease;
+    }
+
+    .banner-drawer.is-pulled .pull-handle i {
+        transform: rotate(180deg);
+    }
+
+    .drawer-content {
+        flex-grow: 1;
+        padding: 0 1.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
 </style>
 
-<!-- Banner Utama -->
-<div class="p-4 mb-4 rounded-3 shadow-sm" style="background: linear-gradient(135deg, #FFF9F0 0%, #FFFFFF 100%); border-left: 5px solid #FF8C00;">
-    <h1 class="display-6 fw-bold text-dark mb-0">Konser <span style="color: #FF8C00;">KU</span></h1>
+<!-- Banner Interaktif Tarik Cari Teman -->
+<div class="banner-container mb-4">
+    <div>
+        <h1 class="display-6 fw-bold text-dark mb-0">Konser <span style="color: #FF8C00;">KU</span></h1>
+    </div>
+
+    <div class="banner-drawer" id="friendBannerDrawer">
+        <div class="pull-handle" id="pullHandle" title="Klik atau tarik untuk Cari Teman">
+            <i class="bi bi-chevron-left" id="pullIcon"></i>
+            <span style="font-size: 0.65rem; font-weight: 700; text-orientation: mixed; writing-mode: vertical-rl; letter-spacing: 1px; margin-top: 4px;">TARIK</span>
+        </div>
+        <div class="drawer-content">
+            <a href="{% url 'accounts:find_friends' %}" class="btn fw-bold w-100 py-2 shadow" style="background-color: #FF8C00; color: #ffffff; border-radius: 8px; border: none; font-size: 0.95rem;">
+                <i class="bi bi-people-fill me-1"></i> CARI TEMAN
+            </a>
+        </div>
+    </div>
 </div>
 
 <!-- Tulisan Rekomendasi Konser -->
@@ -94,7 +177,7 @@
                         <div>
                             <h5 class="card-title fw-bold text-dark mb-2">{{ event.nama_konser }}</h5>
                             <p class="small text-secondary mb-1">📍 {{ event.venue.nama }}, {{ event.venue.kota }}</p>
-                            <p class="small text-secondary mb-1">📅 {{ event.tanggal|date:"d M Y, H:i" }}</p>
+                            <p class="small text-secondary mb-1">🗓️ {{ event.tanggal|date:"d M Y, H:i" }}</p>
                             <p class="small text-secondary mb-3">🎤 {{ event.artis }}</p>
                         </div>
                         
@@ -113,7 +196,6 @@
     </div>
     <div class="swiper-button-next custom-nav-btn"></div>
 </div>
-
 
 <!-- BAGIAN LARIS MANIS -->
 <div class="text-center mt-5 mb-4">
@@ -145,7 +227,6 @@
     {% endfor %}
 </div>
 
-
 <!-- BAGIAN EVENT TERDEKAT -->
 <h4 class="fw-bold text-white mt-5 mb-4">Event Terdekat</h4>
 <div class="row row-cols-1 row-cols-sm-2 row-cols-md-4 g-4 mb-5">
@@ -165,7 +246,6 @@
                 <h6 class="card-title fw-bold mb-2 text-truncate" title="{{ event.nama_konser }}">{{ event.nama_konser }}</h6>
                 <p class="small text-secondary mb-1"><i class="bi bi-calendar-event"></i> {{ event.tanggal|date:"d M Y" }}</p>
                 
-                <!-- Kontainer Harga dan Status Waktu -->
                 <div class="mt-auto d-flex justify-content-between align-items-center mt-2">
                     <p class="small text-dark fw-bold mb-0">
                         {% if event.ticketcategory_set.exists %}
@@ -193,12 +273,28 @@
     {% endfor %}
 </div>
 
-
-<!-- JS UNTUK SWIPER & ANIMASI LARIS MANIS -->
+<!-- JS UNTUK SWIPER, ANIMASI LARIS MANIS, & DRAWER BANNER -->
 <script src="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         
+        // --- LOGIKA DRAWER CARI TEMAN ---
+        const drawer = document.getElementById('friendBannerDrawer');
+        const handle = document.getElementById('pullHandle');
+
+        if (drawer && handle) {
+            handle.addEventListener('click', function (e) {
+                e.stopPropagation();
+                drawer.classList.toggle('is-pulled');
+            });
+
+            document.addEventListener('click', function (e) {
+                if (!drawer.contains(e.target)) {
+                    drawer.classList.remove('is-pulled');
+                }
+            });
+        }
+
         // --- LOGIKA SWIPER ---
         const totalSlides = document.querySelectorAll('.event-swiper .swiper-slide').length;
         if (totalSlides > 0) {
