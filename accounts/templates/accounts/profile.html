@@ -63,13 +63,28 @@
                         {% endif %}
                     </p>
 
-                    <h6 class="fw-bold text-uppercase mb-2" style="color: #FF8C00; font-size: 0.75rem; letter-spacing: 1px;">Gaya & Minat</h6>
+                    <!-- KATEGORI BARU: IDENTITAS -->
+                    {% if profile.gender or profile.latitude %}
+                    <h6 class="fw-bold text-uppercase mb-2" style="color: #FF8C00; font-size: 0.75rem; letter-spacing: 1px;">Identitas Dasar</h6>
                     <div class="d-flex flex-wrap gap-2 mb-4">
                         {% if profile.gender %}
-                            <span class="badge rounded-pill px-3 py-2 fw-normal" style="background-color: #2b2b2b; color: #e0e0e0; border: 1px solid #444; font-size: 0.85rem;">
-                                👤 {% if profile.gender == 'L' %}Laki-laki{% else %}Perempuan{% endif %}
-                            </span>
+                        <span class="badge rounded-pill px-3 py-2 fw-normal" style="background-color: #2b2b2b; color: #e0e0e0; border: 1px solid #444; font-size: 0.85rem;">
+                            👤 {% if profile.gender == 'L' %}Laki-laki{% else %}Perempuan{% endif %}
+                        </span>
                         {% endif %}
+                        
+                        <!-- Tempat penampungan nama kota yang akan diisi oleh JavaScript -->
+                        {% if profile.latitude and profile.longitude %}
+                        <span class="badge rounded-pill px-3 py-2 fw-normal" id="location-badge" style="background-color: #2b2b2b; color: #e0e0e0; border: 1px solid #444; font-size: 0.85rem;">
+                            📍 Memuat lokasi...
+                        </span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    <!-- GAYA & MINAT (Tanpa Gender) -->
+                    <h6 class="fw-bold text-uppercase mb-2" style="color: #FF8C00; font-size: 0.75rem; letter-spacing: 1px;">Gaya & Minat</h6>
+                    <div class="d-flex flex-wrap gap-2 mb-4">
                         {% if profile.concert_vibe %}
                             <span class="badge rounded-pill px-3 py-2 fw-normal" style="background-color: #2b2b2b; color: #e0e0e0; border: 1px solid #444; font-size: 0.85rem;">
                                 🎵 {{ profile.get_concert_vibe_display }}
@@ -85,6 +100,10 @@
                                 🎯 {{ profile.get_matching_goal_display }}
                             </span>
                         {% endif %}
+                        
+                        {% if not profile.concert_vibe and not profile.social_energy and not profile.matching_goal %}
+                            <span class="text-secondary small fst-italic">Belum ada preferensi yang diisi.</span>
+                        {% endif %}
                     </div>
 
                     <a href="{% url 'accounts:edit_profile' %}" class="btn w-100 fw-bold py-3 rounded-pill mt-2 shadow" style="background: linear-gradient(45deg, #FF8C00, #d84315); color: white; border: none; letter-spacing: 0.5px;">
@@ -98,45 +117,77 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        const imgElement = document.getElementById('rotatable-profile-pic');
-        const indicatorContainer = document.getElementById('photo-indicators');
-        if (!imgElement) return;
+        // ==========================================
+        // 1. LOGIKA ROTASI FOTO PROFIL (TINDER STYLE)
+        // ==========================================
+        const photoUrls = [];
+        // Masukkan URL foto ke dalam array JS hanya jika fotonya ada di database
+        {% if profile.profile_picture %}photoUrls.push("{{ profile.profile_picture.url }}");{% endif %}
+        {% if profile.profile_picture_2 %}photoUrls.push("{{ profile.profile_picture_2.url }}");{% endif %}
+        {% if profile.profile_picture_3 %}photoUrls.push("{{ profile.profile_picture_3.url }}");{% endif %}
 
-        const availablePics = [
-            "{% if profile.profile_picture %}{{ profile.profile_picture.url }}{% endif %}",
-            "{% if profile.profile_picture_2 %}{{ profile.profile_picture_2.url }}{% endif %}",
-            "{% if profile.profile_picture_3 %}{{ profile.profile_picture_3.url }}{% endif %}"
-        ].filter(url => url.trim() !== "");
+        const imgElement = document.getElementById("rotatable-profile-pic");
+        const indicatorsContainer = document.getElementById("photo-indicators");
+        let currentPhotoIndex = 0;
 
-        let currentIndex = 0;
+        if (photoUrls.length > 0 && imgElement && indicatorsContainer) {
+            // Buat garis indikator putih di atas foto
+            photoUrls.forEach((url, index) => {
+                const indicator = document.createElement("div");
+                indicator.className = "flex-grow-1 rounded-pill";
+                indicator.style.height = "4px";
+                indicator.style.backgroundColor = index === 0 ? "#ffffff" : "rgba(255,255,255,0.4)";
+                indicator.style.transition = "background-color 0.3s";
+                indicatorsContainer.appendChild(indicator);
+            });
 
-        if (availablePics.length > 1) {
-            for(let i = 0; i < availablePics.length; i++) {
-                let bar = document.createElement('div');
-                bar.className = 'flex-grow-1 rounded-pill';
-                bar.style.height = '4px';
-                bar.style.backgroundColor = i === 0 ? '#ffffff' : 'rgba(255,255,255,0.3)';
-                bar.style.transition = 'background-color 0.3s ease';
-                bar.style.boxShadow = '0 1px 2px rgba(0,0,0,0.5)';
-                indicatorContainer.appendChild(bar);
+            // Aktifkan klik untuk bergeser jika foto lebih dari 1
+            if (photoUrls.length > 1) {
+                imgElement.addEventListener("click", function(e) {
+                    const rect = imgElement.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    
+                    // Klik separuh kanan -> Next, Klik separuh kiri -> Prev
+                    if (x > rect.width / 2) {
+                        currentPhotoIndex = (currentPhotoIndex + 1) % photoUrls.length;
+                    } else {
+                        currentPhotoIndex = (currentPhotoIndex - 1 + photoUrls.length) % photoUrls.length;
+                    }
+                    
+                    // Ganti gambar
+                    imgElement.src = photoUrls[currentPhotoIndex];
+                    
+                    // Perbarui warna indikator
+                    Array.from(indicatorsContainer.children).forEach((ind, index) => {
+                        ind.style.backgroundColor = index === currentPhotoIndex ? "#ffffff" : "rgba(255,255,255,0.4)";
+                    });
+                });
             }
+        }
 
-            imgElement.addEventListener('click', function(e) {
-                const rect = imgElement.getBoundingClientRect();
-                const clickX = e.clientX - rect.left;
-                
-                if (clickX > rect.width / 2) {
-                    currentIndex = (currentIndex + 1) % availablePics.length;
+        // ==========================================
+        // 2. LOGIKA REVERSE GEOCODING (LOKASI)
+        // ==========================================
+        const lat = "{{ profile.latitude|stringformat:'.6f'|default_if_none:'' }}";
+        const lon = "{{ profile.longitude|stringformat:'.6f'|default_if_none:'' }}";
+        const locationBadge = document.getElementById("location-badge");
+
+        if (lat && lon && lat !== "None" && locationBadge) {
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`, {
+                headers: { 'Accept-Language': 'id' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.address) {
+                    const city = data.address.city || data.address.town || data.address.village || data.address.county || "Samarinda";
+                    locationBadge.innerHTML = `📍 ${city}`;
                 } else {
-                    currentIndex = (currentIndex - 1 + availablePics.length) % availablePics.length;
+                    locationBadge.innerHTML = `📍 Lokasi Ditemukan`;
                 }
-                
-                imgElement.src = availablePics[currentIndex];
-                
-                const bars = indicatorContainer.children;
-                for(let i = 0; i < bars.length; i++) {
-                    bars[i].style.backgroundColor = i === currentIndex ? '#ffffff' : 'rgba(255,255,255,0.3)';
-                }
+            })
+            .catch(error => {
+                console.error("Gagal reverse geocoding:", error);
+                locationBadge.innerHTML = `📍 Koordinat tersimpan`;
             });
         }
     });

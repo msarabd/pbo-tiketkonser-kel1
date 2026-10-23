@@ -7,6 +7,7 @@ urlpatterns = [
     path('book/<uuid:category_id>/', views.book_ticket, name='book_ticket'),
     path('checkout/<uuid:order_id>/', views.checkout, name='checkout'),
     path('pay/<uuid:order_id>/', views.pay_order, name='pay_order'),
+    path('success/<uuid:order_id>/', views.payment_success, name='payment_success'),
     path('history/', views.ticket_history, name='ticket_history'),
     path('forums/', views.forum_list, name='forum_list'),
     path('forums/<uuid:event_id>/', views.forum_room, name='forum_room'),

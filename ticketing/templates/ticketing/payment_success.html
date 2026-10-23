@@ -1,0 +1,55 @@
+{% extends 'ticketing/base.html' %}
+{% load humanize %}
+
+{% block content %}
+<div class="row justify-content-center mt-4 mb-5">
+    <div class="col-md-6 col-lg-5">
+        <div class="card shadow border-0" style="border-radius: 15px; border-top: 5px solid #28a745 !important;">
+            <div class="card-body p-5 text-center">
+                
+                <div class="mb-4">
+                    <i class="bi bi-check-circle-fill text-success" style="font-size: 5rem;"></i>
+                </div>
+                
+                <h3 class="fw-bold mb-1 text-dark">Pembayaran Berhasil!</h3>
+                <p class="text-secondary mb-4">Tiket Anda telah aman dan diterbitkan.</p>
+                
+                <div class="bg-light p-4 rounded text-start mb-4 border">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-secondary small">ID Pesanan</span>
+                        <span class="fw-bold text-dark small">#{{ pesanan.id|stringformat:"s"|slice:":8"|upper }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-secondary small">Metode Pembayaran</span>
+                        <span class="fw-bold text-dark small">QRIS</span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-secondary small">Total Dibayar</span>
+                        <h4 class="fw-bold text-dark mb-0">Rp {{ pesanan.total_harga|intcomma }}</h4>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-3">
+                    <a href="{% url 'ticket_history' %}" class="btn fw-bold text-white py-3 shadow-sm" style="background-color: #112250; border-radius: 8px;">
+                        <i class="bi bi-ticket-perforated me-2"></i> Lihat Tiket Digital Saya
+                    </a>
+                    
+                    {% with first_item=pesanan.orderitem_set.first %}
+                        {% if first_item %}
+                        <a href="{% url 'accounts:find_friends_swipe' first_item.category.event.id %}" class="btn btn-outline-dark fw-bold py-3 shadow-sm" style="border-radius: 8px;">
+                            <i class="bi bi-people-fill me-2"></i> Cari Teman Konser
+                        </a>
+                        {% else %}
+                        <button disabled class="btn btn-outline-secondary fw-bold py-3 shadow-sm" style="border-radius: 8px;">
+                            Tiket Tidak Valid
+                        </button>
+                        {% endif %}
+                    {% endwith %}
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

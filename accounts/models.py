@@ -13,7 +13,7 @@ class User(AbstractUser):
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     
-    nik = models.CharField(max_length=16, blank=True, null=True, help_text="Nomor Induk Kependudukan 16 digit")
+    nik = models.CharField(max_length=16, unique=True, blank=True, null=True, help_text="Nomor Induk Kependudukan 16 digit")
     nama_ktp = models.CharField(max_length=100, blank=True, null=True)
     
     background_image = models.ImageField(upload_to='profile_bgs/', blank=True, null=True)
@@ -52,6 +52,9 @@ class UserProfile(models.Model):
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES, blank=True, null=True)
     birth_date = models.DateField(blank=True, null=True)
 
+    latitude = models.FloatField(blank=True, null=True)
+    longitude = models.FloatField(blank=True, null=True)
+
     @property
     def age(self):
         if self.birth_date:
@@ -63,8 +66,11 @@ class UserProfile(models.Model):
         return f"Profil dari {self.user.username}"
 
     def save(self, *args, **kwargs):
+        # Logika pergeseran pics = [...] DIHAPUS. Form yang bertanggung jawab atas urutan.
+        
         image_fields = [self.profile_picture, self.profile_picture_2, self.profile_picture_3, self.background_image]
 
+        # VALIDASI KEAMANAN FILE
         for field in image_fields:
             if field and not getattr(field, '_committed', True):
                 try:
@@ -75,8 +81,9 @@ class UserProfile(models.Model):
 
         super().save(*args, **kwargs)
 
+        # KOMPRESI GAMBAR
         for field in image_fields:
-            if field and hasattr(field, 'path'):
+            if field and hasattr(field, 'path') and field.path:
                 try:
                     img = Image.open(field.path)
                     if img.height > 800 or img.width > 800:

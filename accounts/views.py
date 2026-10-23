@@ -1,8 +1,11 @@
-from django.shortcuts import render, redirect
+import math
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.http import JsonResponse
 from .models import UserProfile
-from .forms import UserProfileForm, CustomUserCreationForm
+from .forms import UserProfileForm, CustomUserCreationForm, UserEditForm
+from ticketing.models import Event, OrderItem
 
 def register_view(request):
     if request.method == 'POST':
@@ -25,45 +28,96 @@ def edit_profile_view(request):
     profile, created = UserProfile.objects.get_or_create(user=request.user)
     
     if request.method == 'POST':
-        form = UserProfileForm(request.POST, request.FILES, instance=profile)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Profil berhasil diperbarui!')
+        user_form = UserEditForm(request.POST, instance=request.user)
+        profile_form = UserProfileForm(request.POST, request.FILES, instance=profile)
+        
+        if user_form.is_valid() and profile_form.is_valid():
+            user_form.save()
+            profile_form.save()
+            messages.success(request, 'Profil dan Nomor Kontak berhasil diperbarui!')
             return redirect('accounts:profile')
     else:
-        form = UserProfileForm(instance=profile)
+        user_form = UserEditForm(instance=request.user)
+        profile_form = UserProfileForm(instance=profile)
         
-    return render(request, 'accounts/edit_profile.html', {'form': form})
+    return render(request, 'accounts/edit_profile.html', {
+        'user_form': user_form,
+        'form': profile_form
+    })
+
+def haversine_distance(lat1, lon1, lat2, lon2):
+    if None in (lat1, lon1, lat2, lon2):
+        return None
+        
+    R = 6371.0
+    dlat = math.radians(lat2 - lat1)
+    dlon = math.radians(lon2 - lon1)
+    
+    a = math.sin(dlat / 2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2)**2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    return R * c
 
 @login_required
-def find_friends_view(request):
-    # Mengambil profil pengguna lain (mengecualikan diri sendiri)
-    profiles = UserProfile.objects.exclude(user=request.user).select_related('user')
+def swipe_friends_view(request, event_id):
+    event = get_object_or_404(Event, id=event_id)
+    
+    has_ticket = OrderItem.objects.filter(
+        order__user=request.user,
+        order__status='PAID',
+        category__event=event
+    ).exists()
 
-    # Parameter filter query GET
-    vibe_filter = request.GET.get('concert_vibe', '')
-    energy_filter = request.GET.get('social_energy', '')
-    goal_filter = request.GET.get('matching_goal', '')
-    gender_filter = request.GET.get('gender', '')
+    if not has_ticket:
+        messages.error(request, "Kamu belum memiliki tiket lunas untuk konser ini.")
+        return redirect('event_detail', event_id=event.id)
+        
+    return render(request, 'accounts/swipe_friends.html', {'event': event})
 
-    if vibe_filter:
-        profiles = profiles.filter(concert_vibe=vibe_filter)
-    if energy_filter:
-        profiles = profiles.filter(social_energy=energy_filter)
-    if goal_filter:
-        profiles = profiles.filter(matching_goal=goal_filter)
-    if gender_filter:
-        profiles = profiles.filter(gender=gender_filter)
+@login_required
+def api_get_swipe_data(request, event_id):
+    user_profile = getattr(request.user, 'profile', None)
+    
+    buyers = list(UserProfile.objects.filter(
+        user__order__status='PAID',
+        user__order__orderitem__category__event_id=event_id
+    ).exclude(user=request.user).distinct())
 
-    context = {
-        'profiles': profiles,
-        'vibe_choices': UserProfile.VIBE_CHOICES,
-        'energy_choices': UserProfile.ENERGY_CHOICES,
-        'goal_choices': UserProfile.GOAL_CHOICES,
-        'gender_choices': UserProfile.GENDER_CHOICES,
-        'selected_vibe': vibe_filter,
-        'selected_energy': energy_filter,
-        'selected_goal': goal_filter,
-        'selected_gender': gender_filter,
-    }
-    return render(request, 'accounts/find_friends.html', context)
+    my_lat = user_profile.latitude if user_profile else None
+    my_lon = user_profile.longitude if user_profile else None
+
+    for p in buyers:
+        if my_lat and my_lon and p.latitude and p.longitude:
+            p.calculated_distance = haversine_distance(my_lat, my_lon, p.latitude, p.longitude)
+        else:
+            p.calculated_distance = float('inf')
+
+    buyers.sort(key=lambda x: x.calculated_distance)
+
+    data = []
+    for p in buyers:
+        if p.calculated_distance != float('inf'):
+            dist_str = f"{round(p.calculated_distance, 1)} km dari lokasimu"
+        else:
+            dist_str = "Jarak tidak diketahui"
+
+        images = []
+        if p.profile_picture: images.append(p.profile_picture.url)
+        if p.profile_picture_2: images.append(p.profile_picture_2.url)
+        if p.profile_picture_3: images.append(p.profile_picture_3.url)
+
+        data.append({
+            'id': p.user.id,
+            'username': p.user.username,
+            'age': p.age or '',
+            'nama_ktp': p.nama_ktp or '',
+            'bio': p.bio or 'Belum ada bio.',
+            'gender': p.get_gender_display() or '',
+            'distance': dist_str,
+            'vibe': p.get_concert_vibe_display() or '',
+            'energy': p.get_social_energy_display() or '',
+            'goal': p.get_matching_goal_display() or '',
+            'images': images,
+            'bg_image': p.background_image.url if p.background_image else None
+        })
+
+    return JsonResponse({'profiles': data})

@@ -9,9 +9,8 @@ import re
 
 from .models import Event, Order, ForumMessage, OrderItem
 from .services import book_ticket_securely, process_payment_and_issue_tickets
-from accounts.models import UserProfile  # Tambahan krusial
+from accounts.models import UserProfile
 
-# --- LOGIKA SENSOR ---
 def sensor_pesan(teks):
     if not teks:
         return teks
@@ -49,14 +48,13 @@ def event_detail(request, event_id):
 
 @login_required(login_url='login')
 def book_ticket(request, category_id):
-    # BLOK VALIDASI PROFIL
     profile, created = UserProfile.objects.get_or_create(user=request.user)
     
-    if not profile.nik or not profile.profile_picture:
-        messages.warning(request, "Akses ditolak. Kamu wajib mengisi NIK dan mengunggah Foto Profil Utama sebelum memesan tiket.")
+    # CEK KEBERADAAN NOMOR WA, NIK, DAN FOTO UTAMA
+    if not profile.nik or not profile.profile_picture or not request.user.no_hp:
+        messages.warning(request, "Akses ditolak. Kamu wajib mengisi Nomor WA, NIK, dan mengunggah Foto Profil Utama sebelum memesan tiket.")
         return redirect('accounts:edit_profile')
 
-    # BLOK PEMESANAN
     if request.method == 'POST':
         quantity = request.POST.get('quantity', 1)
         try:
@@ -70,28 +68,59 @@ def book_ticket(request, category_id):
 @login_required(login_url='login')
 def checkout(request, order_id):
     pesanan = get_object_or_404(Order, id=order_id, user=request.user, status='PENDING')
+    
+    if pesanan.is_expired:
+        pesanan.cancel_order()
+        first_item = pesanan.orderitem_set.first()
+        event_id = first_item.category.event.id if first_item else None
+        
+        messages.error(request, "Batas waktu pembayaran (24 Jam) telah habis. Pesanan Anda dibatalkan otomatis.")
+        if event_id:
+            return redirect('event_detail', event_id=event_id)
+        return redirect('event_list')
+
     items = pesanan.orderitem_set.all()
-    return render(request, 'ticketing/checkout.html', {'pesanan': pesanan, 'items': items})
+    batas_waktu_iso = (pesanan.waktu_pesan + timedelta(hours=24)).isoformat()
+    
+    return render(request, 'ticketing/checkout.html', {
+        'pesanan': pesanan, 
+        'items': items,
+        'batas_waktu_iso': batas_waktu_iso
+    })
 
 @login_required(login_url='login')
 def pay_order(request, order_id):
     if request.method == 'POST':
+        pesanan = get_object_or_404(Order, id=order_id, user=request.user, status='PENDING')
+        
+        if pesanan.is_expired:
+            pesanan.cancel_order()
+            messages.error(request, "Pesanan gagal diproses karena batas waktu 24 jam telah terlewati.")
+            return redirect('event_list')
+
         try:
             process_payment_and_issue_tickets(request.user, order_id)
-            return redirect('ticket_history')
+            # UBAH ARAH REDIRECT DI SINI
+            return redirect('payment_success', order_id=order_id)
         except ValidationError as e:
             messages.error(request, e.message)
             return redirect('checkout', order_id=order_id)
     return redirect('event_list')
 
+
+# FUNGSI VIEW BARU
 @login_required(login_url='login')
+def payment_success(request, order_id):
+    # Kunci keamanan: Hanya tampilkan halaman ini jika pesanan benar-benar LUNAS
+    pesanan = get_object_or_404(Order, id=order_id, user=request.user, status='PAID')
+    return render(request, 'ticketing/payment_success.html', {'pesanan': pesanan})
+
+@login_required
 def ticket_history(request):
     pesanan_lunas = Order.objects.filter(
         user=request.user, status='PAID'
     ).prefetch_related('orderitem_set__ticket', 'orderitem_set__category__event').order_by('-waktu_pesan')
     return render(request, 'ticketing/history.html', {'pesanan_lunas': pesanan_lunas})
-
-# FUNGSI REGISTER SUDAH DIHAPUS DARI SINI KARENA BUKAN TEMPATNYA
 
 @login_required
 def forum_list(request):

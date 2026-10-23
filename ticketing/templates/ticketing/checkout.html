@@ -5,21 +5,41 @@
 <div class="row justify-content-center">
     <div class="col-md-6">
         
-        <!-- Tombol Kembali -->
         <a href="javascript:history.back()" class="text-white text-decoration-none mb-3 d-inline-block fw-bold fs-6">&larr; Kembali ke Detail Konser</a>
         
         <div class="card shadow border-0" style="border-radius: 15px; border-top: 5px solid #FFD700 !important;">
             <div class="card-body p-5 text-center">
                 <span class="badge bg-dark mb-3">Pesanan #{{ pesanan.id|stringformat:"s"|slice:":8" }}</span>
                 <h3 class="fw-bold mb-1">Menunggu Pembayaran</h3>
-                <p class="text-secondary">Selesaikan pembayaran untuk mengamankan tiket Anda.</p>
+                <p class="text-secondary mb-2">Selesaikan pembayaran untuk mengamankan tiket Anda.</p>
+                
+                <div class="alert alert-warning py-2 mb-4 d-inline-block border-warning shadow-sm">
+                    <i class="bi bi-clock-history me-1"></i> Sisa Waktu: 
+                    <span id="countdown-timer" class="fw-bold fs-5 text-danger ms-1">Menghitung...</span>
+                </div>
                 
                 <div class="bg-light p-3 rounded text-start mb-4">
                     <p class="mb-1 small">Total Tagihan:</p>
-                    <!-- Format angka rapi dengan intcomma -->
                     <h2 class="fw-bold text-dark mb-0">Rp {{ pesanan.total_harga|intcomma }}</h2>
                 </div>
                 
+                <!-- DATA PEMESAN -->
+                <div class="text-start mb-4 border-bottom pb-3">
+                    <h6 class="fw-bold">Data Pemesan:</h6>
+                    <div class="d-flex justify-content-between small mb-1">
+                        <span class="text-secondary">Nama</span>
+                        <span class="fw-bold text-dark">{{ request.user.profile.nama_ktp|default:"Belum diisi" }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between small mb-1">
+                        <span class="text-secondary">NIK</span>
+                        <span class="fw-bold text-dark">{{ request.user.profile.nik|default:"Belum diisi" }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between small">
+                        <span class="text-secondary">No. HP / WhatsApp</span>
+                        <span class="fw-bold text-dark">{{ request.user.no_hp|default:"Belum diisi" }}</span>
+                    </div>
+                </div>
+
                 <div class="text-start mb-4">
                     <h6 class="fw-bold">Rincian Tiket:</h6>
                     <ul class="list-group list-group-flush">
@@ -28,19 +48,60 @@
                             <span>{{ item.category.nama_kategori }} 
                                 {% if item.seat %}(Kursi: {{ item.seat.kode_kursi }}){% endif %}
                             </span>
-                            <!-- Format angka rapi dengan intcomma -->
                             <strong>Rp {{ item.harga_satuan|intcomma }}</strong>
                         </li>
                         {% endfor %}
                     </ul>
                 </div>
                 
-                <form action="{% url 'pay_order' pesanan.id %}" method="POST">
+                <form action="{% url 'pay_order' pesanan.id %}" method="POST" id="payment-form">
                     {% csrf_token %}
-                    <button type="submit" class="btn w-100 fw-bold text-white py-2" style="background-color: #112250;">Simulasi Bayar Lunas (QRIS)</button>
+                    <button type="submit" id="pay-btn" class="btn w-100 fw-bold text-white py-3 shadow-sm" style="background-color: #112250; border-radius: 8px;">
+                        Bayar Sekarang (QRIS)
+                    </button>
                 </form>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const deadlineString = "{{ batas_waktu_iso }}";
+        const deadline = new Date(deadlineString).getTime();
+        
+        const timerElement = document.getElementById("countdown-timer");
+        const payButton = document.getElementById("pay-btn");
+
+        const interval = setInterval(function() {
+            const now = new Date().getTime();
+            const distance = deadline - now;
+
+            if (distance < 0) {
+                clearInterval(interval);
+                timerElement.innerHTML = "KEDALUWARSA";
+                timerElement.classList.replace("text-danger", "text-muted");
+                
+                payButton.disabled = true;
+                payButton.innerHTML = "Pesanan Dibatalkan";
+                payButton.style.backgroundColor = "#6c757d";
+                
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+                return;
+            }
+
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            const h = hours < 10 ? "0" + hours : hours;
+            const m = minutes < 10 ? "0" + minutes : minutes;
+            const s = seconds < 10 ? "0" + seconds : seconds;
+
+            timerElement.innerHTML = h + ":" + m + ":" + s;
+        }, 1000);
+    });
+</script>
 {% endblock %}

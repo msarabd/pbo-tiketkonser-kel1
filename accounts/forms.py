@@ -17,6 +17,21 @@ class CustomUserCreationForm(UserCreationForm):
             'no_hp': 'Nomor WhatsApp / HP',
         }
 
+class UserEditForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['no_hp']
+        labels = {
+            'no_hp': 'Nomor WhatsApp / HP',
+        }
+        widgets = {
+            'no_hp': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Contoh: 081234567890'})
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['no_hp'].required = True
+
 class UserProfileForm(forms.ModelForm):
     class Meta:
         model = UserProfile
@@ -32,7 +47,9 @@ class UserProfileForm(forms.ModelForm):
             'birth_date', 
             'concert_vibe', 
             'social_energy', 
-            'matching_goal'
+            'matching_goal',
+            'latitude',
+            'longitude'
         ]
         labels = {
             'nik': 'NIK KTP',
@@ -52,19 +69,17 @@ class UserProfileForm(forms.ModelForm):
             'nik': forms.TextInput(attrs={'class': 'form-control', 'maxlength': '16', 'placeholder': 'Masukkan 16 digit NIK'}),
             'nama_ktp': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nama lengkap sesuai KTP'}),
             'bio': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Ceritakan sedikit tentang dirimu.'}),
-            
-            # Format ISO dipaksa di sini agar browser mau menampilkan tanggal dari database
             'birth_date': forms.DateInput(format='%Y-%m-%d', attrs={'class': 'form-control', 'type': 'date'}),
-            
             'concert_vibe': forms.Select(attrs={'class': 'form-select'}),
             'social_energy': forms.Select(attrs={'class': 'form-select'}),
             'matching_goal': forms.Select(attrs={'class': 'form-select'}),
             'gender': forms.Select(attrs={'class': 'form-select'}),
-            
             'background_image': ModernClearableFileInput(attrs={'class': 'form-control'}),
             'profile_picture': ModernClearableFileInput(attrs={'class': 'form-control'}),
             'profile_picture_2': ModernClearableFileInput(attrs={'class': 'form-control'}),
             'profile_picture_3': ModernClearableFileInput(attrs={'class': 'form-control'}),
+            'latitude': forms.HiddenInput(attrs={'id': 'id_latitude'}),
+            'longitude': forms.HiddenInput(attrs={'id': 'id_longitude'}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -83,3 +98,24 @@ class UserProfileForm(forms.ModelForm):
             if field_name in self.fields:
                 existing_choices = [c for c in self.fields[field_name].choices if c[0] != '']
                 self.fields[field_name].choices = [('', '-- Pilih salah satu --')] + existing_choices
+
+    def clean(self):
+        cleaned_data = super().clean()
+        
+        p1 = cleaned_data.get('profile_picture')
+        p2 = cleaned_data.get('profile_picture_2')
+        p3 = cleaned_data.get('profile_picture_3')
+
+        # Hanya ambil yang benar-benar file (mengabaikan None dari form kosong, dan False dari checkbox Hapus)
+        active_pics = []
+        for p in [p1, p2, p3]:
+            if p: 
+                active_pics.append(p)
+
+        # Gunakan False untuk slot yang tidak kebagian file. 
+        # False adalah sinyal mutlak bagi Django untuk MENGHAPUS record file di database.
+        cleaned_data['profile_picture'] = active_pics[0] if len(active_pics) > 0 else False
+        cleaned_data['profile_picture_2'] = active_pics[1] if len(active_pics) > 1 else False
+        cleaned_data['profile_picture_3'] = active_pics[2] if len(active_pics) > 2 else False
+
+        return cleaned_data

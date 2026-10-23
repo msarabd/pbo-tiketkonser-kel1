@@ -126,9 +126,34 @@ class Order(BaseModel):
     status = models.CharField(max_length=20, default="PENDING")
     total_harga = models.IntegerField(default=0)
 
+    # TAMBAHKAN KODE INI DI DALAM CLASS ORDER
+    @property
+    def is_expired(self):
+        # Mengecek apakah waktu sekarang sudah lewat 24 jam dari waktu_pesan
+        batas_waktu = self.waktu_pesan + timedelta(hours=24)
+        return timezone.now() > batas_waktu
+
+    def cancel_order(self):
+        # Jika pesanan belum dibayar, batalkan dan kembalikan kuota
+        if self.status == "PENDING":
+            self.status = "CANCELED"
+            self.save()
+            
+            # Kembalikan kuota tiket secara eksplisit
+            items = self.orderitem_set.all()
+            for item in items:
+                category = item.category
+                category.kuota += 1
+                category.save()
+                
+                # Jika pakai kursi, kembalikan status kursi menjadi TERSEDIA
+                if item.seat:
+                    item.seat.status = "TERSEDIA"
+                    item.seat.save()
+
     def __str__(self):
         return f"Order: {self.id} | Pemesan: {self.user.username}"
-
+    
 
 class OrderItem(BaseModel):
     order = models.ForeignKey(Order, on_delete=models.CASCADE)

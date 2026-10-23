@@ -1,0 +1,273 @@
+{% extends 'ticketing/base.html' %}
+{% block content %}
+
+<!-- WRAPPER BACKGROUND DINAMIS -->
+<div id="main-container" class="container-fluid d-flex align-items-center justify-content-center py-5" style="min-height: 90vh; background-color: #111111; margin-top: -1.5rem; transition: background 0.5s ease; overflow-x: hidden;">
+    
+    <div class="row justify-content-center w-100 position-relative" style="height: 650px;">
+        <div class="col-12 col-md-10 col-lg-8 col-xl-6 position-relative d-flex justify-content-center align-items-center" id="card-stack">
+            
+            <!-- Loading Indicator -->
+            <div id="loading" class="text-white text-center position-absolute">
+                <div class="spinner-border text-warning" role="status"></div>
+                <p class="mt-3 fw-bold">Mencari teman konser...</p>
+            </div>
+            
+            <!-- End of Stack Message (Tersembunyi di awal) -->
+            <div id="end-message" class="text-center text-white d-none position-absolute" style="z-index: 1;">
+                <i class="bi bi-emoji-sunglasses text-warning mb-3" style="font-size: 4rem;"></i>
+                <h3 class="fw-bold mb-3">Sudah Selesai!</h3>
+                <p class="text-secondary mb-4">Kamu telah melihat semua pembeli tiket di konser ini.</p>
+                <div class="d-flex justify-content-center gap-3">
+                    <button onclick="location.reload()" class="btn btn-outline-warning rounded-pill px-4 fw-bold">
+                        <i class="bi bi-arrow-clockwise"></i> Ulangi
+                    </button>
+                    <a href="{% url 'event_detail' event.id %}" class="btn rounded-pill px-4 fw-bold shadow-lg" style="background: linear-gradient(45deg, #FF8C00, #d84315); color: white; border: none;">
+                        Keluar
+                    </a>
+                </div>
+            </div>
+
+            <!-- Tombol Aksi Manual (Mengapit Card dengan max-width yang pas) -->
+            <div id="action-buttons" class="d-none justify-content-between align-items-center position-absolute w-100" style="top: 50%; transform: translateY(-50%); z-index: 15; max-width: 480px; padding: 0 10px; pointer-events: none;">
+                <button id="btn-nope" class="btn btn-outline-danger rounded-circle d-flex align-items-center justify-content-center shadow-lg bg-dark" style="width: 65px; height: 65px; border-width: 3px; pointer-events: auto;">
+                    <i class="bi bi-x-lg fs-2"></i>
+                </button>
+                <button id="btn-like" class="btn btn-outline-success rounded-circle d-flex align-items-center justify-content-center shadow-lg bg-dark" style="width: 65px; height: 65px; border-width: 3px; pointer-events: auto;">
+                    <i class="bi bi-check-lg fs-2"></i>
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<style>
+    .swipe-card {
+        position: absolute;
+        width: 100%;
+        max-width: 380px;
+        border-radius: 20px;
+        overflow: hidden;
+        background-color: #1a1a1d;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        border: 1px solid rgba(255,255,255,0.1);
+        transition: transform 0.3s ease, opacity 0.3s ease;
+        cursor: grab;
+        z-index: 10;
+        user-select: none;
+    }
+    .swipe-card:active { cursor: grabbing; }
+    .badge-custom { background-color: #2b2b2b; color: #e0e0e0; border: 1px solid #444; font-size: 0.85rem; }
+    
+    .stamp {
+        position: absolute;
+        top: 40px;
+        padding: 5px 15px;
+        border: 4px solid;
+        border-radius: 10px;
+        font-size: 2rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        opacity: 0;
+        z-index: 20;
+    }
+    .stamp-like { color: #28a745; border-color: #28a745; left: 20px; transform: rotate(-15deg); }
+    .stamp-nope { color: #dc3545; border-color: #dc3545; right: 20px; transform: rotate(15deg); }
+
+    @media (max-width: 576px) {
+        #action-buttons {
+            top: auto;
+            bottom: -80px;
+            transform: none;
+            max-width: 100% !important;
+            justify-content: center !important;
+            gap: 40px;
+        }
+    }
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const eventId = "{{ event.id }}";
+    const container = document.getElementById('card-stack');
+    const bgContainer = document.getElementById('main-container');
+    const loading = document.getElementById('loading');
+    const endMessage = document.getElementById('end-message');
+    const actionButtons = document.getElementById('action-buttons');
+    const btnNope = document.getElementById('btn-nope');
+    const btnLike = document.getElementById('btn-like');
+    
+    let profiles = [];
+    let isDragging = false;
+    let startX = 0, currentX = 0;
+    let activeCard = null;
+    let likeStamp = null;
+    let nopeStamp = null;
+
+    fetch(`/accounts/api/swipe-data/${eventId}/`)
+        .then(res => res.json())
+        .then(data => {
+            profiles = data.profiles;
+            loading.classList.add('d-none');
+            renderTopCard();
+        })
+        .catch(err => {
+            console.error("Gagal mengambil data:", err);
+            loading.innerHTML = "<p class='text-danger'>Gagal memuat data teman konser.</p>";
+        });
+
+    function renderTopCard() {
+        if (profiles.length === 0) {
+            endMessage.classList.remove('d-none');
+            actionButtons.classList.add('d-none');
+            actionButtons.classList.remove('d-flex');
+            bgContainer.style.background = '#111111';
+            return;
+        }
+
+        actionButtons.classList.remove('d-none');
+        actionButtons.classList.add('d-flex');
+
+        const profile = profiles[0]; 
+        
+        if(profile.bg_image) {
+            bgContainer.style.background = `linear-gradient(rgba(17, 17, 17, 0.75), rgba(17, 17, 17, 0.95)), url('${profile.bg_image}') center/cover no-repeat fixed`;
+        } else {
+            bgContainer.style.background = '#111111';
+        }
+
+        const card = document.createElement('div');
+        card.className = 'swipe-card';
+        card.innerHTML = `
+            <div class="position-relative" style="height: 480px; background-color: #000;">
+                <img src="${profile.images[0] || ''}" class="w-100 h-100 object-fit-cover pointer-events-none">
+                
+                <div class="stamp stamp-like">CONNECT</div>
+                <div class="stamp stamp-nope">LEWATI</div>
+
+                <div class="position-absolute bottom-0 w-100 p-3 pt-5 pointer-events-none" style="background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 60%, transparent 100%);">
+                    <h2 class="fw-bold text-white mb-0" style="text-shadow: 1px 1px 4px rgba(0,0,0,1);">
+                        ${profile.username} <span class="fw-normal fs-4">${profile.age}</span>
+                    </h2>
+                    <div class="text-info small fw-bold mt-1 d-flex align-items-center gap-1">
+                        <i class="bi bi-geo-alt-fill" style="color: #FF8C00;"></i> 
+                        <span class="text-white opacity-75">${profile.distance}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-4 text-light" style="background-color: #1a1a1d;">
+                <h6 class="fw-bold text-uppercase mb-2" style="color: #FF8C00; font-size: 0.75rem; letter-spacing: 1px;">Tentang Dia</h6>
+                <p class="mb-4 text-white opacity-75" style="line-height: 1.6; font-size: 0.95rem;">${profile.bio}</p>
+                <div class="d-flex flex-wrap gap-2">
+                    ${profile.gender ? `<span class="badge rounded-pill badge-custom px-3 py-2 fw-normal">👤 ${profile.gender}</span>` : ''}
+                    ${profile.vibe ? `<span class="badge rounded-pill badge-custom px-3 py-2 fw-normal">🎵 ${profile.vibe}</span>` : ''}
+                    ${profile.energy ? `<span class="badge rounded-pill badge-custom px-3 py-2 fw-normal">⚡ ${profile.energy}</span>` : ''}
+                    ${profile.goal ? `<span class="badge rounded-pill badge-custom px-3 py-2 fw-normal">🎯 ${profile.goal}</span>` : ''}
+                </div>
+            </div>
+        `;
+        
+        container.appendChild(card);
+        activeCard = card;
+        likeStamp = card.querySelector('.stamp-like');
+        nopeStamp = card.querySelector('.stamp-nope');
+        
+        addDragListeners(activeCard);
+    }
+
+    function addDragListeners(card) {
+        card.addEventListener('touchstart', handleDragStart, {passive: true});
+        card.addEventListener('touchmove', handleDragMove, {passive: false});
+        card.addEventListener('touchend', handleDragEnd);
+        
+        card.addEventListener('mousedown', handleDragStart);
+        document.addEventListener('mousemove', handleDragMove);
+        document.addEventListener('mouseup', handleDragEnd);
+    }
+
+    function handleDragStart(e) {
+        if (!activeCard) return;
+        isDragging = true;
+        startX = e.type.includes('mouse') ? e.pageX : e.touches[0].clientX;
+        activeCard.style.transition = 'none'; 
+    }
+
+    function handleDragMove(e) {
+        if (!isDragging || !activeCard) return;
+        e.preventDefault(); 
+        currentX = (e.type.includes('mouse') ? e.pageX : e.touches[0].clientX) - startX;
+        
+        const rotate = currentX * 0.05;
+        activeCard.style.transform = `translateX(${currentX}px) rotate(${rotate}deg)`;
+
+        const opacity = Math.min(Math.abs(currentX) / 100, 1);
+        if (currentX > 0) {
+            likeStamp.style.opacity = opacity;
+            nopeStamp.style.opacity = 0;
+        } else {
+            nopeStamp.style.opacity = opacity;
+            likeStamp.style.opacity = 0;
+        }
+    }
+
+    function handleDragEnd() {
+        if (!isDragging || !activeCard) return;
+        isDragging = false;
+        activeCard.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+
+        const threshold = window.innerWidth * 0.25; 
+
+        if (currentX > threshold) {
+            swipeOut(1);
+        } else if (currentX < -threshold) {
+            swipeOut(-1);
+        } else {
+            activeCard.style.transform = `translateX(0px) rotate(0deg)`;
+            likeStamp.style.opacity = 0;
+            nopeStamp.style.opacity = 0;
+        }
+        currentX = 0;
+    }
+
+    function swipeOut(direction) {
+        if (!activeCard) return;
+        activeCard.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+        activeCard.style.transform = `translateX(${direction * 1000}px) rotate(${direction * 45}deg)`;
+        activeCard.style.opacity = '0';
+        
+        btnNope.style.pointerEvents = 'none';
+        btnLike.style.pointerEvents = 'none';
+
+        if (direction === 1) {
+            console.log(`Friend Request dikirim ke ${profiles[0].username}`);
+        } else {
+            console.log(`Lewati ${profiles[0].username}`);
+        }
+        
+        setTimeout(() => {
+            if (activeCard) activeCard.remove();
+            activeCard = null;
+            profiles.shift(); 
+            btnNope.style.pointerEvents = 'auto';
+            btnLike.style.pointerEvents = 'auto';
+            renderTopCard();  
+        }, 300);
+    }
+
+    btnNope.addEventListener('click', () => {
+        if (activeCard) {
+            nopeStamp.style.opacity = 1;
+            swipeOut(-1);
+        }
+    });
+
+    btnLike.addEventListener('click', () => {
+        if (activeCard) {
+            likeStamp.style.opacity = 1;
+            swipeOut(1);
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -24,7 +24,8 @@
                         </div>
                         <div class="d-flex justify-content-between mb-1">
                             <span class="text-secondary">Pembeli:</span>
-                            <span class="fw-bold text-dark">{{ pesanan.user.username }}</span>
+                            <!-- Mengambil nama KTP, jika kosong (sangat tidak mungkin karena sudah dicegah di view), akan fallback ke username -->
+                            <span class="fw-bold text-dark">{{ pesanan.user.profile.nama_ktp|default:pesanan.user.username }}</span>
                         </div>
                         {% if item.seat %}
                         <div class="d-flex justify-content-between mt-2 pt-2 border-top">
