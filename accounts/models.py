@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from PIL import Image
+from ticketing.models import Event
 
 class User(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -66,11 +67,8 @@ class UserProfile(models.Model):
         return f"Profil dari {self.user.username}"
 
     def save(self, *args, **kwargs):
-        # Logika pergeseran pics = [...] DIHAPUS. Form yang bertanggung jawab atas urutan.
-        
         image_fields = [self.profile_picture, self.profile_picture_2, self.profile_picture_3, self.background_image]
 
-        # VALIDASI KEAMANAN FILE
         for field in image_fields:
             if field and not getattr(field, '_committed', True):
                 try:
@@ -81,7 +79,6 @@ class UserProfile(models.Model):
 
         super().save(*args, **kwargs)
 
-        # KOMPRESI GAMBAR
         for field in image_fields:
             if field and hasattr(field, 'path') and field.path:
                 try:
@@ -91,3 +88,24 @@ class UserProfile(models.Model):
                         img.save(field.path, quality=85, optimize=True)
                 except Exception:
                     pass
+
+class FriendRequest(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    sender = models.ForeignKey(User, related_name='sent_requests', on_delete=models.CASCADE)
+    receiver = models.ForeignKey(User, related_name='received_requests', on_delete=models.CASCADE)
+    event = models.ForeignKey(Event, on_delete=models.CASCADE)
+    
+    STATUS_CHOICES = [
+        ('PENDING', 'Menunggu'),
+        ('ACCEPTED', 'Diterima'),
+        ('REJECTED', 'Ditolak'),
+    ]
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PENDING')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('sender', 'receiver', 'event')
+
+    def __str__(self):
+        return f"{self.sender.username} -> {self.receiver.username} [{self.status}]"

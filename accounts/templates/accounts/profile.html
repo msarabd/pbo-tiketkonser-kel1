@@ -1,39 +1,89 @@
 {% extends 'ticketing/base.html' %}
 {% block content %}
 
-<!-- WRAPPER BACKGROUND DINAMIS -->
-<div class="container-fluid d-flex align-items-center justify-content-center py-5" style="
+<!-- LACI / DRAWER FRIEND REQUEST -->
+<div id="fr-drawer" class="shadow-lg" style="position: fixed; top: -400px; left: 0; width: 340px; height: 450px; background-color: #FF8C00; border-radius: 0 0 20px 20px; z-index: 1050; transition: top 0.4s cubic-bezier(0.4, 0, 0.2, 1); border: 2px solid #FF8C00; border-top: none;">
+    <div class="p-3 text-dark h-100 d-flex flex-column" style="padding-top: 15px;">
+        <h4 class="text-center mb-3 fw-bold" style="border-bottom: 2px solid #111; padding-bottom: 5px; color: #111; font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif;">
+            friend Request
+        </h4>
+        
+        <div id="fr-loading" class="text-center mt-4 d-none">
+            <div class="spinner-border spinner-border-sm text-dark" role="status"></div>
+            <p class="small mt-2 fw-bold" style="color: #111;">Memuat...</p>
+        </div>
+
+        <div id="fr-list" class="flex-grow-1 overflow-auto pe-1" style="scrollbar-width: thin; scrollbar-color: #111 #FF8C00;">
+            <!-- Data API masuk ke sini -->
+        </div>
+    </div>
+    
+    <div id="fr-pull-tab" class="text-center shadow" style="position: absolute; bottom: -35px; left: 30px; width: 100px; background-color: #111; color: #FF8C00; padding: 5px 10px; border-radius: 10px; cursor: pointer; border: 2px solid #FF8C00; font-weight: bold;">
+        <i class="bi bi-chevron-down" id="fr-pull-icon"></i> tarik
+    </div>
+</div>
+
+<!-- MODAL PROFIL TEMAN -->
+<div class="modal fade" id="friendProfileModal" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-transparent border-0">
+            <div class="modal-body p-0 d-flex justify-content-center">
+                <div class="swipe-card w-100 shadow-lg position-relative" style="max-width: 380px; background-color: #1a1a1d; border-radius: 20px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);">
+                    
+                    <button type="button" class="btn btn-dark shadow-sm position-absolute" data-bs-dismiss="modal" onclick="closeManualModal()" style="top: 15px; left: 15px; z-index: 1000; border-radius: 50%; width: 40px; height: 40px; border: 2px solid rgba(255,255,255,0.2);">
+                        <i class="bi bi-arrow-left text-white fw-bold"></i>
+                    </button>
+
+                    <div class="position-relative" style="height: 480px; background-color: #000;">
+                        <img id="fp-image" src="" class="w-100 h-100 object-fit-cover">
+                        <div class="position-absolute bottom-0 w-100 p-3 pt-5" style="background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 60%, transparent 100%);">
+                            <h2 class="fw-bold text-white mb-0" id="fp-name">Nama <span class="fw-normal fs-4" id="fp-age"></span></h2>
+                            <div class="text-info small fw-bold mt-1 d-flex align-items-center gap-1">
+                                <i class="bi bi-calendar-event-fill" style="color: #FF8C00;"></i> 
+                                <span class="text-white opacity-75" id="fp-event">Event Name</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body p-4 text-light">
+                        <h6 class="fw-bold text-uppercase mb-2" style="color: #FF8C00; font-size: 0.75rem;">Tentang Dia</h6>
+                        <p class="mb-4 text-white opacity-75 small" id="fp-bio" style="line-height: 1.6;"></p>
+                        <div class="d-flex flex-wrap gap-2 mb-4" id="fp-tags"></div>
+                        
+                        <div class="d-flex gap-2 mt-4" id="fp-action-container">
+                            <!-- Tombol disuntikkan via JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- WRAPPER BACKGROUND DINAMIS PROFIL UTAMA -->
+<div class="container-fluid d-flex align-items-start justify-content-center py-5 position-relative" style="
     {% if profile.background_image %}
         background: linear-gradient(rgba(17, 17, 17, 0.75), rgba(17, 17, 17, 0.95)), url('{{ profile.background_image.url }}') center/cover no-repeat fixed;
     {% else %}
         background-color: #111111;
     {% endif %}
     min-height: 90vh; 
-    margin-top: -1.5rem;
+    margin-top: 0;
 ">
-    <div class="row justify-content-center w-100">
-        <div class="col-md-8 col-lg-6 col-xl-4">
-            
-            <div class="card shadow-lg border-0 bg-dark" style="border-radius: 20px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1) !important; box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;">
+    <div class="row w-100 position-relative" style="max-width: 1200px;">
+        <div class="col-12 col-lg-8 mx-auto mt-4 d-flex justify-content-center">
+            <div class="card shadow-lg border-0 bg-dark w-100" style="max-width: 420px; border-radius: 20px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1) !important; box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;">
                 
-                <!-- Bagian Foto Besar (Tinder Style) -->
                 <div class="position-relative" style="height: 500px; background-color: #000;">
                     {% if profile.profile_picture %}
-                        <img src="{{ profile.profile_picture.url }}" alt="Profile" 
-                             id="rotatable-profile-pic"
-                             class="w-100 h-100 object-fit-cover"
-                             style="cursor: pointer;">
+                        <img src="{{ profile.profile_picture.url }}" alt="Profile" id="rotatable-profile-pic" class="w-100 h-100 object-fit-cover" style="cursor: pointer;">
                     {% else %}
                         <div class="w-100 h-100 d-flex align-items-center justify-content-center display-1 fw-bold text-secondary" style="background: linear-gradient(135deg, #2b2b2b, #1a1a1d);">
                             {{ profile.user.username|slice:":1"|upper }}
                         </div>
                     {% endif %}
 
-                    <!-- Indikator Banyak Foto -->
-                    <div class="position-absolute top-0 w-100 d-flex gap-1 p-2" id="photo-indicators" style="z-index: 10;">
-                    </div>
+                    <div class="position-absolute top-0 w-100 d-flex gap-1 p-2" id="photo-indicators" style="z-index: 10;"></div>
 
-                    <!-- Gradient Overlay untuk Teks di atas gambar -->
                     <div class="position-absolute bottom-0 w-100 p-3 pt-5" style="background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 60%, transparent 100%); pointer-events: none;">
                         <h2 class="fw-bold text-white mb-0" style="text-shadow: 1px 1px 4px rgba(0,0,0,1);">
                             {{ profile.user.username }}
@@ -51,59 +101,25 @@
                     </div>
                 </div>
 
-                <!-- Bagian Bio & Tags -->
                 <div class="card-body p-4 text-light" style="background-color: #1a1a1d;">
-                    
                     <h6 class="fw-bold text-uppercase mb-2" style="color: #FF8C00; font-size: 0.75rem; letter-spacing: 1px;">Tentang Saya</h6>
                     <p class="mb-4 text-white opacity-75" style="line-height: 1.6; font-size: 0.95rem;">
-                        {% if profile.bio %}
-                            {{ profile.bio }}
-                        {% else %}
-                            <span class="fst-italic">Belum ada bio. Tambahkan cerita konsermu!</span>
-                        {% endif %}
+                        {% if profile.bio %}{{ profile.bio }}{% else %}<span class="fst-italic">Belum ada bio. Tambahkan cerita konsermu!</span>{% endif %}
                     </p>
 
-                    <!-- KATEGORI BARU: IDENTITAS -->
                     {% if profile.gender or profile.latitude %}
                     <h6 class="fw-bold text-uppercase mb-2" style="color: #FF8C00; font-size: 0.75rem; letter-spacing: 1px;">Identitas Dasar</h6>
                     <div class="d-flex flex-wrap gap-2 mb-4">
-                        {% if profile.gender %}
-                        <span class="badge rounded-pill px-3 py-2 fw-normal" style="background-color: #2b2b2b; color: #e0e0e0; border: 1px solid #444; font-size: 0.85rem;">
-                            👤 {% if profile.gender == 'L' %}Laki-laki{% else %}Perempuan{% endif %}
-                        </span>
-                        {% endif %}
-                        
-                        <!-- Tempat penampungan nama kota yang akan diisi oleh JavaScript -->
-                        {% if profile.latitude and profile.longitude %}
-                        <span class="badge rounded-pill px-3 py-2 fw-normal" id="location-badge" style="background-color: #2b2b2b; color: #e0e0e0; border: 1px solid #444; font-size: 0.85rem;">
-                            📍 Memuat lokasi...
-                        </span>
-                        {% endif %}
+                        {% if profile.gender %}<span class="badge rounded-pill px-3 py-2 fw-normal" style="background-color: #2b2b2b; color: #e0e0e0; border: 1px solid #444; font-size: 0.85rem;">👤 {% if profile.gender == 'L' %}Laki-laki{% else %}Perempuan{% endif %}</span>{% endif %}
+                        {% if profile.latitude and profile.longitude %}<span class="badge rounded-pill px-3 py-2 fw-normal" id="location-badge" style="background-color: #2b2b2b; color: #e0e0e0; border: 1px solid #444; font-size: 0.85rem;">📍 Memuat lokasi...</span>{% endif %}
                     </div>
                     {% endif %}
 
-                    <!-- GAYA & MINAT (Tanpa Gender) -->
                     <h6 class="fw-bold text-uppercase mb-2" style="color: #FF8C00; font-size: 0.75rem; letter-spacing: 1px;">Gaya & Minat</h6>
                     <div class="d-flex flex-wrap gap-2 mb-4">
-                        {% if profile.concert_vibe %}
-                            <span class="badge rounded-pill px-3 py-2 fw-normal" style="background-color: #2b2b2b; color: #e0e0e0; border: 1px solid #444; font-size: 0.85rem;">
-                                🎵 {{ profile.get_concert_vibe_display }}
-                            </span>
-                        {% endif %}
-                        {% if profile.social_energy %}
-                            <span class="badge rounded-pill px-3 py-2 fw-normal" style="background-color: #2b2b2b; color: #e0e0e0; border: 1px solid #444; font-size: 0.85rem;">
-                                ⚡ {{ profile.get_social_energy_display }}
-                            </span>
-                        {% endif %}
-                        {% if profile.matching_goal %}
-                            <span class="badge rounded-pill px-3 py-2 fw-normal" style="background-color: #2b2b2b; color: #e0e0e0; border: 1px solid #444; font-size: 0.85rem;">
-                                🎯 {{ profile.get_matching_goal_display }}
-                            </span>
-                        {% endif %}
-                        
-                        {% if not profile.concert_vibe and not profile.social_energy and not profile.matching_goal %}
-                            <span class="text-secondary small fst-italic">Belum ada preferensi yang diisi.</span>
-                        {% endif %}
+                        {% if profile.concert_vibe %}<span class="badge rounded-pill px-3 py-2 fw-normal" style="background-color: #2b2b2b; color: #e0e0e0; border: 1px solid #444; font-size: 0.85rem;">🎵 {{ profile.get_concert_vibe_display }}</span>{% endif %}
+                        {% if profile.social_energy %}<span class="badge rounded-pill px-3 py-2 fw-normal" style="background-color: #2b2b2b; color: #e0e0e0; border: 1px solid #444; font-size: 0.85rem;">⚡ {{ profile.get_social_energy_display }}</span>{% endif %}
+                        {% if profile.matching_goal %}<span class="badge rounded-pill px-3 py-2 fw-normal" style="background-color: #2b2b2b; color: #e0e0e0; border: 1px solid #444; font-size: 0.85rem;">🎯 {{ profile.get_matching_goal_display }}</span>{% endif %}
                     </div>
 
                     <a href="{% url 'accounts:edit_profile' %}" class="btn w-100 fw-bold py-3 rounded-pill mt-2 shadow" style="background: linear-gradient(45deg, #FF8C00, #d84315); color: white; border: none; letter-spacing: 0.5px;">
@@ -116,80 +132,288 @@
 </div>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        // ==========================================
-        // 1. LOGIKA ROTASI FOTO PROFIL (TINDER STYLE)
-        // ==========================================
-        const photoUrls = [];
-        // Masukkan URL foto ke dalam array JS hanya jika fotonya ada di database
-        {% if profile.profile_picture %}photoUrls.push("{{ profile.profile_picture.url }}");{% endif %}
-        {% if profile.profile_picture_2 %}photoUrls.push("{{ profile.profile_picture_2.url }}");{% endif %}
-        {% if profile.profile_picture_3 %}photoUrls.push("{{ profile.profile_picture_3.url }}");{% endif %}
+document.addEventListener("DOMContentLoaded", function() {
+    
+    // --- LOGIKA ROTASI FOTO PROFIL ---
+    const photoUrls = [];
+    {% if profile.profile_picture %}photoUrls.push("{{ profile.profile_picture.url }}");{% endif %}
+    {% if profile.profile_picture_2 %}photoUrls.push("{{ profile.profile_picture_2.url }}");{% endif %}
+    {% if profile.profile_picture_3 %}photoUrls.push("{{ profile.profile_picture_3.url }}");{% endif %}
 
-        const imgElement = document.getElementById("rotatable-profile-pic");
-        const indicatorsContainer = document.getElementById("photo-indicators");
-        let currentPhotoIndex = 0;
+    const imgElement = document.getElementById("rotatable-profile-pic");
+    const indicatorsContainer = document.getElementById("photo-indicators");
+    let currentPhotoIndex = 0;
 
-        if (photoUrls.length > 0 && imgElement && indicatorsContainer) {
-            // Buat garis indikator putih di atas foto
-            photoUrls.forEach((url, index) => {
-                const indicator = document.createElement("div");
-                indicator.className = "flex-grow-1 rounded-pill";
-                indicator.style.height = "4px";
-                indicator.style.backgroundColor = index === 0 ? "#ffffff" : "rgba(255,255,255,0.4)";
-                indicator.style.transition = "background-color 0.3s";
-                indicatorsContainer.appendChild(indicator);
-            });
+    if (photoUrls.length > 0 && imgElement && indicatorsContainer) {
+        photoUrls.forEach((url, index) => {
+            const indicator = document.createElement("div");
+            indicator.className = "flex-grow-1 rounded-pill";
+            indicator.style.height = "4px";
+            indicator.style.backgroundColor = index === 0 ? "#ffffff" : "rgba(255,255,255,0.4)";
+            indicator.style.transition = "background-color 0.3s";
+            indicatorsContainer.appendChild(indicator);
+        });
 
-            // Aktifkan klik untuk bergeser jika foto lebih dari 1
-            if (photoUrls.length > 1) {
-                imgElement.addEventListener("click", function(e) {
-                    const rect = imgElement.getBoundingClientRect();
-                    const x = e.clientX - rect.left;
-                    
-                    // Klik separuh kanan -> Next, Klik separuh kiri -> Prev
-                    if (x > rect.width / 2) {
-                        currentPhotoIndex = (currentPhotoIndex + 1) % photoUrls.length;
-                    } else {
-                        currentPhotoIndex = (currentPhotoIndex - 1 + photoUrls.length) % photoUrls.length;
-                    }
-                    
-                    // Ganti gambar
-                    imgElement.src = photoUrls[currentPhotoIndex];
-                    
-                    // Perbarui warna indikator
-                    Array.from(indicatorsContainer.children).forEach((ind, index) => {
-                        ind.style.backgroundColor = index === currentPhotoIndex ? "#ffffff" : "rgba(255,255,255,0.4)";
-                    });
+        if (photoUrls.length > 1) {
+            imgElement.addEventListener("click", function(e) {
+                const rect = imgElement.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                if (x > rect.width / 2) currentPhotoIndex = (currentPhotoIndex + 1) % photoUrls.length;
+                else currentPhotoIndex = (currentPhotoIndex - 1 + photoUrls.length) % photoUrls.length;
+                
+                imgElement.src = photoUrls[currentPhotoIndex];
+                Array.from(indicatorsContainer.children).forEach((ind, index) => {
+                    ind.style.backgroundColor = index === currentPhotoIndex ? "#ffffff" : "rgba(255,255,255,0.4)";
                 });
+            });
+        }
+    }
+
+    // --- LOGIKA REVERSE GEOCODING ---
+    const lat = "{{ profile.latitude|stringformat:'.6f'|default_if_none:'' }}";
+    const lon = "{{ profile.longitude|stringformat:'.6f'|default_if_none:'' }}";
+    const locationBadge = document.getElementById("location-badge");
+
+    if (lat && lon && lat !== "None" && locationBadge) {
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`, { headers: { 'Accept-Language': 'id' } })
+        .then(response => response.json())
+        .then(data => {
+            if (data.address) {
+                const city = data.address.city || data.address.town || data.address.village || data.address.county || "Samarinda";
+                locationBadge.innerHTML = `📍 ${city}`;
+            } else { locationBadge.innerHTML = `📍 Lokasi Ditemukan`; }
+        })
+        .catch(error => { locationBadge.innerHTML = `📍 Koordinat tersimpan`; });
+    }
+
+    // --- LOGIKA DRAWER FRIEND REQUEST ---
+    let drawerOpen = false;
+    const drawer = document.getElementById('fr-drawer');
+    const icon = document.getElementById('fr-pull-icon');
+    
+    document.body.appendChild(drawer);
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
             }
         }
+        return cookieValue;
+    }
 
-        // ==========================================
-        // 2. LOGIKA REVERSE GEOCODING (LOKASI)
-        // ==========================================
-        const lat = "{{ profile.latitude|stringformat:'.6f'|default_if_none:'' }}";
-        const lon = "{{ profile.longitude|stringformat:'.6f'|default_if_none:'' }}";
-        const locationBadge = document.getElementById("location-badge");
-
-        if (lat && lon && lat !== "None" && locationBadge) {
-            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`, {
-                headers: { 'Accept-Language': 'id' }
-            })
-            .then(response => response.json())
+    function loadFriendRequests() {
+        document.getElementById('fr-loading').classList.remove('d-none');
+        document.getElementById('fr-list').innerHTML = '';
+        
+        fetch('/accounts/api/swipe/list/')
+            .then(res => res.json())
             .then(data => {
-                if (data.address) {
-                    const city = data.address.city || data.address.town || data.address.village || data.address.county || "Samarinda";
-                    locationBadge.innerHTML = `📍 ${city}`;
-                } else {
-                    locationBadge.innerHTML = `📍 Lokasi Ditemukan`;
+                document.getElementById('fr-loading').classList.add('d-none');
+                const listContainer = document.getElementById('fr-list');
+                
+                if (data.requests.length === 0) {
+                    listContainer.innerHTML = '<p class="text-center mt-4 fw-bold" style="color: #111;">Belum ada request.</p>';
+                    return;
                 }
-            })
-            .catch(error => {
-                console.error("Gagal reverse geocoding:", error);
-                locationBadge.innerHTML = `📍 Koordinat tersimpan`;
+                
+                data.requests.forEach(req => {
+                    const item = document.createElement('div');
+                    item.className = 'd-flex justify-content-between align-items-center mb-3';
+                    
+                    const nameContainer = document.createElement('div');
+                    nameContainer.className = 'd-flex align-items-center px-2 py-1 shadow-sm';
+                    nameContainer.style.borderRadius = '20px';
+                    nameContainer.style.border = '2px solid #111';
+                    nameContainer.style.width = '60%'; 
+                    nameContainer.style.justifyContent = 'space-between';
+
+                    const leftWrapper = document.createElement('div');
+                    leftWrapper.className = 'd-flex align-items-center overflow-hidden';
+
+                    const thumbImg = document.createElement('img');
+                    thumbImg.src = req.profile_pic ? req.profile_pic : `https://ui-avatars.com/api/?name=${req.username}&background=random`;
+                    thumbImg.className = 'rounded-circle me-2';
+                    thumbImg.style.width = '24px';
+                    thumbImg.style.height = '24px';
+                    thumbImg.style.objectFit = 'cover';
+                    thumbImg.style.border = '1px solid #111';
+
+                    const nameSpan = document.createElement('span');
+                    nameSpan.className = 'fw-bold text-dark text-truncate';
+                    nameSpan.style.maxWidth = '70px';
+                    nameSpan.innerText = req.username;
+
+                    leftWrapper.appendChild(thumbImg);
+                    leftWrapper.appendChild(nameSpan);
+
+                    const arrowIcon = document.createElement('i');
+                    arrowIcon.className = req.direction === 'sent' ? 'bi bi-arrow-right text-secondary me-2' : 'bi bi-arrow-left text-secondary me-2';
+                    
+                    nameContainer.appendChild(leftWrapper);
+                    nameContainer.appendChild(arrowIcon);
+
+                    if (req.status === 'REJECTED') {
+                        nameContainer.style.backgroundColor = '#e0e0e0'; 
+                        nameContainer.style.cursor = 'not-allowed';
+                        
+                        nameSpan.style.textDecoration = 'line-through';
+                        nameSpan.style.color = '#555';
+                        
+                        const lockIcon = document.createElement('i');
+                        lockIcon.className = 'bi bi-lock-fill ms-1';
+                        lockIcon.style.color = '#555';
+                        lockIcon.style.fontSize = '0.75rem';
+                        nameSpan.appendChild(lockIcon);
+
+                        nameContainer.onclick = function(e) {
+                            e.preventDefault();
+                            console.log("Profil terkunci karena ditolak.");
+                        };
+                    } else {
+                        nameContainer.style.backgroundColor = 'white';
+                        nameContainer.style.cursor = 'pointer';
+                        nameContainer.onclick = function() {
+                            showFriendProfile(req);
+                        };
+                    }
+
+                    const actionContainer = document.createElement('div');
+                    actionContainer.className = 'd-flex justify-content-center align-items-center';
+                    actionContainer.style.width = '35%';
+
+                    if (req.direction === 'sent') {
+                        let statusText = req.status === 'ACCEPTED' ? 'diterima' : (req.status === 'REJECTED' ? 'ditolak' : 'menunggu');
+                        let statusColor = req.status === 'ACCEPTED' ? '#28a745' : (req.status === 'REJECTED' ? '#dc3545' : '#111');
+                        actionContainer.innerHTML = `<span class="fw-bold" style="color: ${statusColor}; font-size: 0.9rem;">${statusText}</span>`;
+                    } else {
+                        if (req.status === 'PENDING') {
+                            actionContainer.innerHTML = `
+                                <button class="btn btn-sm d-flex align-items-center justify-content-center p-0 me-2 shadow-sm" style="width: 30px; height: 30px; border-radius: 5px; background-color: #2b2b2b; border: 1px solid #111;" onclick="respondReq('${req.req_id}', 'reject')">
+                                    <i class="bi bi-x" style="color: #dc3545; font-size: 1.2rem; font-weight: bold;"></i>
+                                </button>
+                                <button class="btn btn-sm d-flex align-items-center justify-content-center p-0 shadow-sm" style="width: 30px; height: 30px; border-radius: 5px; background-color: #2b2b2b; border: 1px solid #111;" onclick="respondReq('${req.req_id}', 'accept')">
+                                    <i class="bi bi-check" style="color: #28a745; font-size: 1.2rem; font-weight: bold;"></i>
+                                </button>
+                            `;
+                        } else {
+                            let statusText = req.status === 'ACCEPTED' ? 'diterima' : 'ditolak';
+                            let statusColor = req.status === 'ACCEPTED' ? '#28a745' : '#dc3545';
+                            actionContainer.innerHTML = `<span class="fw-bold" style="color: ${statusColor}; font-size: 0.9rem;">${statusText}</span>`;
+                        }
+                    }
+                    
+                    item.appendChild(nameContainer);
+                    item.appendChild(actionContainer);
+                    listContainer.appendChild(item);
+                });
             });
+    }
+
+    window.respondReq = function(reqId, action) {
+        fetch(`/accounts/api/swipe/respond/${reqId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ action: action })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                loadFriendRequests();
+            }
+        });
+    }
+
+    window.closeManualModal = function() {
+        document.getElementById('friendProfileModal').classList.remove('show', 'd-block');
+        // Pastikan overlay Bootstrap terhapus jika ada
+        const backdrops = document.querySelectorAll('.modal-backdrop');
+        backdrops.forEach(backdrop => backdrop.remove());
+        document.body.classList.remove('modal-open');
+        document.body.style.paddingRight = '';
+    }
+
+    // MODIFIKASI: Penundaan (Lazy-binding) modal untuk menembus batasan urutan script base.html
+    window.showFriendProfile = function(req) {
+        document.getElementById('fp-image').src = req.profile_pic ? req.profile_pic : `https://ui-avatars.com/api/?name=${req.username}&background=random&size=400`;
+        document.getElementById('fp-name').innerText = req.username;
+        document.getElementById('fp-age').innerText = req.age || '';
+        document.getElementById('fp-event').innerText = req.event_name;
+        document.getElementById('fp-bio').innerText = req.bio || 'Tidak ada bio.';
+        
+        let tagsHtml = '';
+        if(req.gender) tagsHtml += `<span class="badge rounded-pill px-3 py-2 fw-normal" style="background-color: #2b2b2b; color: #e0e0e0; border: 1px solid #444; font-size: 0.85rem;">👤 ${req.gender}</span>`;
+        if(req.vibe) tagsHtml += `<span class="badge rounded-pill px-3 py-2 fw-normal" style="background-color: #2b2b2b; color: #e0e0e0; border: 1px solid #444; font-size: 0.85rem;">🎵 ${req.vibe}</span>`;
+        document.getElementById('fp-tags').innerHTML = tagsHtml;
+        
+        const actionContainer = document.getElementById('fp-action-container');
+        actionContainer.innerHTML = ''; 
+        
+        const backBtn = document.createElement('button');
+        backBtn.className = 'btn btn-outline-secondary w-100 rounded-pill fw-bold';
+        backBtn.setAttribute('data-bs-dismiss', 'modal');
+        backBtn.innerText = 'Kembali ke Daftar';
+        backBtn.onclick = closeManualModal;
+
+        if (req.status === 'ACCEPTED' && req.no_hp) {
+            backBtn.className = 'btn btn-outline-secondary w-50 rounded-pill fw-bold'; 
+            
+            let phone = req.no_hp;
+            if (phone.startsWith('0')) { phone = '62' + phone.slice(1); }
+            
+            const waBtn = document.createElement('a');
+            waBtn.href = `https://wa.me/${phone}`;
+            waBtn.target = '_blank';
+            waBtn.className = 'btn w-50 rounded-pill fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2';
+            waBtn.style.backgroundColor = '#25D366';
+            waBtn.style.color = 'white';
+            waBtn.style.border = 'none';
+            waBtn.innerHTML = '<i class="bi bi-whatsapp"></i> Hubungi';
+            
+            actionContainer.appendChild(backBtn);
+            actionContainer.appendChild(waBtn);
+        } else {
+            actionContainer.appendChild(backBtn);
         }
+        
+        // Panggil modal dengan timeout ringan agar script base.html ter-load penuh
+        setTimeout(() => {
+            try {
+                if (typeof bootstrap !== 'undefined') {
+                    var modalEl = document.getElementById('friendProfileModal');
+                    var myModal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                    myModal.show();
+                } else {
+                    throw new Error("Bootstrap JS not found");
+                }
+            } catch (e) {
+                console.warn("Menggunakan fallback modal manual.");
+                document.getElementById('friendProfileModal').classList.add('show', 'd-block');
+                document.getElementById('friendProfileModal').style.backgroundColor = 'rgba(0,0,0,0.8)';
+            }
+        }, 100);
+    }
+
+    document.getElementById('fr-pull-tab').addEventListener('click', function() {
+        if (!drawerOpen) {
+            drawer.style.top = '60px'; 
+            icon.className = 'bi bi-chevron-up';
+            loadFriendRequests();
+        } else {
+            drawer.style.top = '-400px';
+            icon.className = 'bi bi-chevron-down';
+        }
+        drawerOpen = !drawerOpen;
     });
+});
 </script>
 {% endblock %}
