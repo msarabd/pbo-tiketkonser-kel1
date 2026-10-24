@@ -182,41 +182,44 @@ def api_get_friend_requests(request):
     sent = FriendRequest.objects.filter(sender=request.user).select_related('receiver__profile', 'event')
     received = FriendRequest.objects.filter(receiver=request.user).select_related('sender__profile', 'event')
 
-    data = []
-    for req in sent:
-        p = req.receiver.profile
-        data.append({
-            'req_id': req.id,
-            'direction': 'sent',
-            'status': req.status,
-            'user_id': p.user.id,
-            'username': p.user.username,
-            'event_name': req.event.nama_konser,
-            'profile_pic': p.profile_picture.url if p.profile_picture else None,
-            'no_hp': p.user.no_hp if req.status == 'ACCEPTED' else None,
-            'age': p.age,
-            'bio': p.bio,
-            'gender': p.get_gender_display(),
-            'vibe': p.get_concert_vibe_display(),
-            'bg_image': p.background_image.url if p.background_image else None
-        })
+    my_profile = getattr(request.user, 'profile', None)
+    my_lat = my_profile.latitude if my_profile else None
+    my_lon = my_profile.longitude if my_profile else None
 
-    for req in received:
-        p = req.sender.profile
-        data.append({
-            'req_id': req.id,
-            'direction': 'received',
-            'status': req.status,
-            'user_id': p.user.id,
-            'username': p.user.username,
-            'event_name': req.event.nama_konser,
-            'profile_pic': p.profile_picture.url if p.profile_picture else None,
-            'no_hp': p.user.no_hp if req.status == 'ACCEPTED' else None,
-            'age': p.age,
-            'bio': p.bio,
-            'gender': p.get_gender_display(),
-            'vibe': p.get_concert_vibe_display(),
-            'bg_image': p.background_image.url if p.background_image else None
-        })
+    data = []
+    
+    def process_requests(queryset, direction):
+        for req in queryset:
+            p = req.receiver.profile if direction == 'sent' else req.sender.profile
+            
+            dist_str = "Jarak tidak diketahui"
+            if my_lat is not None and my_lon is not None and p.latitude is not None and p.longitude is not None:
+                try:
+                    dist = haversine_distance(float(my_lat), float(my_lon), float(p.latitude), float(p.longitude))
+                    dist_str = f"{round(dist, 1)} km dari lokasimu"
+                except TypeError:
+                    pass
+
+            data.append({
+                'req_id': req.id,
+                'direction': direction,
+                'status': req.status,
+                'user_id': p.user.id,
+                'username': p.user.username,
+                'event_name': req.event.nama_konser,
+                'profile_pic': p.profile_picture.url if p.profile_picture else None,
+                'no_hp': p.user.no_hp if req.status == 'ACCEPTED' else None,
+                'age': p.age,
+                'bio': p.bio,
+                'gender': p.get_gender_display(),
+                'vibe': p.get_concert_vibe_display(),
+                'energy': p.get_social_energy_display(),
+                'goal': p.get_matching_goal_display(),
+                'distance': dist_str,
+                'bg_image': p.background_image.url if p.background_image else None
+            })
+
+    process_requests(sent, 'sent')
+    process_requests(received, 'received')
 
     return JsonResponse({'requests': data})

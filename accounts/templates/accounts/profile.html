@@ -28,32 +28,47 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content bg-transparent border-0">
             <div class="modal-body p-0 d-flex justify-content-center">
-                <div class="swipe-card w-100 shadow-lg position-relative" style="max-width: 380px; background-color: #1a1a1d; border-radius: 20px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);">
+                
+                <div class="w-100 shadow-lg position-relative d-flex flex-column bg-dark" style="max-width: 380px; max-height: 85vh; border-radius: 20px; overflow-y: auto; overflow-x: hidden; border: 1px solid rgba(255,255,255,0.1);">
                     
-                    <button type="button" class="btn btn-dark shadow-sm position-absolute" data-bs-dismiss="modal" onclick="closeManualModal()" style="top: 15px; left: 15px; z-index: 1000; border-radius: 50%; width: 40px; height: 40px; border: 2px solid rgba(255,255,255,0.2);">
+                    <!-- Tombol Panah Kembali di Atas Card -->
+                    <button type="button" class="btn btn-dark shadow-sm position-absolute" data-bs-dismiss="modal" onclick="closeManualModal()" style="top: 15px; left: 15px; z-index: 1000; border-radius: 50%; width: 40px; height: 40px; border: 2px solid rgba(255,255,255,0.2); background-color: rgba(0,0,0,0.6);">
                         <i class="bi bi-arrow-left text-white fw-bold"></i>
                     </button>
 
-                    <div class="position-relative" style="height: 480px; background-color: #000;">
+                    <div class="position-relative w-100" style="aspect-ratio: 1 / 1.2; background-color: #000; flex-shrink: 0;">
                         <img id="fp-image" src="" class="w-100 h-100 object-fit-cover">
                         <div class="position-absolute bottom-0 w-100 p-3 pt-5" style="background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 60%, transparent 100%);">
-                            <h2 class="fw-bold text-white mb-0" id="fp-name">Nama <span class="fw-normal fs-4" id="fp-age"></span></h2>
+                            
+                            <h2 class="fw-bold text-white mb-0">
+                                <span id="fp-name">Nama</span> <span class="fw-normal fs-4" id="fp-age"></span>
+                            </h2>
+                            
+                            <!-- Jarak Lokasi -->
                             <div class="text-info small fw-bold mt-1 d-flex align-items-center gap-1">
-                                <i class="bi bi-calendar-event-fill" style="color: #FF8C00;"></i> 
-                                <span class="text-white opacity-75" id="fp-event">Event Name</span>
+                                <i class="bi bi-geo-alt-fill" style="color: #FF8C00;"></i> 
+                                <span class="text-white opacity-75" id="fp-distance">Jarak</span>
                             </div>
+
+                            <!-- Keterangan Konser (Event Name) -->
+                            <div class="text-warning small fw-bold mt-1 d-flex align-items-center gap-1">
+                                <i class="bi bi-ticket-perforated-fill" style="color: #FF8C00;"></i> 
+                                <span class="text-white opacity-90" id="fp-event">Konser</span>
+                            </div>
+
                         </div>
                     </div>
-                    <div class="card-body p-4 text-light">
+                    
+                    <div class="p-4 text-light w-100 flex-grow-1" style="background-color: #1a1a1d;">
                         <h6 class="fw-bold text-uppercase mb-2" style="color: #FF8C00; font-size: 0.75rem;">Tentang Dia</h6>
                         <p class="mb-4 text-white opacity-75 small" id="fp-bio" style="line-height: 1.6;"></p>
+                        
                         <div class="d-flex flex-wrap gap-2 mb-4" id="fp-tags"></div>
                         
-                        <div class="d-flex gap-2 mt-4" id="fp-action-container">
-                            <!-- Tombol disuntikkan via JS -->
-                        </div>
+                        <div class="d-flex flex-column gap-2 mt-2 w-100" id="fp-action-container"></div>
                     </div>
                 </div>
+
             </div>
         </div>
     </div>
@@ -238,7 +253,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     leftWrapper.className = 'd-flex align-items-center overflow-hidden';
 
                     const thumbImg = document.createElement('img');
-                    thumbImg.src = req.profile_pic ? req.profile_pic : `https://ui-avatars.com/api/?name=${req.username}&background=random`;
+                    thumbImg.src = req.profile_pic ? req.profile_pic : `https://ui-avatars.com/api/?name=${encodeURIComponent(req.username)}&background=random`;
                     thumbImg.className = 'rounded-circle me-2';
                     thumbImg.style.width = '24px';
                     thumbImg.style.height = '24px';
@@ -262,7 +277,6 @@ document.addEventListener("DOMContentLoaded", function() {
                     if (req.status === 'REJECTED') {
                         nameContainer.style.backgroundColor = '#e0e0e0'; 
                         nameContainer.style.cursor = 'not-allowed';
-                        
                         nameSpan.style.textDecoration = 'line-through';
                         nameSpan.style.color = '#555';
                         
@@ -272,16 +286,52 @@ document.addEventListener("DOMContentLoaded", function() {
                         lockIcon.style.fontSize = '0.75rem';
                         nameSpan.appendChild(lockIcon);
 
-                        nameContainer.onclick = function(e) {
-                            e.preventDefault();
-                            console.log("Profil terkunci karena ditolak.");
-                        };
+                        nameContainer.onclick = function(e) { e.preventDefault(); };
                     } else {
                         nameContainer.style.backgroundColor = 'white';
                         nameContainer.style.cursor = 'pointer';
-                        nameContainer.onclick = function() {
-                            showFriendProfile(req);
-                        };
+                        
+                        nameContainer.setAttribute('data-bs-toggle', 'modal');
+                        nameContainer.setAttribute('data-bs-target', '#friendProfileModal');
+                        
+                        nameContainer.addEventListener('click', function() {
+                            document.getElementById('fp-image').src = req.profile_pic ? req.profile_pic : `https://ui-avatars.com/api/?name=${encodeURIComponent(req.username)}&background=random&size=400`;
+                            document.getElementById('fp-name').innerText = req.username;
+                            document.getElementById('fp-age').innerText = req.age ? ` ${req.age}` : '';
+                            document.getElementById('fp-distance').innerText = req.distance ? req.distance : 'Jarak tidak diketahui';
+                            
+                            // Menyuntikkan Nama Konser ke Elemen #fp-event
+                            document.getElementById('fp-event').innerText = req.event_name ? req.event_name : 'Konser Musik';
+                            
+                            document.getElementById('fp-bio').innerText = req.bio || 'Tidak ada bio.';
+                            
+                            let tagsHtml = '';
+                            if(req.gender) tagsHtml += `<span class="badge rounded-pill px-3 py-2 fw-normal" style="background-color: #2b2b2b; color: #e0e0e0; border: 1px solid #444; font-size: 0.85rem;">👤 ${req.gender}</span>`;
+                            if(req.vibe) tagsHtml += `<span class="badge rounded-pill px-3 py-2 fw-normal" style="background-color: #2b2b2b; color: #e0e0e0; border: 1px solid #444; font-size: 0.85rem;">🎵 ${req.vibe}</span>`;
+                            if(req.energy) tagsHtml += `<span class="badge rounded-pill px-3 py-2 fw-normal" style="background-color: #2b2b2b; color: #e0e0e0; border: 1px solid #444; font-size: 0.85rem;">⚡ ${req.energy}</span>`;
+                            if(req.goal) tagsHtml += `<span class="badge rounded-pill px-3 py-2 fw-normal" style="background-color: #2b2b2b; color: #e0e0e0; border: 1px solid #444; font-size: 0.85rem;">🎯 ${req.goal}</span>`;
+
+                            document.getElementById('fp-tags').innerHTML = tagsHtml;
+                            
+                            const actionContainer = document.getElementById('fp-action-container');
+                            actionContainer.innerHTML = ''; 
+
+                            if (req.status === 'ACCEPTED' && req.no_hp) {
+                                let phone = req.no_hp;
+                                if (phone.startsWith('0')) { phone = '62' + phone.slice(1); }
+                                
+                                const waBtn = document.createElement('a');
+                                waBtn.href = `https://wa.me/${phone}`;
+                                waBtn.target = '_blank';
+                                waBtn.className = 'btn w-100 rounded-pill fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2 py-3';
+                                waBtn.style.backgroundColor = '#25D366';
+                                waBtn.style.color = 'white';
+                                waBtn.style.border = 'none';
+                                waBtn.innerHTML = '<i class="bi bi-whatsapp fs-5"></i> Hubungi via WhatsApp';
+                                
+                                actionContainer.appendChild(waBtn);
+                            }
+                        });
                     }
 
                     const actionContainer = document.createElement('div');
@@ -335,72 +385,10 @@ document.addEventListener("DOMContentLoaded", function() {
 
     window.closeManualModal = function() {
         document.getElementById('friendProfileModal').classList.remove('show', 'd-block');
-        // Pastikan overlay Bootstrap terhapus jika ada
         const backdrops = document.querySelectorAll('.modal-backdrop');
         backdrops.forEach(backdrop => backdrop.remove());
         document.body.classList.remove('modal-open');
         document.body.style.paddingRight = '';
-    }
-
-    // MODIFIKASI: Penundaan (Lazy-binding) modal untuk menembus batasan urutan script base.html
-    window.showFriendProfile = function(req) {
-        document.getElementById('fp-image').src = req.profile_pic ? req.profile_pic : `https://ui-avatars.com/api/?name=${req.username}&background=random&size=400`;
-        document.getElementById('fp-name').innerText = req.username;
-        document.getElementById('fp-age').innerText = req.age || '';
-        document.getElementById('fp-event').innerText = req.event_name;
-        document.getElementById('fp-bio').innerText = req.bio || 'Tidak ada bio.';
-        
-        let tagsHtml = '';
-        if(req.gender) tagsHtml += `<span class="badge rounded-pill px-3 py-2 fw-normal" style="background-color: #2b2b2b; color: #e0e0e0; border: 1px solid #444; font-size: 0.85rem;">👤 ${req.gender}</span>`;
-        if(req.vibe) tagsHtml += `<span class="badge rounded-pill px-3 py-2 fw-normal" style="background-color: #2b2b2b; color: #e0e0e0; border: 1px solid #444; font-size: 0.85rem;">🎵 ${req.vibe}</span>`;
-        document.getElementById('fp-tags').innerHTML = tagsHtml;
-        
-        const actionContainer = document.getElementById('fp-action-container');
-        actionContainer.innerHTML = ''; 
-        
-        const backBtn = document.createElement('button');
-        backBtn.className = 'btn btn-outline-secondary w-100 rounded-pill fw-bold';
-        backBtn.setAttribute('data-bs-dismiss', 'modal');
-        backBtn.innerText = 'Kembali ke Daftar';
-        backBtn.onclick = closeManualModal;
-
-        if (req.status === 'ACCEPTED' && req.no_hp) {
-            backBtn.className = 'btn btn-outline-secondary w-50 rounded-pill fw-bold'; 
-            
-            let phone = req.no_hp;
-            if (phone.startsWith('0')) { phone = '62' + phone.slice(1); }
-            
-            const waBtn = document.createElement('a');
-            waBtn.href = `https://wa.me/${phone}`;
-            waBtn.target = '_blank';
-            waBtn.className = 'btn w-50 rounded-pill fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2';
-            waBtn.style.backgroundColor = '#25D366';
-            waBtn.style.color = 'white';
-            waBtn.style.border = 'none';
-            waBtn.innerHTML = '<i class="bi bi-whatsapp"></i> Hubungi';
-            
-            actionContainer.appendChild(backBtn);
-            actionContainer.appendChild(waBtn);
-        } else {
-            actionContainer.appendChild(backBtn);
-        }
-        
-        // Panggil modal dengan timeout ringan agar script base.html ter-load penuh
-        setTimeout(() => {
-            try {
-                if (typeof bootstrap !== 'undefined') {
-                    var modalEl = document.getElementById('friendProfileModal');
-                    var myModal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-                    myModal.show();
-                } else {
-                    throw new Error("Bootstrap JS not found");
-                }
-            } catch (e) {
-                console.warn("Menggunakan fallback modal manual.");
-                document.getElementById('friendProfileModal').classList.add('show', 'd-block');
-                document.getElementById('friendProfileModal').style.backgroundColor = 'rgba(0,0,0,0.8)';
-            }
-        }, 100);
     }
 
     document.getElementById('fr-pull-tab').addEventListener('click', function() {
