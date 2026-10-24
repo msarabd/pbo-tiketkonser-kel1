@@ -6,7 +6,6 @@ from django.utils import timezone
 from django.db.models import Count, Q
 from datetime import timedelta
 import re
-
 from .models import Event, Order, ForumMessage, OrderItem
 from .services import book_ticket_securely, process_payment_and_issue_tickets
 from accounts.models import UserProfile
@@ -117,10 +116,23 @@ def payment_success(request, order_id):
 
 @login_required
 def ticket_history(request):
+    # 1. Ambil tiket digital yang sudah lunas
     pesanan_lunas = Order.objects.filter(
         user=request.user, status='PAID'
     ).prefetch_related('orderitem_set__ticket', 'orderitem_set__category__event').order_by('-waktu_pesan')
-    return render(request, 'ticketing/history.html', {'pesanan_lunas': pesanan_lunas})
+    
+    # 2. Ambil tagihan yang masih tertahan (PENDING)
+    pesanan_pending = Order.objects.filter(
+        user=request.user, status='PENDING'
+    ).prefetch_related('orderitem_set__category__event').order_by('-waktu_pesan')
+
+    # 3. Filter manual: hanya tampilkan tagihan yang waktunya (15 menit) belum habis
+    tagihan_aktif = [p for p in pesanan_pending if not p.is_expired]
+
+    return render(request, 'ticketing/history.html', {
+        'pesanan_lunas': pesanan_lunas,
+        'tagihan_aktif': tagihan_aktif
+    })
 
 @login_required
 def forum_list(request):
@@ -178,3 +190,24 @@ def delete_forum_message(request, message_id):
     event_id = message.event.id
     message.delete()
     return redirect('forum_room', event_id=event_id)
+
+@login_required
+def choose_friend_concert(request):
+    user_events = Event.objects.filter(
+        ticketcategory__orderitem__order__user=request.user,
+        ticketcategory__orderitem__order__status='PAID'
+    ).distinct()
+    return render(request, 'ticketing/choose_friend_concert.html', {'events': user_events})
+
+@login_required(login_url='login')
+def cancel_order_view(request, order_id):
+    if request.method == 'POST':
+        # Validasi ketat: pastikan ini order miliknya dan masih PENDING
+        pesanan = get_object_or_404(Order, id=order_id, user=request.user, status='PENDING')
+        
+        # Panggil method yang sudah ada di models.py (Otomatis ubah status ke CANCELED & balikin kuota)
+        pesanan.cancel_order()
+        
+        messages.success(request, f"Pesanan #{str(pesanan.id)[:8].upper()} berhasil dibatalkan. Kuota telah dikembalikan ke sistem.")
+        
+    return redirect('ticket_history')

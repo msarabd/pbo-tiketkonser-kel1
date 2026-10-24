@@ -3,8 +3,10 @@ import uuid
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
-from django.db.models.signals import post_delete
+from django.db.models.signals import pre_delete, post_delete
 from django.dispatch import receiver
+from django.db.models import Q
+from django.apps import apps
 
 # ==============================================================================
 # BASE MODEL (STANDARISASI UUID)
@@ -126,34 +128,30 @@ class Order(BaseModel):
     status = models.CharField(max_length=20, default="PENDING")
     total_harga = models.IntegerField(default=0)
 
-    # TAMBAHKAN KODE INI DI DALAM CLASS ORDER
     @property
     def is_expired(self):
-        # Mengecek apakah waktu sekarang sudah lewat 24 jam dari waktu_pesan
-        batas_waktu = self.waktu_pesan + timedelta(hours=24)
+        # Ubah durasi hold tiket menjadi 15 menit
+        batas_waktu = self.waktu_pesan + timedelta(minutes=15)
         return timezone.now() > batas_waktu
-
+    
     def cancel_order(self):
-        # Jika pesanan belum dibayar, batalkan dan kembalikan kuota
         if self.status == "PENDING":
             self.status = "CANCELED"
             self.save()
             
-            # Kembalikan kuota tiket secara eksplisit
             items = self.orderitem_set.all()
             for item in items:
                 category = item.category
                 category.kuota += 1
                 category.save()
                 
-                # Jika pakai kursi, kembalikan status kursi menjadi TERSEDIA
                 if item.seat:
                     item.seat.status = "TERSEDIA"
                     item.seat.save()
 
     def __str__(self):
         return f"Order: {self.id} | Pemesan: {self.user.username}"
-    
+
 
 class OrderItem(BaseModel):
     order = models.ForeignKey(Order, on_delete=models.CASCADE)
@@ -207,14 +205,37 @@ class ForumMessage(BaseModel):
         return f"{self.sender.username} di {self.event.nama_konser}"
 
 # ==============================================================================
-# SIGNALS (SISTEM PENGEMBALIAN KUOTA OTOMATIS)
+# SIGNALS
 # ==============================================================================
+@receiver(pre_delete, sender=OrderItem)
+def bersihkan_data_sosial_saat_item_dihapus(sender, instance, **kwargs):
+    order = instance.order
+    user = order.user
+    
+    if not instance.category or not instance.category.event:
+        return
+        
+    event = instance.category.event
+    FriendRequest = apps.get_model('accounts', 'FriendRequest')
+    
+    # Cek apakah user MASIH memiliki tiket PAID lain di event yang sama
+    # (Kecualikan OrderItem yang sedang dalam proses dihapus ini)
+    masih_punya_tiket_lain = OrderItem.objects.filter(
+        order__user=user,
+        order__status='PAID',
+        category__event=event
+    ).exclude(id=instance.id).exists()
+    
+    # Jika ini tiket aktif terakhir miliknya untuk konser tersebut, musnahkan relasi sosialnya
+    if not masih_punya_tiket_lain:
+        ForumMessage.objects.filter(sender=user, event=event).delete()
+        FriendRequest.objects.filter(event=event).filter(
+            Q(sender=user) | Q(receiver=user)
+        ).delete()
+
+
 @receiver(post_delete, sender=OrderItem)
 def kembalikan_kuota_saat_item_dihapus(sender, instance, **kwargs):
     if instance.category:
         instance.category.kuota += 1
         instance.category.save()
-
-@receiver(post_delete, sender=Order)
-def hapus_semua_item_saat_order_dihapus(sender, instance, **kwargs):
-    pass

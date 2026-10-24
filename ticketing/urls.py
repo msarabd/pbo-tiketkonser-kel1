@@ -7,9 +7,11 @@ urlpatterns = [
     path('book/<uuid:category_id>/', views.book_ticket, name='book_ticket'),
     path('checkout/<uuid:order_id>/', views.checkout, name='checkout'),
     path('pay/<uuid:order_id>/', views.pay_order, name='pay_order'),
+    path('cancel-order/<uuid:order_id>/', views.cancel_order_view, name='cancel_order'),
     path('success/<uuid:order_id>/', views.payment_success, name='payment_success'),
     path('history/', views.ticket_history, name='ticket_history'),
     path('forums/', views.forum_list, name='forum_list'),
     path('forums/<uuid:event_id>/', views.forum_room, name='forum_room'),
     path('forums/message/<uuid:message_id>/delete/', views.delete_forum_message, name='delete_forum_message'),
+    path('cari-teman/', views.choose_friend_concert, name='choose_friend_concert'),
 ]

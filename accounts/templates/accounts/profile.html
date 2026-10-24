@@ -1,24 +1,24 @@
 {% extends 'ticketing/base.html' %}
 {% block content %}
 
-<!-- LACI / DRAWER FRIEND REQUEST -->
-<div id="fr-drawer" class="shadow-lg" style="position: fixed; top: -400px; left: 0; width: 340px; height: 450px; background-color: #FF8C00; border-radius: 0 0 20px 20px; z-index: 1050; transition: top 0.4s cubic-bezier(0.4, 0, 0.2, 1); border: 2px solid #FF8C00; border-top: none;">
-    <div class="p-3 text-dark h-100 d-flex flex-column" style="padding-top: 15px;">
-        <h4 class="text-center mb-3 fw-bold" style="border-bottom: 2px solid #111; padding-bottom: 5px; color: #111; font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif;">
-            friend Request
+<!-- LACI / DRAWER FRIEND REQUEST (Edisi Gelap Elegan) -->
+<div id="fr-drawer" class="shadow-lg" style="position: fixed; top: -400px; left: 0; width: 340px; height: 450px; background-color: #1a1a1d; border-radius: 0 0 20px 20px; z-index: 1050; transition: top 0.4s cubic-bezier(0.4, 0, 0.2, 1); border: 2px solid #FF8C00; border-top: none;">
+    <div class="p-3 h-100 d-flex flex-column" style="padding-top: 15px;">
+        <h4 class="text-center mb-3 fw-bold" style="border-bottom: 2px solid rgba(255, 140, 0, 0.3); padding-bottom: 10px; color: #FF8C00; font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif;">
+            Friend Request
         </h4>
         
         <div id="fr-loading" class="text-center mt-4 d-none">
-            <div class="spinner-border spinner-border-sm text-dark" role="status"></div>
-            <p class="small mt-2 fw-bold" style="color: #111;">Memuat...</p>
+            <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
+            <p class="small mt-2 fw-bold text-white opacity-75">Memuat...</p>
         </div>
 
-        <div id="fr-list" class="flex-grow-1 overflow-auto pe-1" style="scrollbar-width: thin; scrollbar-color: #111 #FF8C00;">
+        <div id="fr-list" class="flex-grow-1 overflow-auto pe-1" style="scrollbar-width: thin; scrollbar-color: #FF8C00 #1a1a1d;">
             <!-- Data API masuk ke sini -->
         </div>
     </div>
     
-    <div id="fr-pull-tab" class="text-center shadow" style="position: absolute; bottom: -35px; left: 30px; width: 100px; background-color: #111; color: #FF8C00; padding: 5px 10px; border-radius: 10px; cursor: pointer; border: 2px solid #FF8C00; font-weight: bold;">
+    <div id="fr-pull-tab" class="text-center shadow" style="position: absolute; bottom: -35px; left: 30px; width: 100px; background-color: #111; color: #FF8C00; padding: 5px 10px; border-radius: 10px; cursor: pointer; border: 2px solid #FF8C00; border-top: none; font-weight: bold;">
         <i class="bi bi-chevron-down" id="fr-pull-icon"></i> tarik
     </div>
 </div>
@@ -338,9 +338,10 @@ document.addEventListener("DOMContentLoaded", function() {
                     actionContainer.className = 'd-flex justify-content-center align-items-center';
                     actionContainer.style.width = '35%';
 
+                    // GANTI MENJADI:
                     if (req.direction === 'sent') {
                         let statusText = req.status === 'ACCEPTED' ? 'diterima' : (req.status === 'REJECTED' ? 'ditolak' : 'menunggu');
-                        let statusColor = req.status === 'ACCEPTED' ? '#28a745' : (req.status === 'REJECTED' ? '#dc3545' : '#111');
+                        let statusColor = req.status === 'ACCEPTED' ? '#28a745' : (req.status === 'REJECTED' ? '#dc3545' : '#ffffff');
                         actionContainer.innerHTML = `<span class="fw-bold" style="color: ${statusColor}; font-size: 0.9rem;">${statusText}</span>`;
                     } else {
                         if (req.status === 'PENDING') {

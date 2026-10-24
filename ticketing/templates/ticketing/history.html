@@ -1,6 +1,44 @@
 {% extends 'ticketing/base.html' %}
 {% block content %}
-<div class="row mb-4">
+
+<!-- SECTION 1: TAGIHAN MENUNGGU PEMBAYARAN -->
+{% if tagihan_aktif %}
+<div class="row mb-3 mt-4">
+    <div class="col">
+        <h4 class="fw-bold text-danger">Tagihan Menunggu Pembayaran</h4>
+        <p class="small text-secondary">Selesaikan pembayaran ini sebelum batas waktu 15 menit habis, atau tiketmu akan hangus dan dikembalikan ke sistem.</p>
+    </div>
+</div>
+<div class="row mb-5">
+    {% for pesanan in tagihan_aktif %}
+    <div class="col-md-6 mb-3">
+        <div class="card bg-white shadow-sm" style="border-radius: 12px; border-left: 5px solid #dc3545;">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="fw-bold text-dark mb-1">Pesanan #{{ pesanan.id|stringformat:"s"|slice:":8"|upper }}</h6>
+                    <p class="small text-secondary mb-1">
+                        {% with first_item=pesanan.orderitem_set.first %}
+                            {{ first_item.category.event.nama_konser }} ({{ pesanan.orderitem_set.count }} Tiket)
+                        {% endwith %}
+                    </p>
+                    <h6 class="fw-bold text-danger mb-0">Rp {{ pesanan.total_harga }}</h6>
+                </div>
+                <div class="d-flex gap-2">
+                    <form action="{% url 'cancel_order' pesanan.id %}" method="POST" onsubmit="return confirm('Yakin ingin membatalkan pesanan ini? Tiket akan dilepas kembali ke sistem.');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-danger fw-bold shadow-sm" style="border-radius: 8px;">Batalkan</button>
+                    </form>
+                    <a href="{% url 'checkout' pesanan.id %}" class="btn btn-danger fw-bold shadow-sm" style="border-radius: 8px;">Lanjut Bayar</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- SECTION 2: TIKET DIGITAL SAYA -->
+<div class="row mb-4 {% if not tagihan_aktif %}mt-4{% endif %}">
     <div class="col">
         <h2 class="fw-bold" style="color: #FF8C00;">Tiket Digital Saya</h2>
     </div>
@@ -8,7 +46,6 @@
 
 <div class="row">
     {% for pesanan in pesanan_lunas %}
-        <!-- Looping di level Tiket (OrderItem), bukan lagi di level Pesanan -->
         {% for item in pesanan.orderitem_set.all %}
         <div class="col-md-4 mb-4">
             <div class="card bg-white shadow-sm h-100" style="border-radius: 15px; border: 2px solid #112250;">
@@ -24,7 +61,6 @@
                         </div>
                         <div class="d-flex justify-content-between mb-1">
                             <span class="text-secondary">Pembeli:</span>
-                            <!-- Mengambil nama KTP, jika kosong (sangat tidak mungkin karena sudah dicegah di view), akan fallback ke username -->
                             <span class="fw-bold text-dark">{{ pesanan.user.profile.nama_ktp|default:pesanan.user.username }}</span>
                         </div>
                         {% if item.seat %}
@@ -35,7 +71,6 @@
                         {% endif %}
                     </div>
 
-                    <!-- Generate QR Code Gambar secara live dari API -->
                     <div class="p-2 rounded d-inline-block border mb-2">
                         <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={{ item.ticket.kode_qr }}" alt="QR Code Tiket">
                     </div>
@@ -48,7 +83,7 @@
     {% empty %}
     <div class="col">
         <div class="alert text-center p-5" style="background-color: #FFF9F0; border: 2px dashed #FFD700;">
-            <h4 class="text-dark">Belum ada tiket</h4>
+            <h4 class="text-dark">Belum ada tiket yang lunas</h4>
         </div>
     </div>
     {% endfor %}

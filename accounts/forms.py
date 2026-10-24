@@ -17,6 +17,41 @@ class CustomUserCreationForm(UserCreationForm):
             'no_hp': 'Nomor WhatsApp / HP',
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # --- 1. Modifikasi Username ---
+        self.fields['username'].help_text = "Maks. 20 karakter. Hanya huruf, angka, dan @/./+/-/_."
+        self.fields['username'].max_length = 20
+        self.fields['username'].widget.attrs['maxlength'] = '20'
+        
+        # --- 2. Modifikasi Sandi (UI & Teks) ---
+        if 'password1' in self.fields:
+            # Mengganti teks ini akan otomatis menghapus daftar peluru panjang bawaan Django
+            self.fields['password1'].help_text = "Wajib 8 hingga 15 karakter."
+            
+            # Kunci input secara statis di HTML agar browser memblokir ketikan berlebih
+            self.fields['password1'].widget.attrs.update({
+                'minlength': '8',
+                'maxlength': '15'
+            })
+            
+        if 'password2' in self.fields:
+            self.fields['password2'].widget.attrs.update({
+                'minlength': '8',
+                'maxlength': '15'
+            })
+
+    # --- 3. Penegakan Validasi Logika Backend ---
+    def clean_password1(self):
+        password = self.cleaned_data.get('password1')
+        if password:
+            if len(password) < 8:
+                raise forms.ValidationError("Sandi terlalu pendek (minimal 8 karakter).")
+            if len(password) > 15:
+                raise forms.ValidationError("Sandi terlalu panjang (maksimal 15 karakter).")
+        return password
+    
 class UserEditForm(forms.ModelForm):
     class Meta:
         model = User
