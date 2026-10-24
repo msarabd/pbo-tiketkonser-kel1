@@ -1,7 +1,6 @@
 {% extends 'ticketing/base.html' %}
 {% block content %}
 
-<!-- LACI / DRAWER FRIEND REQUEST (Edisi Gelap Elegan) -->
 <div id="fr-drawer" class="shadow-lg" style="position: fixed; top: -400px; left: 0; width: 340px; height: 450px; background-color: #1a1a1d; border-radius: 0 0 20px 20px; z-index: 1050; transition: top 0.4s cubic-bezier(0.4, 0, 0.2, 1); border: 2px solid #FF8C00; border-top: none;">
     <div class="p-3 h-100 d-flex flex-column" style="padding-top: 15px;">
         <h4 class="text-center mb-3 fw-bold" style="border-bottom: 2px solid rgba(255, 140, 0, 0.3); padding-bottom: 10px; color: #FF8C00; font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif;">
@@ -23,7 +22,6 @@
     </div>
 </div>
 
-<!-- MODAL PROFIL TEMAN -->
 <div class="modal fade" id="friendProfileModal" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content bg-transparent border-0">
@@ -31,7 +29,6 @@
                 
                 <div class="w-100 shadow-lg position-relative d-flex flex-column bg-dark" style="max-width: 380px; max-height: 85vh; border-radius: 20px; overflow-y: auto; overflow-x: hidden; border: 1px solid rgba(255,255,255,0.1);">
                     
-                    <!-- Tombol Panah Kembali di Atas Card -->
                     <button type="button" class="btn btn-dark shadow-sm position-absolute" data-bs-dismiss="modal" onclick="closeManualModal()" style="top: 15px; left: 15px; z-index: 1000; border-radius: 50%; width: 40px; height: 40px; border: 2px solid rgba(255,255,255,0.2); background-color: rgba(0,0,0,0.6);">
                         <i class="bi bi-arrow-left text-white fw-bold"></i>
                     </button>
@@ -44,13 +41,11 @@
                                 <span id="fp-name">Nama</span> <span class="fw-normal fs-4" id="fp-age"></span>
                             </h2>
                             
-                            <!-- Jarak Lokasi -->
                             <div class="text-info small fw-bold mt-1 d-flex align-items-center gap-1">
                                 <i class="bi bi-geo-alt-fill" style="color: #FF8C00;"></i> 
                                 <span class="text-white opacity-75" id="fp-distance">Jarak</span>
                             </div>
 
-                            <!-- Keterangan Konser (Event Name) -->
                             <div class="text-warning small fw-bold mt-1 d-flex align-items-center gap-1">
                                 <i class="bi bi-ticket-perforated-fill" style="color: #FF8C00;"></i> 
                                 <span class="text-white opacity-90" id="fp-event">Konser</span>
@@ -74,7 +69,6 @@
     </div>
 </div>
 
-<!-- WRAPPER BACKGROUND DINAMIS PROFIL UTAMA -->
 <div class="container-fluid d-flex align-items-start justify-content-center py-5 position-relative" style="
     {% if profile.background_image %}
         background: linear-gradient(rgba(17, 17, 17, 0.75), rgba(17, 17, 17, 0.95)), url('{{ profile.background_image.url }}') center/cover no-repeat fixed;
@@ -148,8 +142,6 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    
-    // --- LOGIKA ROTASI FOTO PROFIL ---
     const photoUrls = [];
     {% if profile.profile_picture %}photoUrls.push("{{ profile.profile_picture.url }}");{% endif %}
     {% if profile.profile_picture_2 %}photoUrls.push("{{ profile.profile_picture_2.url }}");{% endif %}
@@ -184,7 +176,6 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 
-    // --- LOGIKA REVERSE GEOCODING ---
     const lat = "{{ profile.latitude|stringformat:'.6f'|default_if_none:'' }}";
     const lon = "{{ profile.longitude|stringformat:'.6f'|default_if_none:'' }}";
     const locationBadge = document.getElementById("location-badge");
@@ -201,7 +192,6 @@ document.addEventListener("DOMContentLoaded", function() {
         .catch(error => { locationBadge.innerHTML = `📍 Koordinat tersimpan`; });
     }
 
-    // --- LOGIKA DRAWER FRIEND REQUEST ---
     let drawerOpen = false;
     const drawer = document.getElementById('fr-drawer');
     const icon = document.getElementById('fr-pull-icon');
@@ -234,7 +224,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 const listContainer = document.getElementById('fr-list');
                 
                 if (data.requests.length === 0) {
-                    listContainer.innerHTML = '<p class="text-center mt-4 fw-bold" style="color: #111;">Belum ada request.</p>';
+                    listContainer.innerHTML = '<p class="text-center mt-4 fw-bold text-white opacity-75">Belum ada request.</p>';
                     return;
                 }
                 
@@ -245,7 +235,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     const nameContainer = document.createElement('div');
                     nameContainer.className = 'd-flex align-items-center px-2 py-1 shadow-sm';
                     nameContainer.style.borderRadius = '20px';
-                    nameContainer.style.border = '2px solid #111';
+                    nameContainer.style.border = '1px solid rgba(255, 140, 0, 0.3)';
                     nameContainer.style.width = '60%'; 
                     nameContainer.style.justifyContent = 'space-between';
 
@@ -258,10 +248,10 @@ document.addEventListener("DOMContentLoaded", function() {
                     thumbImg.style.width = '24px';
                     thumbImg.style.height = '24px';
                     thumbImg.style.objectFit = 'cover';
-                    thumbImg.style.border = '1px solid #111';
+                    thumbImg.style.border = '1px solid #FF8C00';
 
                     const nameSpan = document.createElement('span');
-                    nameSpan.className = 'fw-bold text-dark text-truncate';
+                    nameSpan.className = 'fw-bold text-white text-truncate';
                     nameSpan.style.maxWidth = '70px';
                     nameSpan.innerText = req.username;
 
@@ -269,26 +259,32 @@ document.addEventListener("DOMContentLoaded", function() {
                     leftWrapper.appendChild(nameSpan);
 
                     const arrowIcon = document.createElement('i');
-                    arrowIcon.className = req.direction === 'sent' ? 'bi bi-arrow-right text-secondary me-2' : 'bi bi-arrow-left text-secondary me-2';
+                    if (req.status === 'MUTUAL') {
+                        arrowIcon.className = 'bi bi-arrow-left-right me-2';
+                        arrowIcon.style.color = '#198754'; 
+                    } else {
+                        arrowIcon.className = req.direction === 'sent' ? 'bi bi-arrow-right me-2' : 'bi bi-arrow-left me-2';
+                        arrowIcon.style.color = '#FF8C00'; 
+                    }
                     
                     nameContainer.appendChild(leftWrapper);
                     nameContainer.appendChild(arrowIcon);
 
                     if (req.status === 'REJECTED') {
-                        nameContainer.style.backgroundColor = '#e0e0e0'; 
+                        nameContainer.style.backgroundColor = '#2b2b2b'; 
                         nameContainer.style.cursor = 'not-allowed';
                         nameSpan.style.textDecoration = 'line-through';
-                        nameSpan.style.color = '#555';
+                        nameSpan.style.color = '#666';
                         
                         const lockIcon = document.createElement('i');
                         lockIcon.className = 'bi bi-lock-fill ms-1';
-                        lockIcon.style.color = '#555';
+                        lockIcon.style.color = '#666';
                         lockIcon.style.fontSize = '0.75rem';
                         nameSpan.appendChild(lockIcon);
 
                         nameContainer.onclick = function(e) { e.preventDefault(); };
                     } else {
-                        nameContainer.style.backgroundColor = 'white';
+                        nameContainer.style.backgroundColor = '#2b2b2b';
                         nameContainer.style.cursor = 'pointer';
                         
                         nameContainer.setAttribute('data-bs-toggle', 'modal');
@@ -300,7 +296,6 @@ document.addEventListener("DOMContentLoaded", function() {
                             document.getElementById('fp-age').innerText = req.age ? ` ${req.age}` : '';
                             document.getElementById('fp-distance').innerText = req.distance ? req.distance : 'Jarak tidak diketahui';
                             
-                            // Menyuntikkan Nama Konser ke Elemen #fp-event
                             document.getElementById('fp-event').innerText = req.event_name ? req.event_name : 'Konser Musik';
                             
                             document.getElementById('fp-bio').innerText = req.bio || 'Tidak ada bio.';
@@ -313,10 +308,10 @@ document.addEventListener("DOMContentLoaded", function() {
 
                             document.getElementById('fp-tags').innerHTML = tagsHtml;
                             
-                            const actionContainer = document.getElementById('fp-action-container');
-                            actionContainer.innerHTML = ''; 
+                            const actionContainerModal = document.getElementById('fp-action-container');
+                            actionContainerModal.innerHTML = ''; 
 
-                            if (req.status === 'ACCEPTED' && req.no_hp) {
+                            if ((req.status === 'ACCEPTED' || req.status === 'MUTUAL') && req.no_hp) {
                                 let phone = req.no_hp;
                                 if (phone.startsWith('0')) { phone = '62' + phone.slice(1); }
                                 
@@ -329,7 +324,7 @@ document.addEventListener("DOMContentLoaded", function() {
                                 waBtn.style.border = 'none';
                                 waBtn.innerHTML = '<i class="bi bi-whatsapp fs-5"></i> Hubungi via WhatsApp';
                                 
-                                actionContainer.appendChild(waBtn);
+                                actionContainerModal.appendChild(waBtn);
                             }
                         });
                     }
@@ -338,24 +333,23 @@ document.addEventListener("DOMContentLoaded", function() {
                     actionContainer.className = 'd-flex justify-content-center align-items-center';
                     actionContainer.style.width = '35%';
 
-                    // GANTI MENJADI:
                     if (req.direction === 'sent') {
-                        let statusText = req.status === 'ACCEPTED' ? 'diterima' : (req.status === 'REJECTED' ? 'ditolak' : 'menunggu');
-                        let statusColor = req.status === 'ACCEPTED' ? '#28a745' : (req.status === 'REJECTED' ? '#dc3545' : '#ffffff');
+                        let statusText = (req.status === 'ACCEPTED' || req.status === 'MUTUAL') ? 'diterima' : (req.status === 'REJECTED' ? 'ditolak' : 'menunggu');
+                        let statusColor = (req.status === 'ACCEPTED' || req.status === 'MUTUAL') ? '#28a745' : (req.status === 'REJECTED' ? '#dc3545' : '#ffffff');
                         actionContainer.innerHTML = `<span class="fw-bold" style="color: ${statusColor}; font-size: 0.9rem;">${statusText}</span>`;
                     } else {
                         if (req.status === 'PENDING') {
                             actionContainer.innerHTML = `
-                                <button class="btn btn-sm d-flex align-items-center justify-content-center p-0 me-2 shadow-sm" style="width: 30px; height: 30px; border-radius: 5px; background-color: #2b2b2b; border: 1px solid #111;" onclick="respondReq('${req.req_id}', 'reject')">
+                                <button class="btn btn-sm d-flex align-items-center justify-content-center p-0 me-2 shadow-sm" style="width: 30px; height: 30px; border-radius: 5px; background-color: #2b2b2b; border: 1px solid #ffffff;" onclick="respondReq('${req.req_id}', 'reject')">
                                     <i class="bi bi-x" style="color: #dc3545; font-size: 1.2rem; font-weight: bold;"></i>
                                 </button>
-                                <button class="btn btn-sm d-flex align-items-center justify-content-center p-0 shadow-sm" style="width: 30px; height: 30px; border-radius: 5px; background-color: #2b2b2b; border: 1px solid #111;" onclick="respondReq('${req.req_id}', 'accept')">
+                                <button class="btn btn-sm d-flex align-items-center justify-content-center p-0 shadow-sm" style="width: 30px; height: 30px; border-radius: 5px; background-color: #2b2b2b; border: 1px solid #ffffff;" onclick="respondReq('${req.req_id}', 'accept')">
                                     <i class="bi bi-check" style="color: #28a745; font-size: 1.2rem; font-weight: bold;"></i>
                                 </button>
                             `;
                         } else {
-                            let statusText = req.status === 'ACCEPTED' ? 'diterima' : 'ditolak';
-                            let statusColor = req.status === 'ACCEPTED' ? '#28a745' : '#dc3545';
+                            let statusText = (req.status === 'ACCEPTED' || req.status === 'MUTUAL') ? 'diterima' : 'ditolak';
+                            let statusColor = (req.status === 'ACCEPTED' || req.status === 'MUTUAL') ? '#28a745' : '#dc3545';
                             actionContainer.innerHTML = `<span class="fw-bold" style="color: ${statusColor}; font-size: 0.9rem;">${statusText}</span>`;
                         }
                     }

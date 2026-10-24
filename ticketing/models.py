@@ -5,7 +5,7 @@ from django.db import models
 from django.utils import timezone
 from django.db.models.signals import pre_delete, post_delete
 from django.dispatch import receiver
-from django.db.models import Q
+from django.db.models import Q, F
 from django.apps import apps
 
 # ==============================================================================
@@ -234,8 +234,10 @@ def bersihkan_data_sosial_saat_item_dihapus(sender, instance, **kwargs):
         ).delete()
 
 
+from django.db.models import F
+
 @receiver(post_delete, sender=OrderItem)
 def kembalikan_kuota_saat_item_dihapus(sender, instance, **kwargs):
-    if instance.category:
-        instance.category.kuota += 1
-        instance.category.save()
+    if instance.category_id:
+        # Eksekusi penambahan langsung di level SQL database (bebas dari tabrakan memori Python)
+        TicketCategory.objects.filter(id=instance.category_id).update(kuota=F('kuota') + 1)

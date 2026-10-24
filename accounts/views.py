@@ -80,18 +80,20 @@ def swipe_friends_view(request, event_id):
 def api_get_swipe_data(request, event_id):
     user_profile = getattr(request.user, 'profile', None)
     
-    interacted_ids = FriendRequest.objects.filter(
-        event_id=event_id
-    ).filter(
-        models.Q(sender=request.user) | models.Q(receiver=request.user)
-    ).values_list('receiver_id', 'sender_id')
+    sent_to = FriendRequest.objects.filter(
+        event_id=event_id, sender=request.user
+    ).values_list('receiver_id', flat=True)
     
-    flat_interacted_ids = set([id for tuple in interacted_ids for id in tuple])
+    responded_to = FriendRequest.objects.filter(
+        event_id=event_id, receiver=request.user
+    ).exclude(status='PENDING').values_list('sender_id', flat=True)
+    
+    excluded_ids = set(sent_to) | set(responded_to)
 
     buyers = list(UserProfile.objects.filter(
         user__order__status='PAID',
         user__order__orderitem__category__event_id=event_id
-    ).exclude(user=request.user).exclude(user__id__in=flat_interacted_ids).distinct())
+    ).exclude(user=request.user).exclude(user__id__in=excluded_ids).distinct())
 
     my_lat = user_profile.latitude if user_profile else None
     my_lon = user_profile.longitude if user_profile else None
@@ -148,13 +150,25 @@ def api_send_friend_request(request, event_id):
         if request.user == receiver_user:
             return JsonResponse({'error': 'Tidak valid'}, status=400)
 
-        obj, created = FriendRequest.objects.get_or_create(
-            sender=request.user,
-            receiver=receiver_user,
-            event=event,
-            defaults={'status': 'PENDING'}
-        )
-        return JsonResponse({'status': 'success', 'created': created})
+        existing_req = FriendRequest.objects.filter(
+            sender=receiver_user, 
+            receiver=request.user, 
+            event=event
+        ).first()
+
+        if existing_req:
+            existing_req.status = 'MUTUAL'
+            existing_req.save()
+            return JsonResponse({'status': 'match', 'message': 'Cocok! (Mutual)'})
+        else:
+            obj, created = FriendRequest.objects.get_or_create(
+                sender=request.user,
+                receiver=receiver_user,
+                event=event,
+                defaults={'status': 'PENDING'}
+            )
+            return JsonResponse({'status': 'success', 'created': created})
+            
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
 
@@ -208,7 +222,7 @@ def api_get_friend_requests(request):
                 'username': p.user.username,
                 'event_name': req.event.nama_konser,
                 'profile_pic': p.profile_picture.url if p.profile_picture else None,
-                'no_hp': p.user.no_hp if req.status == 'ACCEPTED' else None,
+                'no_hp': p.user.no_hp if req.status in ['ACCEPTED', 'MUTUAL'] else None,
                 'age': p.age,
                 'bio': p.bio,
                 'gender': p.get_gender_display(),

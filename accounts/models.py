@@ -99,6 +99,7 @@ class FriendRequest(models.Model):
         ('PENDING', 'Menunggu'),
         ('ACCEPTED', 'Diterima'),
         ('REJECTED', 'Ditolak'),
+        ('MUTUAL', 'Saling Suka'), # Tambahkan baris ini
     ]
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PENDING')
     created_at = models.DateTimeField(auto_now_add=True)
