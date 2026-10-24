@@ -18,7 +18,7 @@ Ikuti urutan eksekusi di bawah ini dengan presisi agar sistem berjalan lancar di
 
 1. **Kloning Repositori**
    Buka terminal atau *Command Prompt* di komputer Anda, lalu jalankan perintah:
-   `git clone `
+   `git clone https://github.com/msarabd/pbo-tiketkonser-kel1.git`
    `cd pbo_tiketkonser_kel1`
 2. **Buat dan Aktifkan Virtual Environment**
    Sangat dilarang menginstal dependensi langsung ke sistem utama Python komputer Anda.
