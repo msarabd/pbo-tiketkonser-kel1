@@ -12,7 +12,6 @@
                     <p class="text-secondary small">Lengkapi filter ini agar lebih mudah mendapat teman konser.</p>
                 </div>
 
-                <!-- KOTAK NOTIFIKASI LOKASI -->
                 <div class="alert alert-warning small d-flex align-items-center mb-4 shadow-sm" role="alert" id="location-warning">
                     <i class="bi bi-geo-alt-fill me-3 fs-3"></i>
                     <div>
@@ -24,7 +23,6 @@
                 <form method="POST" enctype="multipart/form-data" id="profile-edit-form">
                     {% csrf_token %}
                     
-                    <!-- 1. Nama Sesuai KTP -->
                     {% with field=form.nama_ktp %}
                     <div class="mb-3 text-dark text-start">
                         <label class="form-label small fw-bold mb-1">{{ field.label }} <span class="text-danger">*</span></label>
@@ -33,7 +31,6 @@
                     </div>
                     {% endwith %}
 
-                    <!-- 2. NIK -->
                     {% with field=form.nik %}
                     <div class="mb-3 text-dark text-start">
                         <label class="form-label small fw-bold mb-1">{{ field.label }} <span class="text-danger">*</span></label>
@@ -42,7 +39,6 @@
                     </div>
                     {% endwith %}
 
-                    <!-- 3. Nomor WA / HP (Dari tabel User) -->
                     {% with field=user_form.no_hp %}
                     <div class="mb-3 text-dark text-start">
                         <label class="form-label small fw-bold mb-1">{{ field.label }} <span class="text-danger">*</span></label>
@@ -51,7 +47,6 @@
                     </div>
                     {% endwith %}
 
-                    <!-- SISA FIELD PROFIL -->
                     {% for field in form %}
                         {% if field.name != 'nama_ktp' and field.name != 'nik' and field.name != 'latitude' and field.name != 'longitude' %}
                             <div class="mb-3 text-dark text-start">
@@ -72,7 +67,6 @@
                         {% endif %}
                     {% endfor %}
                     
-                    <!-- FIELD TERSEMBUNYI UNTUK LOKASI -->
                     {{ form.latitude }}
                     {{ form.longitude }}
                     
@@ -96,14 +90,11 @@
                     function(position) {
                         latInput.value = position.coords.latitude;
                         lngInput.value = position.coords.longitude;
-                        
-                        // Ubah kotak peringatan menjadi sukses
                         warningBox.classList.remove('alert-warning', 'alert-danger');
                         warningBox.classList.add('alert-success');
                         warningBox.innerHTML = '<i class="bi bi-check-circle-fill me-3 fs-3"></i><div><strong>Lokasi Berhasil Ditangkap!</strong><br>Anda dapat menyimpan profil sekarang.</div>';
                     },
                     function(error) {
-                        // Jika ditolak atau error
                         warningBox.classList.remove('alert-warning');
                         warningBox.classList.add('alert-danger');
                         warningBox.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-3 fs-3"></i><div><strong>Akses Lokasi Ditolak!</strong><br>Buka pengaturan browser Anda, izinkan lokasi untuk situs ini, lalu muat ulang halaman.</div>';
@@ -115,17 +106,56 @@
             }
         }
 
-        // Panggil fungsi penangkap lokasi saat halaman dimuat
         fetchLocation();
 
-        // Mencegat tombol simpan jika lokasi masih kosong
         editForm.addEventListener('submit', function(e) {
             if (!latInput.value || !lngInput.value) {
-                e.preventDefault(); // Hentikan form agar tidak terkirim
+                e.preventDefault();
                 alert("PENYIMPANAN DIBATALKAN: Anda wajib mengizinkan akses lokasi sebelum dapat menyimpan perubahan profil. Periksa pengaturan browser Anda.");
-                fetchLocation(); // Coba tangkap lagi
+                fetchLocation();
             }
         });
+
+        // OCR KTP LOGIC
+        const ktpInput = document.getElementById('id_foto_ktp');
+        const nikInput = document.getElementById('id_nik');
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        if (ktpInput && nikInput) {
+            ktpInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const formData = new FormData();
+                formData.append('image', file);
+
+                const originalPlaceholder = nikInput.placeholder;
+                nikInput.placeholder = "Membaca KTP, mohon tunggu...";
+                
+                fetch("{% url 'accounts:api_ocr_ktp' %}", {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        nikInput.value = data.nik;
+                        alert("Sistem menemukan NIK dari gambar. Pastikan angkanya benar dan tidak ada salah baca!");
+                    } else if (data.status === 'failed') {
+                        alert("Sistem gagal membaca NIK dengan jelas. Silakan ketik angka KTP secara manual.");
+                    }
+                })
+                .catch(error => {
+                    console.error('Error OCR:', error);
+                })
+                .finally(() => {
+                    nikInput.placeholder = originalPlaceholder;
+                });
+            });
+        }
     });
 </script>
 {% endblock %}

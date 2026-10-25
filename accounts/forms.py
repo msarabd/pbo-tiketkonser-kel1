@@ -19,30 +19,17 @@ class CustomUserCreationForm(UserCreationForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        
-        # --- 1. Modifikasi Username ---
         self.fields['username'].help_text = "Maks. 20 karakter. Hanya huruf, angka, dan @/./+/-/_."
         self.fields['username'].max_length = 20
         self.fields['username'].widget.attrs['maxlength'] = '20'
         
-        # --- 2. Modifikasi Sandi (UI & Teks) ---
         if 'password1' in self.fields:
-            # Mengganti teks ini akan otomatis menghapus daftar peluru panjang bawaan Django
             self.fields['password1'].help_text = "Wajib 8 hingga 15 karakter."
-            
-            # Kunci input secara statis di HTML agar browser memblokir ketikan berlebih
-            self.fields['password1'].widget.attrs.update({
-                'minlength': '8',
-                'maxlength': '15'
-            })
+            self.fields['password1'].widget.attrs.update({'minlength': '8', 'maxlength': '15'})
             
         if 'password2' in self.fields:
-            self.fields['password2'].widget.attrs.update({
-                'minlength': '8',
-                'maxlength': '15'
-            })
+            self.fields['password2'].widget.attrs.update({'minlength': '8', 'maxlength': '15'})
 
-    # --- 3. Penegakan Validasi Logika Backend ---
     def clean_password1(self):
         password = self.cleaned_data.get('password1')
         if password:
@@ -73,6 +60,7 @@ class UserProfileForm(forms.ModelForm):
         fields = [
             'nik', 
             'nama_ktp',
+            'foto_ktp',
             'background_image', 
             'profile_picture', 
             'profile_picture_2', 
@@ -89,6 +77,7 @@ class UserProfileForm(forms.ModelForm):
         labels = {
             'nik': 'NIK KTP',
             'nama_ktp': 'Nama Sesuai KTP',
+            'foto_ktp': 'Foto KTP',
             'background_image': 'Foto Background',
             'profile_picture': 'Foto Profil Utama',
             'profile_picture_2': 'Foto Profil 2',
@@ -103,6 +92,7 @@ class UserProfileForm(forms.ModelForm):
         widgets = {
             'nik': forms.TextInput(attrs={'class': 'form-control', 'maxlength': '16', 'placeholder': 'Masukkan 16 digit NIK'}),
             'nama_ktp': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nama lengkap sesuai KTP'}),
+            'foto_ktp': ModernClearableFileInput(attrs={'class': 'form-control', 'id': 'id_foto_ktp'}),
             'bio': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Ceritakan sedikit tentang dirimu.'}),
             'birth_date': forms.DateInput(format='%Y-%m-%d', attrs={'class': 'form-control', 'type': 'date'}),
             'concert_vibe': forms.Select(attrs={'class': 'form-select'}),
@@ -123,6 +113,11 @@ class UserProfileForm(forms.ModelForm):
         self.fields['nik'].required = True
         self.fields['nama_ktp'].required = True
         
+        if not self.instance or not self.instance.foto_ktp:
+            self.fields['foto_ktp'].required = True
+        else:
+            self.fields['foto_ktp'].required = False
+        
         if not self.instance or not self.instance.profile_picture:
             self.fields['profile_picture'].required = True
         else:
@@ -141,14 +136,11 @@ class UserProfileForm(forms.ModelForm):
         p2 = cleaned_data.get('profile_picture_2')
         p3 = cleaned_data.get('profile_picture_3')
 
-        # Hanya ambil yang benar-benar file (mengabaikan None dari form kosong, dan False dari checkbox Hapus)
         active_pics = []
         for p in [p1, p2, p3]:
             if p: 
                 active_pics.append(p)
 
-        # Gunakan False untuk slot yang tidak kebagian file. 
-        # False adalah sinyal mutlak bagi Django untuk MENGHAPUS record file di database.
         cleaned_data['profile_picture'] = active_pics[0] if len(active_pics) > 0 else False
         cleaned_data['profile_picture_2'] = active_pics[1] if len(active_pics) > 1 else False
         cleaned_data['profile_picture_3'] = active_pics[2] if len(active_pics) > 2 else False

@@ -1,5 +1,8 @@
 import math
 import json
+import re
+import pytesseract
+from PIL import Image
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
@@ -9,6 +12,9 @@ from django.db import models
 from .models import UserProfile, FriendRequest, User
 from .forms import UserProfileForm, CustomUserCreationForm, UserEditForm
 from ticketing.models import Event, OrderItem
+
+# Wajib diganti jika lokasi instalasi tesseract.exe berbeda di komputermu!
+pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
 def register_view(request):
     if request.method == 'POST':
@@ -251,3 +257,27 @@ def api_mark_tutorial_seen(request, event_id):
     profile, created = UserProfile.objects.get_or_create(user=request.user)
     profile.tutorial_seen_events.add(event)
     return JsonResponse({'status': 'success'})
+
+@login_required
+@require_POST
+def api_ocr_ktp(request):
+    if 'image' not in request.FILES:
+        return JsonResponse({'error': 'Gambar tidak ditemukan'}, status=400)
+    
+    try:
+        image_file = request.FILES['image']
+        img = Image.open(image_file)
+        
+        # Ekstraksi OCR
+        text = pytesseract.image_to_string(img)
+        
+        # Cari 16 digit NIK berurutan
+        match = re.search(r'\b\d{16}\b', text)
+        
+        if match:
+            return JsonResponse({'status': 'success', 'nik': match.group()})
+        else:
+            return JsonResponse({'status': 'failed'})
+            
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

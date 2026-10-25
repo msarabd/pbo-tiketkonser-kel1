@@ -16,6 +16,7 @@ class UserProfile(models.Model):
     
     nik = models.CharField(max_length=16, unique=True, blank=True, null=True, help_text="Nomor Induk Kependudukan 16 digit")
     nama_ktp = models.CharField(max_length=100, blank=True, null=True)
+    foto_ktp = models.ImageField(upload_to='ktp_pics/', blank=True, null=True)
     
     background_image = models.ImageField(upload_to='profile_bgs/', blank=True, null=True)
     profile_picture = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
@@ -56,7 +57,6 @@ class UserProfile(models.Model):
     latitude = models.FloatField(blank=True, null=True)
     longitude = models.FloatField(blank=True, null=True)
     
-    # Penambahan field untuk melacak status tutorial per event
     tutorial_seen_events = models.ManyToManyField(
         Event, 
         blank=True, 
@@ -75,7 +75,8 @@ class UserProfile(models.Model):
         return f"Profil dari {self.user.username}"
 
     def save(self, *args, **kwargs):
-        image_fields = [self.profile_picture, self.profile_picture_2, self.profile_picture_3, self.background_image]
+        # foto_ktp dimasukkan ke list agar ikut terkompresi
+        image_fields = [self.profile_picture, self.profile_picture_2, self.profile_picture_3, self.background_image, self.foto_ktp]
 
         for field in image_fields:
             if field and not getattr(field, '_committed', True):
