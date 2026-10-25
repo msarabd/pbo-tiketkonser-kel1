@@ -55,6 +55,14 @@ class UserProfile(models.Model):
 
     latitude = models.FloatField(blank=True, null=True)
     longitude = models.FloatField(blank=True, null=True)
+    
+    # Penambahan field untuk melacak status tutorial per event
+    tutorial_seen_events = models.ManyToManyField(
+        Event, 
+        blank=True, 
+        related_name='users_seen_tutorial',
+        help_text="Menyimpan riwayat event mana saja pengguna sudah melihat tutorial swipe."
+    )
 
     @property
     def age(self):
@@ -99,7 +107,7 @@ class FriendRequest(models.Model):
         ('PENDING', 'Menunggu'),
         ('ACCEPTED', 'Diterima'),
         ('REJECTED', 'Ditolak'),
-        ('MUTUAL', 'Saling Suka'), # Tambahkan baris ini
+        ('MUTUAL', 'Saling Suka'), 
     ]
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PENDING')
     created_at = models.DateTimeField(auto_now_add=True)

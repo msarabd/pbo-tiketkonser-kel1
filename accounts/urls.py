@@ -14,4 +14,5 @@ urlpatterns = [
     path('api/swipe/send/<uuid:event_id>/', views.api_send_friend_request, name='api_send_request'),
     path('api/swipe/respond/<uuid:request_id>/', views.api_respond_friend_request, name='api_respond_request'),
     path('api/swipe/list/', views.api_get_friend_requests, name='api_get_requests'),
+    path('api/tutorial-seen/<uuid:event_id>/', views.api_mark_tutorial_seen, name='api_mark_tutorial_seen'),
 ]

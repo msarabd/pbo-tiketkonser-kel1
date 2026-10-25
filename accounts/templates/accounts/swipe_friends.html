@@ -2,92 +2,101 @@
 {% block content %}
 
 <!-- WRAPPER BACKGROUND DINAMIS -->
-<div id="main-container" class="container-fluid d-flex align-items-center justify-content-center py-5" style="min-height: 90vh; background-color: #111111; margin-top: -1.5rem; transition: background 0.5s ease; overflow-x: hidden;">
+<div id="main-container" class="container-fluid d-flex flex-column align-items-center justify-content-center py-4" style="min-height: calc(100vh - 80px); background-color: #111111; transition: background 0.5s ease; overflow-x: hidden;">
     
-    <div class="row justify-content-center w-100 position-relative" style="height: 650px;">
-        <div class="col-12 col-md-10 col-lg-8 col-xl-6 position-relative d-flex justify-content-center align-items-center" id="card-stack">
-            
-            <div id="loading" class="text-white text-center position-absolute">
-                <div class="spinner-border text-warning" role="status"></div>
-                <p class="mt-3 fw-bold">Mencari teman konser...</p>
-            </div>
-            
-            <div id="end-message" class="text-center text-white d-none position-absolute w-100" style="z-index: 1; top: 50%; transform: translateY(-50%);">
-                <i class="bi bi-emoji-sunglasses text-warning mb-3" style="font-size: 5rem;"></i>
-                <h3 class="fw-bold mb-3">Sudah Selesai!</h3>
-                <p class="text-secondary mb-5">Kamu telah melihat semua pembeli tiket di konser ini.</p>
-                <div class="d-flex justify-content-center gap-3">
-                    <button onclick="location.reload()" class="btn btn-outline-warning rounded-pill px-4 py-2 fw-bold shadow-sm">
-                        <i class="bi bi-arrow-clockwise me-1"></i> Ulangi
-                    </button>
-                    <a href="{% url 'accounts:profile' %}" class="btn rounded-pill px-5 py-2 fw-bold shadow-sm" style="background-color: #FF8C00; color: white; border: none;">
-                        Keluar
-                    </a>
-                </div>
-            </div>
-
-            <div id="action-buttons" class="d-none justify-content-between align-items-center position-absolute w-100" style="top: 50%; transform: translateY(-50%); z-index: 15; max-width: 480px; padding: 0 10px; pointer-events: none;">
-                <button id="btn-nope" class="btn btn-outline-danger rounded-circle d-flex align-items-center justify-content-center shadow-lg bg-dark" style="width: 65px; height: 65px; border-width: 3px; pointer-events: auto;">
-                    <i class="bi bi-x-lg fs-2"></i>
-                </button>
-                <button id="btn-like" class="btn btn-outline-success rounded-circle d-flex align-items-center justify-content-center shadow-lg bg-dark" style="width: 65px; height: 65px; border-width: 3px; pointer-events: auto;">
-                    <i class="bi bi-check-lg fs-2"></i>
-                </button>
-            </div>
-
+    <!-- STACK KARTU UTAMA -->
+    <div id="card-stack" class="position-relative d-flex justify-content-center" style="width: 100%; max-width: 380px; height: 60vh; min-height: 480px; max-height: 550px; z-index: 10;">
+        
+        <div id="loading" class="text-white text-center position-absolute" style="top: 40%;">
+            <div class="spinner-border text-warning" role="status"></div>
+            <p class="mt-3 fw-bold">Mencari teman konser...</p>
         </div>
+        
+        <div id="end-message" class="text-center text-white d-none position-absolute w-100" style="top: 30%;">
+            <i class="bi bi-emoji-sunglasses text-warning mb-3" style="font-size: 5rem;"></i>
+            <h3 class="fw-bold mb-3">Sudah Selesai!</h3>
+            <p class="text-secondary mb-4">Kamu telah melihat semua pembeli tiket di konser ini.</p>
+            <div class="d-flex justify-content-center gap-3 flex-wrap">
+                <button onclick="location.reload()" class="btn btn-outline-warning rounded-pill px-4 py-2 fw-bold shadow-sm" style="min-width: 140px;">
+                    <i class="bi bi-arrow-clockwise me-1"></i> Ulangi
+                </button>
+                <a href="{% url 'accounts:profile' %}" class="btn rounded-pill px-4 py-2 fw-bold shadow-lg" style="min-width: 140px; background-color: #FF8C00; color: #111111; border: none;">
+                    Ke Profil
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ACTION BUTTONS -->
+    <div id="action-buttons" class="d-none w-100 justify-content-between align-items-center gap-3 mt-4" style="max-width: 380px; z-index: 15; padding: 0 10px;">
+        
+        <button id="btn-nope" class="btn btn-outline-danger rounded-circle d-flex align-items-center justify-content-center shadow-lg bg-dark" style="width: 60px; height: 60px; border-width: 3px; flex-shrink: 0;">
+            <i class="bi bi-x-lg fs-2"></i>
+        </button>
+        
+        <!-- TOMBOL KELUAR DI TENGAH (WARNA ORANYE TERANG) -->
+        <a id="btn-finish-swipe" href="{% url 'accounts:profile' %}" class="btn rounded-pill px-4 fw-bold shadow-lg d-flex align-items-center justify-content-center" style="background-color: #FF8C00 !important; color: #111111 !important; border: none; height: 50px; flex-grow: 1;">
+            Sudah Selesai
+        </a>
+
+        <button id="btn-like" class="btn btn-outline-success rounded-circle d-flex align-items-center justify-content-center shadow-lg bg-dark" style="width: 60px; height: 60px; border-width: 3px; flex-shrink: 0;">
+            <i class="bi bi-check-lg fs-2"></i>
+        </button>
+
+    </div>
+</div>
+
+<!-- ELEMEN NATIVE BUBBLE TUTORIAL -->
+<div id="step-overlay" class="d-none"></div>
+<div id="step-tooltip" class="d-none">
+    <p id="step-text" class="fw-bold mb-4 fs-6" style="line-height: 1.5;"></p>
+    <div class="d-flex justify-content-between align-items-center mt-2">
+        <span id="step-counter" class="text-secondary small fw-bold"></span>
+        <button id="btn-next-step" class="btn btn-sm fw-bold px-4 rounded-pill" style="background-color: #FF8C00; color: white;">Lanjut</button>
     </div>
 </div>
 
 <style>
+    /* STYLING BUBBLE CHAT & OVERLAY */
+    #step-overlay {
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        background: rgba(0, 0, 0, 0.85); z-index: 9998; backdrop-filter: blur(8px);
+    }
+    #step-tooltip {
+        position: fixed; z-index: 10000; background: #ffffff; color: #111;
+        padding: 20px; border-radius: 16px; width: 300px;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+        transition: left 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+
+    /* KARTU SWIPE MENGGUNAKAN FLEXBOX KOLOM AGAR TIDAK TERPOTONG */
     .swipe-card {
-        position: absolute;
-        width: 100%;
-        max-width: 380px;
-        border-radius: 20px;
-        overflow: hidden;
-        background-color: #1a1a1d;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        border: 1px solid rgba(255,255,255,0.1);
-        transition: transform 0.3s ease, opacity 0.3s ease;
-        cursor: grab;
-        z-index: 10;
-        user-select: none;
+        position: absolute; top: 0; width: 100%; height: 100%; border-radius: 20px;
+        overflow: hidden; background-color: #1a1a1d;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1);
+        transition: transform 0.3s ease, opacity 0.3s ease; cursor: grab; z-index: 10; user-select: none;
+        display: flex; flex-direction: column;
     }
     .swipe-card:active { cursor: grabbing; }
     .badge-custom { background-color: #2b2b2b; color: #e0e0e0; border: 1px solid #444; font-size: 0.85rem; }
     
     .stamp {
-        position: absolute;
-        top: 40px;
-        padding: 5px 15px;
-        border: 4px solid;
-        border-radius: 10px;
-        font-size: 2rem;
-        font-weight: bold;
-        text-transform: uppercase;
-        opacity: 0;
-        z-index: 20;
-        transition: opacity 0.2s ease;
+        position: absolute; top: 40px; padding: 5px 15px; border: 4px solid; border-radius: 10px;
+        font-size: 2rem; font-weight: bold; text-transform: uppercase; opacity: 0;
+        z-index: 20; transition: opacity 0.2s ease;
     }
     .stamp-like { color: #28a745; border-color: #28a745; left: 20px; transform: rotate(-15deg); }
     .stamp-nope { color: #dc3545; border-color: #dc3545; right: 20px; transform: rotate(15deg); }
 
-    @media (max-width: 576px) {
-        #action-buttons {
-            top: auto;
-            bottom: -80px;
-            transform: none;
-            max-width: 100% !important;
-            justify-content: center !important;
-            gap: 40px;
-        }
-    }
+    /* Memastikan kloningan tutorial meniru bentuk aslinya */
+    .tut-clone { border-radius: inherit !important; }
 </style>
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     const eventId = "{{ event.id }}";
+    const showTutorial = {{ show_tutorial|yesno:"true,false" }};
+    
     const container = document.getElementById('card-stack');
     const bgContainer = document.getElementById('main-container');
     const loading = document.getElementById('loading');
@@ -102,6 +111,7 @@ document.addEventListener("DOMContentLoaded", function() {
     let activeCard = null;
     let likeStamp = null;
     let nopeStamp = null;
+    let tutorialHasRun = false;
 
     function getCookie(name) {
         let cookieValue = null;
@@ -143,6 +153,24 @@ document.addEventListener("DOMContentLoaded", function() {
         actionButtons.classList.add('d-flex');
 
         const profile = profiles[0]; 
+        const images = profile.images && profile.images.length > 0 ? profile.images : [''];
+        let currentImgIndex = 0;
+
+        let indicatorsHtml = '';
+        let tapZonesHtml = '';
+
+        if (images.length > 1) {
+            indicatorsHtml = '<div class="position-absolute top-0 w-100 d-flex gap-1 p-2" style="z-index: 25;">';
+            images.forEach((_, i) => {
+                indicatorsHtml += `<div class="flex-grow-1 rounded-pill bg-white indicator-bar" style="height: 4px; opacity: ${i === 0 ? '1' : '0.4'}; transition: opacity 0.2s;"></div>`;
+            });
+            indicatorsHtml += '</div>';
+
+            tapZonesHtml = `
+                <div class="position-absolute h-100 tap-left" style="width: 50%; left: 0; top: 0; z-index: 21; cursor: pointer;"></div>
+                <div class="position-absolute h-100 tap-right" style="width: 50%; right: 0; top: 0; z-index: 21; cursor: pointer;"></div>
+            `;
+        }
         
         if(profile.bg_image) {
             bgContainer.style.background = `linear-gradient(rgba(17, 17, 17, 0.75), rgba(17, 17, 17, 0.95)), url('${profile.bg_image}') center/cover no-repeat fixed`;
@@ -153,13 +181,16 @@ document.addEventListener("DOMContentLoaded", function() {
         const card = document.createElement('div');
         card.className = 'swipe-card';
         card.innerHTML = `
-            <div class="position-relative" style="height: 480px; background-color: #000;">
-                <img src="${profile.images[0] || ''}" class="w-100 h-100 object-fit-cover pointer-events-none">
+            <div class="position-relative w-100" style="flex: 1 1 auto; min-height: 0; background-color: #000;">
+                ${indicatorsHtml}
+                <img id="card-img" src="${images[0]}" class="w-100 h-100 object-fit-cover pointer-events-none">
                 
+                ${tapZonesHtml}
+
                 <div class="stamp stamp-like">CONNECT</div>
                 <div class="stamp stamp-nope">LEWATI</div>
 
-                <div class="position-absolute bottom-0 w-100 p-3 pt-5 pointer-events-none" style="background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 60%, transparent 100%);">
+                <div class="position-absolute bottom-0 w-100 p-3 pt-5 pointer-events-none" style="background: linear-gradient(to top, rgba(26,26,29,1) 0%, rgba(26,26,29,0.4) 60%, transparent 100%); z-index: 22;">
                     <h2 class="fw-bold text-white mb-0" style="text-shadow: 1px 1px 4px rgba(0,0,0,1);">
                         ${profile.username} <span class="fw-normal fs-4">${profile.age}</span>
                     </h2>
@@ -169,11 +200,11 @@ document.addEventListener("DOMContentLoaded", function() {
                     </div>
                 </div>
             </div>
-            <div class="card-body p-4 text-light" style="background-color: #1a1a1d;">
+            <div class="p-4 text-light w-100" style="flex: 0 0 auto; background-color: #1a1a1d; overflow-y: auto;">
                 <h6 class="fw-bold text-uppercase mb-2" style="color: #FF8C00; font-size: 0.75rem; letter-spacing: 1px;">Tentang Dia</h6>
-                <p class="mb-4 text-white opacity-75" style="line-height: 1.6; font-size: 0.95rem;">${profile.bio}</p>
+                <p class="mb-3 text-white opacity-75" style="line-height: 1.4; font-size: 0.9rem;">${profile.bio}</p>
                 <div class="d-flex flex-wrap gap-2">
-                    ${profile.gender ? `<span class="badge rounded-pill badge-custom px-3 py-2 fw-normal">👤 ${profile.gender}</span>` : ''}
+                    ${profile.gender ? `<span class="badge rounded-pill badge-custom px-3 py-2 fw-normal">🎟️ ${profile.gender}</span>` : ''}
                     ${profile.vibe ? `<span class="badge rounded-pill badge-custom px-3 py-2 fw-normal">🎵 ${profile.vibe}</span>` : ''}
                     ${profile.energy ? `<span class="badge rounded-pill badge-custom px-3 py-2 fw-normal">⚡ ${profile.energy}</span>` : ''}
                     ${profile.goal ? `<span class="badge rounded-pill badge-custom px-3 py-2 fw-normal">🎯 ${profile.goal}</span>` : ''}
@@ -185,8 +216,139 @@ document.addEventListener("DOMContentLoaded", function() {
         activeCard = card;
         likeStamp = card.querySelector('.stamp-like');
         nopeStamp = card.querySelector('.stamp-nope');
+
+        if (images.length > 1) {
+            const imgEl = card.querySelector('#card-img');
+            const bars = card.querySelectorAll('.indicator-bar');
+            
+            card.querySelector('.tap-left').addEventListener('click', (e) => {
+                if (Math.abs(currentX) > 5) return; // Batalkan jika sedang swipe
+                // Jika sedang di foto pertama (0), lompat ke foto terakhir. Jika tidak, mundur 1.
+                currentImgIndex = (currentImgIndex === 0) ? images.length - 1 : currentImgIndex - 1;
+                imgEl.src = images[currentImgIndex];
+                bars.forEach((bar, i) => bar.style.opacity = i === currentImgIndex ? '1' : '0.4');
+            });
+            
+            card.querySelector('.tap-right').addEventListener('click', (e) => {
+                if (Math.abs(currentX) > 5) return; // Batalkan jika sedang swipe
+                // Jika sedang di foto terakhir, kembali ke foto pertama (0). Jika tidak, maju 1.
+                currentImgIndex = (currentImgIndex === images.length - 1) ? 0 : currentImgIndex + 1;
+                imgEl.src = images[currentImgIndex];
+                bars.forEach((bar, i) => bar.style.opacity = i === currentImgIndex ? '1' : '0.4');
+            });
+        }
         
         addDragListeners(activeCard);
+
+        if (showTutorial && !tutorialHasRun && profiles.length > 0) {
+            tutorialHasRun = true; 
+            startNativeTutorial();
+        }
+    }
+
+    function startNativeTutorial() {
+        const overlay = document.getElementById('step-overlay');
+        const tooltip = document.getElementById('step-tooltip');
+        const textElem = document.getElementById('step-text');
+        const counterElem = document.getElementById('step-counter');
+        const nextBtn = document.getElementById('btn-next-step');
+        
+        tooltip.style.zIndex = '10000';
+        
+        let currentStep = 0;
+        const steps = [
+            { target: null, text: "👋 Selamat datang! Mari pelajari cara mencari teman konser di KonserKU.", placement: "center" },
+            { target: ".swipe-card", text: "Geser kartu ini ke Kanan untuk Connect, atau ke Kiri untuk Lewati.", placement: "bottom" },
+            { target: "#btn-nope", text: "Atau tekan tombol ❌ ini jika kamu merasa kurang cocok dengannya.", placement: "top" },
+            { target: "#btn-like", text: "Tekan tombol ✔️ ini jika kamu ingin terhubung dan mengajaknya berteman.", placement: "top" },
+            { target: "#btn-finish-swipe", text: "Tekan tombol ini kapan saja jika kamu ingin berhenti mencari dan kembali ke profil.", placement: "top" }
+        ];
+
+        overlay.classList.remove('d-none');
+        tooltip.classList.remove('d-none');
+
+        function renderStep() {
+            document.querySelectorAll('.tut-clone').forEach(el => el.remove());
+
+            if (currentStep >= steps.length) {
+                overlay.classList.add('d-none');
+                tooltip.classList.add('d-none');
+                
+                fetch(`/accounts/api/tutorial-seen/${eventId}/`, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/json' }
+                }).catch(err => console.error(err));
+                return;
+            }
+
+            const step = steps[currentStep];
+            textElem.innerHTML = step.text;
+            counterElem.innerText = `${currentStep + 1} dari ${steps.length}`;
+            nextBtn.innerText = currentStep === steps.length - 1 ? "Paham, Mulai!" : "Lanjut";
+
+            if (step.target) {
+                const targetEl = document.querySelector(step.target);
+                if (targetEl) {
+                    const rect = targetEl.getBoundingClientRect();
+                    
+                    const clone = targetEl.cloneNode(true);
+                    clone.classList.add('tut-clone');
+                    clone.style.position = 'absolute';
+                    
+                    const scrollY = window.scrollY || window.pageYOffset;
+                    const scrollX = window.scrollX || window.pageXOffset;
+                    
+                    clone.style.top = (rect.top + scrollY) + 'px';
+                    clone.style.left = (rect.left + scrollX) + 'px';
+                    clone.style.width = rect.width + 'px';
+                    clone.style.height = rect.height + 'px';
+                    clone.style.zIndex = '9999';
+                    clone.style.margin = '0';
+                    clone.style.pointerEvents = 'none'; 
+                    clone.style.boxShadow = '0 0 30px 10px rgba(255,140,0,0.6)'; 
+                    
+                    const computedStyle = window.getComputedStyle(targetEl);
+                    clone.style.borderRadius = computedStyle.borderRadius;
+                    
+                    document.body.appendChild(clone);
+                    
+                    tooltip.style.transform = 'none';
+                    let leftPos = rect.left + (rect.width / 2) - 150; 
+                    if (leftPos < 10) leftPos = 10;
+                    if (leftPos + 300 > window.innerWidth) leftPos = window.innerWidth - 310;
+                    tooltip.style.left = leftPos + 'px';
+                    
+                    const ttHeight = tooltip.offsetHeight;
+                    tooltip.style.bottom = 'auto'; 
+
+                    if (step.placement === 'bottom') {
+                        let topPos = rect.bottom + 20;
+                        if (topPos + ttHeight + 20 > window.innerHeight) {
+                            topPos = window.innerHeight - ttHeight - 20; 
+                        }
+                        tooltip.style.top = topPos + 'px';
+                    } else if (step.placement === 'top') {
+                        let topPos = rect.top - ttHeight - 20;
+                        if (topPos < 20) {
+                            topPos = rect.top + 20; 
+                        }
+                        tooltip.style.top = topPos + 'px';
+                    }
+                }
+            } else {
+                tooltip.style.top = '50%';
+                tooltip.style.left = '50%';
+                tooltip.style.bottom = 'auto';
+                tooltip.style.transform = 'translate(-50%, -50%)';
+            }
+        }
+
+        nextBtn.onclick = () => {
+            currentStep++;
+            renderStep();
+        };
+
+        renderStep();
     }
 
     function addDragListeners(card) {
@@ -201,6 +363,9 @@ document.addEventListener("DOMContentLoaded", function() {
 
     function handleDragStart(e) {
         if (!activeCard) return;
+        const overlay = document.getElementById('step-overlay');
+        if (!overlay.classList.contains('d-none')) return;
+
         isDragging = true;
         startX = e.type.includes('mouse') ? e.pageX : e.touches[0].clientX;
         activeCard.style.transition = 'none'; 
@@ -281,15 +446,24 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     btnNope.addEventListener('click', () => {
-        if (activeCard) { nopeStamp.style.opacity = 1; swipeOut(-1); }
+        const overlay = document.getElementById('step-overlay');
+        if (activeCard && overlay.classList.contains('d-none')) { 
+            nopeStamp.style.opacity = 1; swipeOut(-1); 
+        }
     });
 
     btnLike.addEventListener('click', () => {
-        if (activeCard) { likeStamp.style.opacity = 1; swipeOut(1); }
+        const overlay = document.getElementById('step-overlay');
+        if (activeCard && overlay.classList.contains('d-none')) { 
+            likeStamp.style.opacity = 1; swipeOut(1); 
+        }
     });
 
     document.addEventListener('keydown', function(e) {
         if (!activeCard) return; 
+        const overlay = document.getElementById('step-overlay');
+        if (!overlay.classList.contains('d-none')) return;
+
         if (e.key === 'ArrowLeft') { nopeStamp.style.opacity = 1; swipeOut(-1); } 
         else if (e.key === 'ArrowRight') { likeStamp.style.opacity = 1; swipeOut(1); }
     });

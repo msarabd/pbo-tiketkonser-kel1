@@ -74,7 +74,13 @@ def swipe_friends_view(request, event_id):
         messages.error(request, "Kamu belum memiliki tiket lunas untuk konser ini.")
         return redirect('event_detail', event_id=event.id)
         
-    return render(request, 'accounts/swipe_friends.html', {'event': event})
+    profile, created = UserProfile.objects.get_or_create(user=request.user)
+    show_tutorial = not profile.tutorial_seen_events.filter(id=event.id).exists()
+        
+    return render(request, 'accounts/swipe_friends.html', {
+        'event': event,
+        'show_tutorial': show_tutorial
+    })
 
 @login_required
 def api_get_swipe_data(request, event_id):
@@ -237,3 +243,11 @@ def api_get_friend_requests(request):
     process_requests(received, 'received')
 
     return JsonResponse({'requests': data})
+
+@login_required
+@require_POST
+def api_mark_tutorial_seen(request, event_id):
+    event = get_object_or_404(Event, id=event_id)
+    profile, created = UserProfile.objects.get_or_create(user=request.user)
+    profile.tutorial_seen_events.add(event)
+    return JsonResponse({'status': 'success'})
