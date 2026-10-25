@@ -157,13 +157,19 @@
                     {% csrf_token %}
                     <div class="input-group input-group-sm mb-3">
                         <span class="input-group-text bg-dark text-white border-0">Jumlah</span>
-                        <input type="number" name="quantity" value="1" min="1" max="5" class="form-control text-center" required>
+                        <!-- Input dimatikan jika event expired -->
+                        <input type="number" name="quantity" value="1" min="1" max="5" class="form-control text-center" {% if event.time_status == 'EXPIRED' %}disabled{% endif %} required>
                     </div>
                     
-                    {% if category.kuota > 0 %}
+                    {% if event.time_status == 'EXPIRED' %}
+                        <!-- Tombol Merah Tanda Berakhir -->
+                        <button type="button" class="btn btn-sm w-100 text-white fw-bold bg-danger border-0 py-2 shadow-sm" style="border-radius: 6px;" disabled>Konser Telah Berakhir</button>
+                    {% elif category.kuota > 0 %}
+                        <!-- Tombol Aktif -->
                         <button type="submit" class="btn btn-sm w-100 text-white fw-bold shadow-sm py-2" style="background-color: #FF8C00; border-radius: 6px; border: none;">Pesan Sekarang</button>
                     {% else %}
-                        <button type="button" class="btn btn-sm w-100 text-white fw-bold bg-secondary border-0 py-2" style="border-radius: 6px;" disabled>Kategori Habis</button>
+                        <!-- Tombol Habis -->
+                        <button type="button" class="btn btn-sm w-100 text-white fw-bold bg-secondary border-0 py-2" style="border-radius: 6px;" disabled>SOLD</button>
                     {% endif %}
                 </form>
             </div>

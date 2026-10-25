@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.db.models import Count, Q, Min
-from .models import Event, Order, ForumMessage, OrderItem, Venue
+from .models import Event, Order, ForumMessage, OrderItem, Venue, TicketCategory
 from .services import book_ticket_securely, process_payment_and_issue_tickets
 from accounts.models import UserProfile
 
@@ -116,6 +116,12 @@ def book_ticket(request, category_id):
     if not profile.nik or not profile.profile_picture or not request.user.no_hp:
         messages.warning(request, "Akses ditolak. Kamu wajib mengisi Nomor WA, NIK, dan mengunggah Foto Profil Utama sebelum memesan tiket.")
         return redirect('accounts:edit_profile')
+
+    # BLOKIR SERVER: Cek apakah event sudah expired sebelum memproses apa pun
+    kategori = get_object_or_404(TicketCategory, id=category_id)
+    if kategori.event.time_status == 'EXPIRED':
+        messages.error(request, "Pemesanan ditolak. Konser ini telah berakhir.")
+        return redirect('event_detail', event_id=kategori.event.id)
 
     if request.method == 'POST':
         quantity = request.POST.get('quantity', 1)
