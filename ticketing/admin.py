@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import Venue, Event, TicketCategory, Seat, Order, OrderItem, Payment, Ticket
+from .models import Venue, Event, TicketCategory, Order, OrderItem, Payment, Ticket
 from .forms import VenueForm, EventForm, TicketCategoryForm
 
 @admin.register(Venue)
@@ -17,7 +17,6 @@ class EventAdmin(admin.ModelAdmin):
 class TicketCategoryAdmin(admin.ModelAdmin):
     form = TicketCategoryForm
 
-admin.site.register(Seat)
 admin.site.register(Order)
 admin.site.register(OrderItem)
 admin.site.register(Payment)

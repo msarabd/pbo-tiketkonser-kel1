@@ -1,12 +1,14 @@
-from datetime import timedelta
 import uuid
+from datetime import timedelta
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
 from django.db.models.signals import pre_delete, post_delete
 from django.dispatch import receiver
-from django.db.models import Q, F
+from django.db.models import Q, F, Count
 from django.apps import apps
+
+HOLD_DURATION_MINUTES = 15
 
 # ==============================================================================
 # BASE MODEL (STANDARISASI UUID)
@@ -34,7 +36,6 @@ class Venue(BaseModel):
 # EVENT (TERPUSAT KHUSUS MUSIK)
 # ==============================================================================
 class Event(BaseModel):
-
     class EventType(models.TextChoices):
         FESTIVAL = "FESTIVAL", "Festival Musik"
         SOLO_CONCERT = "SOLO_CONCERT", "Konser Tunggal"
@@ -87,14 +88,13 @@ class Event(BaseModel):
         return f"{self.nama_konser} oleh {self.artis}"
 
 # ==============================================================================
-# TIKET & KURSI
+# TIKET
 # ==============================================================================
 class TicketCategory(BaseModel):
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
     nama_kategori = models.CharField(max_length=100)
     harga = models.IntegerField()
     kuota = models.IntegerField()
-    pakai_kursi = models.BooleanField(default=False)
 
     class Meta:
         unique_together = ('event', 'nama_kategori')
@@ -106,19 +106,6 @@ class TicketCategory(BaseModel):
     def __str__(self):
         return f"{self.nama_kategori} ({self.event.nama_konser})"
 
-
-class Seat(BaseModel):
-    category = models.ForeignKey(TicketCategory, on_delete=models.CASCADE)
-    kode_kursi = models.CharField(max_length=10)
-    status = models.CharField(max_length=20, default="TERSEDIA")
-
-    @property
-    def is_booked(self):
-        return self.status != "TERSEDIA"
-
-    def __str__(self):
-        return f"{self.kode_kursi} [{self.status}]"
-
 # ==============================================================================
 # ORDER & TRANSAKSI
 # ==============================================================================
@@ -129,25 +116,21 @@ class Order(BaseModel):
     total_harga = models.IntegerField(default=0)
 
     @property
+    def expired_at(self):
+        return self.waktu_pesan + timedelta(minutes=HOLD_DURATION_MINUTES)
+
+    @property
     def is_expired(self):
-        # Ubah durasi hold tiket menjadi 15 menit
-        batas_waktu = self.waktu_pesan + timedelta(minutes=15)
-        return timezone.now() > batas_waktu
-    
+        return timezone.now() > self.expired_at
+
     def cancel_order(self):
         if self.status == "PENDING":
             self.status = "CANCELED"
-            self.save()
-            
-            items = self.orderitem_set.all()
-            for item in items:
-                category = item.category
-                category.kuota += 1
-                category.save()
-                
-                if item.seat:
-                    item.seat.status = "TERSEDIA"
-                    item.seat.save()
+            self.save(update_fields=['status'])
+
+            kategori_counts = self.orderitem_set.values('category_id').annotate(jumlah=Count('id'))
+            for item in kategori_counts:
+                TicketCategory.objects.filter(id=item['category_id']).update(kuota=F('kuota') + item['jumlah'])
 
     def __str__(self):
         return f"Order: {self.id} | Pemesan: {self.user.username}"
@@ -156,7 +139,6 @@ class Order(BaseModel):
 class OrderItem(BaseModel):
     order = models.ForeignKey(Order, on_delete=models.CASCADE)
     category = models.ForeignKey(TicketCategory, on_delete=models.CASCADE)
-    seat = models.ForeignKey(Seat, on_delete=models.SET_NULL, null=True, blank=True)
     harga_satuan = models.IntegerField()
 
     def __str__(self):
@@ -211,22 +193,19 @@ class ForumMessage(BaseModel):
 def bersihkan_data_sosial_saat_item_dihapus(sender, instance, **kwargs):
     order = instance.order
     user = order.user
-    
+
     if not instance.category or not instance.category.event:
         return
-        
+
     event = instance.category.event
     FriendRequest = apps.get_model('accounts', 'FriendRequest')
-    
-    # Cek apakah user MASIH memiliki tiket PAID lain di event yang sama
-    # (Kecualikan OrderItem yang sedang dalam proses dihapus ini)
+
     masih_punya_tiket_lain = OrderItem.objects.filter(
         order__user=user,
         order__status='PAID',
         category__event=event
     ).exclude(id=instance.id).exists()
-    
-    # Jika ini tiket aktif terakhir miliknya untuk konser tersebut, musnahkan relasi sosialnya
+
     if not masih_punya_tiket_lain:
         ForumMessage.objects.filter(sender=user, event=event).delete()
         FriendRequest.objects.filter(event=event).filter(
@@ -234,10 +213,7 @@ def bersihkan_data_sosial_saat_item_dihapus(sender, instance, **kwargs):
         ).delete()
 
 
-from django.db.models import F
-
 @receiver(post_delete, sender=OrderItem)
 def kembalikan_kuota_saat_item_dihapus(sender, instance, **kwargs):
     if instance.category_id:
-        # Eksekusi penambahan langsung di level SQL database (bebas dari tabrakan memori Python)
         TicketCategory.objects.filter(id=instance.category_id).update(kuota=F('kuota') + 1)
