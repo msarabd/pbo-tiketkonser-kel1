@@ -1,6 +1,7 @@
 import math
 import json
 import re
+import sys
 import pytesseract
 from PIL import Image
 from django.shortcuts import render, redirect, get_object_or_404
@@ -13,8 +14,9 @@ from .models import UserProfile, FriendRequest, User
 from .forms import UserProfileForm, CustomUserCreationForm, UserEditForm
 from ticketing.models import Event, OrderItem
 
-# Wajib diganti jika lokasi instalasi tesseract.exe berbeda di komputermu!
-pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+# Deteksi OS otomatis. Jika Windows, pakai path lokalmu. Jika Linux (server temanmu), biarkan default.
+if sys.platform.startswith('win'):
+    pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
 def register_view(request):
     if request.method == 'POST':
