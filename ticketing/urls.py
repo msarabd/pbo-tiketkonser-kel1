@@ -2,16 +2,16 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('', views.event_list, name='event_list'),
-    path('event/<uuid:event_id>/', views.event_detail, name='event_detail'),
-    path('book/<uuid:category_id>/', views.book_ticket, name='book_ticket'),
-    path('checkout/<uuid:order_id>/', views.checkout, name='checkout'),
-    path('pay/<uuid:order_id>/', views.pay_order, name='pay_order'),
-    path('cancel-order/<uuid:order_id>/', views.cancel_order_view, name='cancel_order'),
-    path('success/<uuid:order_id>/', views.payment_success, name='payment_success'),
-    path('history/', views.ticket_history, name='ticket_history'),
-    path('forums/', views.forum_list, name='forum_list'),
-    path('forums/<uuid:event_id>/', views.forum_room, name='forum_room'),
-    path('forums/message/<uuid:message_id>/delete/', views.delete_forum_message, name='delete_forum_message'),
-    path('cari-teman/', views.choose_friend_concert, name='choose_friend_concert'),
+    path('', views.EventListView.as_view(), name='event_list'),
+    path('event/<uuid:event_id>/', views.EventDetailView.as_view(), name='event_detail'),
+    path('book/<uuid:category_id>/', views.BookTicketView.as_view(), name='book_ticket'),
+    path('checkout/<uuid:order_id>/', views.CheckoutView.as_view(), name='checkout'),
+    path('pay/<uuid:order_id>/', views.PayOrderView.as_view(), name='pay_order'),
+    path('cancel-order/<uuid:order_id>/', views.CancelOrderView.as_view(), name='cancel_order'),
+    path('success/<uuid:order_id>/', views.PaymentSuccessView.as_view(), name='payment_success'),
+    path('history/', views.TicketHistoryView.as_view(), name='ticket_history'),
+    path('forums/', views.ForumListView.as_view(), name='forum_list'),
+    path('forums/<uuid:event_id>/', views.ForumRoomView.as_view(), name='forum_room'),
+    path('forums/message/<uuid:message_id>/delete/', views.DeleteForumMessageView.as_view(), name='delete_forum_message'),
+    path('cari-teman/', views.ChooseFriendConcertView.as_view(), name='choose_friend_concert'),
 ]
