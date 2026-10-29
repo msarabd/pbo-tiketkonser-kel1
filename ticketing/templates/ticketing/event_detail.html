@@ -3,46 +3,32 @@
 
 {% block content %}
 <div class="row align-items-start">
-    <!-- 1. Bagian Kiri: Dapat di-scroll (Detail Konser & Google Maps) -->
     <div class="col-md-8 mb-4">
-        
-        <!-- Tombol Kembali -->
         <a href="javascript:history.back()" class="text-white text-decoration-none mb-3 d-inline-block fw-bold fs-6">&larr; Kembali ke Daftar Konser</a>
 
-        <!-- Kartu Detail Acara + Poster Konser -->
         <div class="card shadow-sm border-0 mb-4" style="border-radius: 15px; border-top: 5px solid #FF8C00 !important; background-color: #ffffff;">
             <div class="card-body p-4 p-md-5">
-                
-                <!-- 1. BARIS ATAS: Kiri (Info) & Kanan (Banner) dengan align-items-end -->
-                <div class="row align-items-end">
-                    <!-- Teks Informasi Konser (Kiri) -->
-                    <div class="col-md-7 pe-md-4 mb-3 mb-md-0">
+                <div class="row align-items-md-end align-items-center text-center text-md-start">
+                    <div class="col-md-7 pe-md-4 mb-4 mb-md-0">
                         <span class="badge mb-2 text-white" style="background-color: #112250; font-size: 0.85rem; padding: 6px 12px;">{{ event.tipe }}</span>
                         <h2 class="fw-bold text-dark mb-1">{{ event.nama_konser }}</h2>
-                        <!-- mb-0 agar tidak ada celah kosong di bawah nama artis -->
                         <h5 class="text-secondary mb-0">{{ event.artis }}</h5>
                     </div>
-
-                    <!-- Poster Konser (Kanan) -->
                     <div class="col-md-5">
                         <div class="w-100 rounded-3 overflow-hidden shadow-sm" style="border: 2px solid #FF8C00;">
                             {% if event.poster %}
                                 <img src="{{ event.poster.url }}" alt="{{ event.nama_konser }}" style="width: 100%; height: auto; display: block;">
                             {% else %}
-                                <div class="w-100 d-flex align-items-center justify-content-center text-secondary bg-light" style="min-height: 120px;">
-                                    Tidak ada poster
-                                </div>
+                                <div class="w-100 d-flex align-items-center justify-content-center text-secondary bg-light" style="min-height: 120px;">Tidak ada poster</div>
                             {% endif %}
                         </div>
                     </div>
                 </div>
 
-                <!-- 2. GARIS PEMISAH: Sekarang berada persis di bawah dasar Banner & Artis -->
                 <hr class="border-secondary opacity-25 my-4">
                 
-                <!-- 3. BARIS BAWAH: Waktu & Lokasi Acara -->
-                <div class="row">
-                    <div class="col-6 col-md-4">
+                <div class="row text-center text-md-start">
+                    <div class="col-6 col-md-4 mb-3 mb-md-0">
                         <p class="mb-1 text-muted small fw-semibold">Waktu Acara</p>
                         <h6 class="fw-bold text-dark mb-1">{{ event.tanggal|date:"l, d F Y" }}</h6>
                         <p class="text-secondary small mb-0">{{ event.tanggal|date:"H:i" }} WIB</p>
@@ -53,122 +39,72 @@
                         <p class="text-secondary small mb-0">{{ event.venue.kota }}</p>
                     </div>
                 </div>
-
             </div>
         </div>
 
-        <!-- BARU: Nav Tabs Deskripsi & Syarat Ketentuan -->
         <div class="card shadow-sm border-0 mb-4 custom-event-tabs" style="border-radius: 15px; background-color: #ffffff; overflow: hidden;">
-            
-            <!-- CSS Kustom Khusus untuk Tab Ini -->
             <style>
-                .custom-event-tabs .nav-tabs {
-                    border-bottom: 1px solid #dee2e6;
-                }
-                .custom-event-tabs .nav-link {
-                    color: #6c757d; /* Abu-abu redup (inactive) */
-                    border: none;
-                    background-color: transparent;
-                    font-weight: 600;
-                    padding: 1rem 1.5rem;
-                }
-                .custom-event-tabs .nav-link:hover {
-                    color: #495057;
-                    border: none;
-                }
-                .custom-event-tabs .nav-link.active {
-                    color: #212529 !important; /* Gelap tegas (active) */
-                    border: none;
-                    border-bottom: 3px solid #FFC107 !important; /* Garis kuning khas KonserKU */
-                    background-color: transparent;
-                }
+                .custom-event-tabs .nav-tabs { border-bottom: 1px solid #dee2e6; }
+                .custom-event-tabs .nav-link { color: #6c757d; border: none; background-color: transparent; font-weight: 600; padding: 1rem 1.5rem; white-space: nowrap; }
+                .custom-event-tabs .nav-link:hover { color: #495057; border: none; }
+                .custom-event-tabs .nav-link.active { color: #212529 !important; border: none; border-bottom: 3px solid #FFC107 !important; background-color: transparent; }
             </style>
 
-            <div class="card-header bg-white border-bottom-0 pt-3 pb-0 px-3">
-                <ul class="nav nav-tabs" id="eventInfoTab" role="tablist">
+            <div class="card-header bg-white border-bottom-0 pt-3 pb-0 px-3" style="overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch;">
+                <!-- Penambahan flex-nowrap agar tab deskripsi dan S&K tetap sejajar ke samping walau di HP -->
+                <ul class="nav nav-tabs flex-nowrap" id="eventInfoTab" role="tablist" style="margin-bottom: -1px;">
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="deskripsi-tab" data-bs-toggle="tab" data-bs-target="#deskripsi" type="button" role="tab" aria-controls="deskripsi" aria-selected="true">
-                            DESKRIPSI
-                        </button>
+                        <button class="nav-link active" id="deskripsi-tab" data-bs-toggle="tab" data-bs-target="#deskripsi" type="button" role="tab" aria-controls="deskripsi" aria-selected="true">DESKRIPSI</button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="snk-tab" data-bs-toggle="tab" data-bs-target="#snk" type="button" role="tab" aria-controls="snk" aria-selected="false">
-                            SYARAT & KETENTUAN
-                        </button>
+                        <button class="nav-link" id="snk-tab" data-bs-toggle="tab" data-bs-target="#snk" type="button" role="tab" aria-controls="snk" aria-selected="false">SYARAT & KETENTUAN</button>
                     </li>
                 </ul>
             </div>
             <div class="card-body p-4 bg-light">
                 <div class="tab-content" id="eventInfoTabContent">
-                    <!-- Tab Deskripsi -->
                     <div class="tab-pane fade show active text-dark" id="deskripsi" role="tabpanel" aria-labelledby="deskripsi-tab">
-                        {% if event.deskripsi %}
-                            {{ event.deskripsi|linebreaks }}
-                        {% else %}
-                            <p class="text-muted fst-italic mb-0">Deskripsi konser belum ditambahkan.</p>
-                        {% endif %}
+                        {% if event.deskripsi %} {{ event.deskripsi|linebreaks }} {% else %} <p class="text-muted fst-italic mb-0">Deskripsi konser belum ditambahkan.</p> {% endif %}
                     </div>
-                    <!-- Tab Syarat & Ketentuan -->
                     <div class="tab-pane fade text-dark" id="snk" role="tabpanel" aria-labelledby="snk-tab">
-                        {% if event.syarat_ketentuan %}
-                            {{ event.syarat_ketentuan|linebreaks }}
-                        {% else %}
-                            <p class="text-muted fst-italic mb-0">Syarat dan ketentuan belum ditambahkan.</p>
-                        {% endif %}
+                        {% if event.syarat_ketentuan %} {{ event.syarat_ketentuan|linebreaks }} {% else %} <p class="text-muted fst-italic mb-0">Syarat dan ketentuan belum ditambahkan.</p> {% endif %}
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Google Maps Interaktif -->
         <div class="card shadow-sm border-0" style="border-radius: 15px; overflow: hidden; background-color: #161618; border: 1px solid #28282b;">
             <div class="card-header border-bottom border-secondary py-3 d-flex align-items-center justify-content-between" style="background-color: #0d0d0e;">
                 <span class="fw-bold text-white fs-6">📍 Lokasi Peta Acara</span>
                 <small class="text-secondary">{{ event.venue.nama }}, {{ event.venue.kota }}</small>
             </div>
             <div class="card-body p-0">
-                <iframe 
-                    width="100%" 
-                    height="360" 
-                    style="border:0; display: block;" 
-                    loading="lazy" 
-                    allowfullscreen 
-                    referrerpolicy="no-referrer-when-downgrade"
-                    src="https://maps.google.com/maps?q={{ event.venue.nama|urlencode }}+{{ event.venue.kota|urlencode }}&hl=id&z=16&output=embed">
-                </iframe>
+                <iframe width="100%" height="360" style="border:0; display: block;" loading="lazy" allowfullscreen referrerpolicy="no-referrer-when-downgrade" src="https://maps.google.com/maps?q={{ event.venue.nama|urlencode }}+{{ event.venue.kota|urlencode }}&hl=id&z=16&output=embed"></iframe>
             </div>
         </div>
     </div>
 
-    <!-- 2. Bagian Kanan: Menempel Diam Saat Kiri Di-scroll (Sticky Panel) -->
-    <div class="col-md-4" style="position: sticky; top: 20px; z-index: 10;">
+    <div class="col-md-4 mt-4 mt-md-0" style="position: sticky; top: 20px; z-index: 10;">
         <h4 class="fw-bold mb-3 text-white">Pilih Tiket</h4>
         <div class="list-group" style="max-height: calc(100vh - 100px); overflow-y: auto; padding-right: 4px;">
             {% for category in categories %}
             <div class="list-group-item p-3 mb-3 shadow-sm" style="border: 1px solid #FFD700; border-radius: 12px; background-color: #ffffff;">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <h6 class="fw-bold mb-0 text-dark">{{ category.nama_kategori }}</h6>
-                    <!-- Format angka rapi dengan intcomma -->
                     <span class="badge text-dark fw-bold" style="background-color: #FFD700;">Rp {{ category.harga|intcomma }}</span>
                 </div>
                 <p class="small text-muted mb-3">Sisa Kuota: {{ category.kuota }}</p>
-                
                 <form action="{% url 'book_ticket' category.id %}" method="POST">
                     {% csrf_token %}
                     <div class="input-group input-group-sm mb-3">
                         <span class="input-group-text bg-dark text-white border-0">Jumlah</span>
-                        <!-- Input dimatikan jika event expired -->
                         <input type="number" name="quantity" value="1" min="1" max="5" class="form-control text-center" {% if event.time_status == 'EXPIRED' %}disabled{% endif %} required>
                     </div>
-                    
                     {% if event.time_status == 'EXPIRED' %}
-                        <!-- Tombol Merah Tanda Berakhir -->
                         <button type="button" class="btn btn-sm w-100 text-white fw-bold bg-danger border-0 py-2 shadow-sm" style="border-radius: 6px;" disabled>Konser Telah Berakhir</button>
                     {% elif category.kuota > 0 %}
-                        <!-- Tombol Aktif -->
                         <button type="submit" class="btn btn-sm w-100 text-white fw-bold shadow-sm py-2" style="background-color: #FF8C00; border-radius: 6px; border: none;">Pesan Sekarang</button>
                     {% else %}
-                        <!-- Tombol Habis -->
                         <button type="button" class="btn btn-sm w-100 text-white fw-bold bg-secondary border-0 py-2" style="border-radius: 6px;" disabled>SOLD</button>
                     {% endif %}
                 </form>

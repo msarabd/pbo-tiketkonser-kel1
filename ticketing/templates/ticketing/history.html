@@ -1,7 +1,6 @@
 {% extends 'ticketing/base.html' %}
 {% block content %}
 
-<!-- SECTION 1: TAGIHAN MENUNGGU PEMBAYARAN -->
 {% if tagihan_aktif %}
 <div class="row mb-3 mt-4">
     <div class="col">
@@ -13,8 +12,9 @@
     {% for pesanan in tagihan_aktif %}
     <div class="col-md-6 mb-3">
         <div class="card bg-white shadow-sm" style="border-radius: 12px; border-left: 5px solid #dc3545;">
-            <div class="card-body d-flex justify-content-between align-items-center">
-                <div>
+            <!-- Perbaikan Flexbox: flex-column di HP, flex-md-row di Laptop -->
+            <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div class="w-100">
                     <h6 class="fw-bold text-dark mb-1">Pesanan #{{ pesanan.id|stringformat:"s"|slice:":8"|upper }}</h6>
                     <p class="small text-secondary mb-1">
                         {% with first_item=pesanan.orderitem_set.first %}
@@ -23,12 +23,12 @@
                     </p>
                     <h6 class="fw-bold text-danger mb-0">Rp {{ pesanan.total_harga }}</h6>
                 </div>
-                <div class="d-flex gap-2">
-                    <form action="{% url 'cancel_order' pesanan.id %}" method="POST" onsubmit="return confirm('Yakin ingin membatalkan pesanan ini? Tiket akan dilepas kembali ke sistem.');">
+                <div class="d-flex w-100 w-md-auto flex-column flex-sm-row gap-2 justify-content-end">
+                    <form action="{% url 'cancel_order' pesanan.id %}" method="POST" class="flex-grow-1" onsubmit="return confirm('Yakin ingin membatalkan pesanan ini? Tiket akan dilepas kembali ke sistem.');">
                         {% csrf_token %}
-                        <button type="submit" class="btn btn-outline-danger fw-bold shadow-sm" style="border-radius: 8px;">Batalkan</button>
+                        <button type="submit" class="btn btn-outline-danger fw-bold shadow-sm w-100" style="border-radius: 8px;">Batalkan</button>
                     </form>
-                    <a href="{% url 'checkout' pesanan.id %}" class="btn btn-danger fw-bold shadow-sm" style="border-radius: 8px;">Lanjut Bayar</a>
+                    <a href="{% url 'checkout' pesanan.id %}" class="btn btn-danger fw-bold shadow-sm flex-grow-1 text-center" style="border-radius: 8px;">Lanjut Bayar</a>
                 </div>
             </div>
         </div>
@@ -37,7 +37,6 @@
 </div>
 {% endif %}
 
-<!-- SECTION 2: TIKET DIGITAL SAYA -->
 <div class="row mb-4 {% if not tagihan_aktif %}mt-4{% endif %}">
     <div class="col">
         <h2 class="fw-bold" style="color: #FF8C00;">Tiket Digital Saya</h2>
@@ -70,11 +69,9 @@
                         </div>
                         {% endif %}
                     </div>
-
                     <div class="p-2 rounded d-inline-block border mb-2">
-                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={{ item.ticket.kode_qr }}" alt="QR Code Tiket">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={{ item.ticket.kode_qr }}" alt="QR Code Tiket" class="img-fluid">
                     </div>
-                    
                     <p class="mt-2 mb-0 small text-secondary">Kode Tiket: {{ item.ticket.kode_qr|slice:":12" }}...</p>
                 </div>
             </div>

@@ -277,7 +277,11 @@ class ForumRoomView(LoginRequiredMixin, View):
 
 
 class DeleteForumMessageView(LoginRequiredMixin, View):
-    def get(self, request, message_id):
+    # [PERBAIKAN LOGIKA HTTP & KEAMANAN]
+    # Sebelumnya menggunakan def get(), yang memicu HTTP ERROR 405 (Method Not Allowed).
+    # Semua aksi destruktif (seperti hapus pesan) wajib menggunakan method POST agar
+    # terlindung dari eksekusi tidak disengaja oleh web crawler atau request eksternal.
+    def post(self, request, message_id):
         message = get_object_or_404(ForumMessage, id=message_id)
         if message.sender != request.user:
             messages.error(request, "Anda tidak berhak menghapus pesan ini.")

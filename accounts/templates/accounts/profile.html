@@ -1,23 +1,19 @@
 {% extends 'ticketing/base.html' %}
 {% block content %}
 
-<div id="fr-drawer" class="shadow-lg" style="position: fixed; top: -400px; left: 0; width: 340px; height: 450px; background-color: #1a1a1d; border-radius: 0 0 20px 20px; z-index: 1050; transition: top 0.4s cubic-bezier(0.4, 0, 0.2, 1); border: 2px solid #FF8C00; border-top: none;">
+<!-- Laci dirubah menggunakan left: 50% dan transform untuk center mutlak di segala device -->
+<div id="fr-drawer" class="shadow-lg" style="position: fixed; top: -400px; left: 50%; transform: translateX(-50%); width: 95%; max-width: 380px; height: 450px; background-color: #1a1a1d; border-radius: 0 0 20px 20px; z-index: 1050; transition: top 0.4s cubic-bezier(0.4, 0, 0.2, 1); border: 2px solid #FF8C00; border-top: none;">
     <div class="p-3 h-100 d-flex flex-column" style="padding-top: 15px;">
         <h4 class="text-center mb-3 fw-bold" style="border-bottom: 2px solid rgba(255, 140, 0, 0.3); padding-bottom: 10px; color: #FF8C00; font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif;">
             Friend Request
         </h4>
-        
         <div id="fr-loading" class="text-center mt-4 d-none">
             <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
             <p class="small mt-2 fw-bold text-white opacity-75">Memuat...</p>
         </div>
-
-        <div id="fr-list" class="flex-grow-1 overflow-auto pe-1" style="scrollbar-width: thin; scrollbar-color: #FF8C00 #1a1a1d;">
-            <!-- Data API masuk ke sini -->
-        </div>
+        <div id="fr-list" class="flex-grow-1 overflow-auto pe-1" style="scrollbar-width: thin; scrollbar-color: #FF8C00 #1a1a1d;"></div>
     </div>
-    
-    <div id="fr-pull-tab" class="text-center shadow" style="position: absolute; bottom: -35px; left: 30px; width: 100px; background-color: #111; color: #FF8C00; padding: 5px 10px; border-radius: 10px; cursor: pointer; border: 2px solid #FF8C00; border-top: none; font-weight: bold;">
+    <div id="fr-pull-tab" class="text-center shadow" style="position: absolute; bottom: -35px; left: 50%; transform: translateX(-50%); width: 100px; background-color: #111; color: #FF8C00; padding: 5px 10px; border-radius: 10px; cursor: pointer; border: 2px solid #FF8C00; border-top: none; font-weight: bold;">
         <i class="bi bi-chevron-down" id="fr-pull-icon"></i> tarik
     </div>
 </div>
@@ -26,85 +22,51 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content bg-transparent border-0">
             <div class="modal-body p-0 d-flex justify-content-center">
-                
                 <div class="w-100 shadow-lg position-relative d-flex flex-column bg-dark" style="max-width: 380px; max-height: 85vh; border-radius: 20px; overflow-y: auto; overflow-x: hidden; border: 1px solid rgba(255,255,255,0.1);">
-                    
                     <button type="button" class="btn btn-dark shadow-sm position-absolute" data-bs-dismiss="modal" onclick="closeManualModal()" style="top: 15px; left: 15px; z-index: 1000; border-radius: 50%; width: 40px; height: 40px; border: 2px solid rgba(255,255,255,0.2); background-color: rgba(0,0,0,0.6);">
                         <i class="bi bi-arrow-left text-white fw-bold"></i>
                     </button>
-
                     <div class="position-relative w-100" style="aspect-ratio: 1 / 1.2; background-color: #000; flex-shrink: 0;">
                         <img id="fp-image" src="" class="w-100 h-100 object-fit-cover">
                         <div class="position-absolute bottom-0 w-100 p-3 pt-5" style="background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 60%, transparent 100%);">
-                            
-                            <h2 class="fw-bold text-white mb-0">
-                                <span id="fp-name">Nama</span> <span class="fw-normal fs-4" id="fp-age"></span>
-                            </h2>
-                            
-                            <div class="text-info small fw-bold mt-1 d-flex align-items-center gap-1">
-                                <i class="bi bi-geo-alt-fill" style="color: #FF8C00;"></i> 
-                                <span class="text-white opacity-75" id="fp-distance">Jarak</span>
-                            </div>
-
-                            <div class="text-warning small fw-bold mt-1 d-flex align-items-center gap-1">
-                                <i class="bi bi-ticket-perforated-fill" style="color: #FF8C00;"></i> 
-                                <span class="text-white opacity-90" id="fp-event">Konser</span>
-                            </div>
-
+                            <h2 class="fw-bold text-white mb-0"><span id="fp-name">Nama</span> <span class="fw-normal fs-4" id="fp-age"></span></h2>
+                            <div class="text-info small fw-bold mt-1 d-flex align-items-center gap-1"><i class="bi bi-geo-alt-fill" style="color: #FF8C00;"></i> <span class="text-white opacity-75" id="fp-distance">Jarak</span></div>
+                            <div class="text-warning small fw-bold mt-1 d-flex align-items-center gap-1"><i class="bi bi-ticket-perforated-fill" style="color: #FF8C00;"></i> <span class="text-white opacity-90" id="fp-event">Konser</span></div>
                         </div>
                     </div>
-                    
                     <div class="p-4 text-light w-100 flex-grow-1" style="background-color: #1a1a1d;">
                         <h6 class="fw-bold text-uppercase mb-2" style="color: #FF8C00; font-size: 0.75rem;">Tentang Dia</h6>
                         <p class="mb-4 text-white opacity-75 small" id="fp-bio" style="line-height: 1.6;"></p>
-                        
                         <div class="d-flex flex-wrap gap-2 mb-4" id="fp-tags"></div>
-                        
                         <div class="d-flex flex-column gap-2 mt-2 w-100" id="fp-action-container"></div>
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
 </div>
 
-<div class="container-fluid d-flex align-items-start justify-content-center py-5 position-relative" style="
-    {% if profile.background_image %}
-        background: linear-gradient(rgba(17, 17, 17, 0.75), rgba(17, 17, 17, 0.95)), url('{{ profile.background_image.url }}') center/cover no-repeat fixed;
-    {% else %}
-        background-color: #111111;
-    {% endif %}
-    min-height: 90vh; 
-    margin-top: 0;
-">
+<div class="container-fluid d-flex align-items-start justify-content-center py-5 position-relative" style="{% if profile.background_image %}background: linear-gradient(rgba(17, 17, 17, 0.75), rgba(17, 17, 17, 0.95)), url('{{ profile.background_image.url }}') center/cover no-repeat fixed;{% else %}background-color: #111111;{% endif %} min-height: 90vh; margin-top: 0;">
     <div class="row w-100 position-relative" style="max-width: 1200px;">
         <div class="col-12 col-lg-8 mx-auto mt-4 d-flex justify-content-center">
             <div class="card shadow-lg border-0 bg-dark w-100" style="max-width: 420px; border-radius: 20px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1) !important; box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;">
                 
-                <div class="position-relative" style="height: 500px; background-color: #000;">
+                <!-- Tinggi dirubah jadi aspect-ratio 4/5 agar proporsional di HP tanpa gepeng -->
+                <div class="position-relative" style="aspect-ratio: 4/5; min-height: 400px; max-height: 550px; background-color: #000;">
                     {% if profile.profile_picture %}
                         <img src="{{ profile.profile_picture.url }}" alt="Profile" id="rotatable-profile-pic" class="w-100 h-100 object-fit-cover" style="cursor: pointer;">
                     {% else %}
-                        <div class="w-100 h-100 d-flex align-items-center justify-content-center display-1 fw-bold text-secondary" style="background: linear-gradient(135deg, #2b2b2b, #1a1a1d);">
-                            {{ profile.user.username|slice:":1"|upper }}
-                        </div>
+                        <div class="w-100 h-100 d-flex align-items-center justify-content-center display-1 fw-bold text-secondary" style="background: linear-gradient(135deg, #2b2b2b, #1a1a1d);">{{ profile.user.username|slice:":1"|upper }}</div>
                     {% endif %}
-
                     <div class="position-absolute top-0 w-100 d-flex gap-1 p-2" id="photo-indicators" style="z-index: 10;"></div>
-
                     <div class="position-absolute bottom-0 w-100 p-3 pt-5" style="background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 60%, transparent 100%); pointer-events: none;">
                         <h2 class="fw-bold text-white mb-0" style="text-shadow: 1px 1px 4px rgba(0,0,0,1);">
                             {{ profile.user.username }}
-                            {% if profile.age %}
-                                <span class="fw-normal fs-4"> {{ profile.age }}</span>
-                            {% endif %}
+                            {% if profile.age %}<span class="fw-normal fs-4"> {{ profile.age }}</span>{% endif %}
                         </h2>
-                        
                         {% if profile.nama_ktp %}
                         <div class="text-info small fw-bold mt-1 d-flex align-items-center gap-1">
-                            <i class="bi bi-patch-check-fill fs-6" style="color: #FF8C00;"></i> 
-                            <span class="text-white opacity-75">Terverifikasi: {{ profile.nama_ktp }}</span>
+                            <i class="bi bi-patch-check-fill fs-6" style="color: #FF8C00;"></i> <span class="text-white opacity-75">Terverifikasi: {{ profile.nama_ktp }}</span>
                         </div>
                         {% endif %}
                     </div>
@@ -112,9 +74,7 @@
 
                 <div class="card-body p-4 text-light" style="background-color: #1a1a1d;">
                     <h6 class="fw-bold text-uppercase mb-2" style="color: #FF8C00; font-size: 0.75rem; letter-spacing: 1px;">Tentang Saya</h6>
-                    <p class="mb-4 text-white opacity-75" style="line-height: 1.6; font-size: 0.95rem;">
-                        {% if profile.bio %}{{ profile.bio }}{% else %}<span class="fst-italic">Belum ada bio. Tambahkan cerita konsermu!</span>{% endif %}
-                    </p>
+                    <p class="mb-4 text-white opacity-75" style="line-height: 1.6; font-size: 0.95rem;">{% if profile.bio %}{{ profile.bio }}{% else %}<span class="fst-italic">Belum ada bio. Tambahkan cerita konsermu!</span>{% endif %}</p>
 
                     {% if profile.gender or profile.latitude %}
                     <h6 class="fw-bold text-uppercase mb-2" style="color: #FF8C00; font-size: 0.75rem; letter-spacing: 1px;">Identitas Dasar</h6>
@@ -131,9 +91,7 @@
                         {% if profile.matching_goal %}<span class="badge rounded-pill px-3 py-2 fw-normal" style="background-color: #2b2b2b; color: #e0e0e0; border: 1px solid #444; font-size: 0.85rem;">🎯 {{ profile.get_matching_goal_display }}</span>{% endif %}
                     </div>
 
-                    <a href="{% url 'accounts:edit_profile' %}" class="btn w-100 fw-bold py-3 rounded-pill mt-2 shadow" style="background: linear-gradient(45deg, #FF8C00, #d84315); color: white; border: none; letter-spacing: 0.5px;">
-                        <i class="bi bi-pencil-fill me-2"></i> Edit Profil
-                    </a>
+                    <a href="{% url 'accounts:edit_profile' %}" class="btn w-100 fw-bold py-3 rounded-pill mt-2 shadow" style="background: linear-gradient(45deg, #FF8C00, #d84315); color: white; border: none; letter-spacing: 0.5px;"><i class="bi bi-pencil-fill me-2"></i> Edit Profil</a>
                 </div>
             </div>
         </div>
@@ -204,10 +162,7 @@ document.addEventListener("DOMContentLoaded", function() {
             const cookies = document.cookie.split(';');
             for (let i = 0; i < cookies.length; i++) {
                 const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
+                if (cookie.substring(0, name.length + 1) === (name + '=')) { cookieValue = decodeURIComponent(cookie.substring(name.length + 1)); break; }
             }
         }
         return cookieValue;
@@ -259,45 +214,27 @@ document.addEventListener("DOMContentLoaded", function() {
                     leftWrapper.appendChild(nameSpan);
 
                     const arrowIcon = document.createElement('i');
-                    if (req.status === 'MUTUAL') {
-                        arrowIcon.className = 'bi bi-arrow-left-right me-2';
-                        arrowIcon.style.color = '#198754'; 
-                    } else {
-                        arrowIcon.className = req.direction === 'sent' ? 'bi bi-arrow-right me-2' : 'bi bi-arrow-left me-2';
-                        arrowIcon.style.color = '#FF8C00'; 
-                    }
+                    if (req.status === 'MUTUAL') { arrowIcon.className = 'bi bi-arrow-left-right me-2'; arrowIcon.style.color = '#198754'; } 
+                    else { arrowIcon.className = req.direction === 'sent' ? 'bi bi-arrow-right me-2' : 'bi bi-arrow-left me-2'; arrowIcon.style.color = '#FF8C00'; }
                     
                     nameContainer.appendChild(leftWrapper);
                     nameContainer.appendChild(arrowIcon);
 
                     if (req.status === 'REJECTED') {
-                        nameContainer.style.backgroundColor = '#2b2b2b'; 
-                        nameContainer.style.cursor = 'not-allowed';
-                        nameSpan.style.textDecoration = 'line-through';
-                        nameSpan.style.color = '#666';
-                        
-                        const lockIcon = document.createElement('i');
-                        lockIcon.className = 'bi bi-lock-fill ms-1';
-                        lockIcon.style.color = '#666';
-                        lockIcon.style.fontSize = '0.75rem';
+                        nameContainer.style.backgroundColor = '#2b2b2b'; nameContainer.style.cursor = 'not-allowed';
+                        nameSpan.style.textDecoration = 'line-through'; nameSpan.style.color = '#666';
+                        const lockIcon = document.createElement('i'); lockIcon.className = 'bi bi-lock-fill ms-1'; lockIcon.style.color = '#666'; lockIcon.style.fontSize = '0.75rem';
                         nameSpan.appendChild(lockIcon);
-
                         nameContainer.onclick = function(e) { e.preventDefault(); };
                     } else {
-                        nameContainer.style.backgroundColor = '#2b2b2b';
-                        nameContainer.style.cursor = 'pointer';
-                        
-                        nameContainer.setAttribute('data-bs-toggle', 'modal');
-                        nameContainer.setAttribute('data-bs-target', '#friendProfileModal');
-                        
+                        nameContainer.style.backgroundColor = '#2b2b2b'; nameContainer.style.cursor = 'pointer';
+                        nameContainer.setAttribute('data-bs-toggle', 'modal'); nameContainer.setAttribute('data-bs-target', '#friendProfileModal');
                         nameContainer.addEventListener('click', function() {
                             document.getElementById('fp-image').src = req.profile_pic ? req.profile_pic : `https://ui-avatars.com/api/?name=${encodeURIComponent(req.username)}&background=random&size=400`;
                             document.getElementById('fp-name').innerText = req.username;
                             document.getElementById('fp-age').innerText = req.age ? ` ${req.age}` : '';
                             document.getElementById('fp-distance').innerText = req.distance ? req.distance : 'Jarak tidak diketahui';
-                            
                             document.getElementById('fp-event').innerText = req.event_name ? req.event_name : 'Konser Musik';
-                            
                             document.getElementById('fp-bio').innerText = req.bio || 'Tidak ada bio.';
                             
                             let tagsHtml = '';
@@ -305,25 +242,17 @@ document.addEventListener("DOMContentLoaded", function() {
                             if(req.vibe) tagsHtml += `<span class="badge rounded-pill px-3 py-2 fw-normal" style="background-color: #2b2b2b; color: #e0e0e0; border: 1px solid #444; font-size: 0.85rem;">🎵 ${req.vibe}</span>`;
                             if(req.energy) tagsHtml += `<span class="badge rounded-pill px-3 py-2 fw-normal" style="background-color: #2b2b2b; color: #e0e0e0; border: 1px solid #444; font-size: 0.85rem;">⚡ ${req.energy}</span>`;
                             if(req.goal) tagsHtml += `<span class="badge rounded-pill px-3 py-2 fw-normal" style="background-color: #2b2b2b; color: #e0e0e0; border: 1px solid #444; font-size: 0.85rem;">🎯 ${req.goal}</span>`;
-
                             document.getElementById('fp-tags').innerHTML = tagsHtml;
                             
                             const actionContainerModal = document.getElementById('fp-action-container');
                             actionContainerModal.innerHTML = ''; 
-
                             if ((req.status === 'ACCEPTED' || req.status === 'MUTUAL') && req.no_hp) {
                                 let phone = req.no_hp;
                                 if (phone.startsWith('0')) { phone = '62' + phone.slice(1); }
-                                
-                                const waBtn = document.createElement('a');
-                                waBtn.href = `https://wa.me/${phone}`;
-                                waBtn.target = '_blank';
+                                const waBtn = document.createElement('a'); waBtn.href = `https://wa.me/${phone}`; waBtn.target = '_blank';
                                 waBtn.className = 'btn w-100 rounded-pill fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2 py-3';
-                                waBtn.style.backgroundColor = '#25D366';
-                                waBtn.style.color = 'white';
-                                waBtn.style.border = 'none';
+                                waBtn.style.backgroundColor = '#25D366'; waBtn.style.color = 'white'; waBtn.style.border = 'none';
                                 waBtn.innerHTML = '<i class="bi bi-whatsapp fs-5"></i> Hubungi via WhatsApp';
-                                
                                 actionContainerModal.appendChild(waBtn);
                             }
                         });
@@ -340,12 +269,8 @@ document.addEventListener("DOMContentLoaded", function() {
                     } else {
                         if (req.status === 'PENDING') {
                             actionContainer.innerHTML = `
-                                <button class="btn btn-sm d-flex align-items-center justify-content-center p-0 me-2 shadow-sm" style="width: 30px; height: 30px; border-radius: 5px; background-color: #2b2b2b; border: 1px solid #ffffff;" onclick="respondReq('${req.req_id}', 'reject')">
-                                    <i class="bi bi-x" style="color: #dc3545; font-size: 1.2rem; font-weight: bold;"></i>
-                                </button>
-                                <button class="btn btn-sm d-flex align-items-center justify-content-center p-0 shadow-sm" style="width: 30px; height: 30px; border-radius: 5px; background-color: #2b2b2b; border: 1px solid #ffffff;" onclick="respondReq('${req.req_id}', 'accept')">
-                                    <i class="bi bi-check" style="color: #28a745; font-size: 1.2rem; font-weight: bold;"></i>
-                                </button>
+                                <button class="btn btn-sm d-flex align-items-center justify-content-center p-0 me-2 shadow-sm" style="width: 30px; height: 30px; border-radius: 5px; background-color: #2b2b2b; border: 1px solid #ffffff;" onclick="respondReq('${req.req_id}', 'reject')"><i class="bi bi-x" style="color: #dc3545; font-size: 1.2rem; font-weight: bold;"></i></button>
+                                <button class="btn btn-sm d-flex align-items-center justify-content-center p-0 shadow-sm" style="width: 30px; height: 30px; border-radius: 5px; background-color: #2b2b2b; border: 1px solid #ffffff;" onclick="respondReq('${req.req_id}', 'accept')"><i class="bi bi-check" style="color: #28a745; font-size: 1.2rem; font-weight: bold;"></i></button>
                             `;
                         } else {
                             let statusText = (req.status === 'ACCEPTED' || req.status === 'MUTUAL') ? 'diterima' : 'ditolak';
@@ -353,7 +278,6 @@ document.addEventListener("DOMContentLoaded", function() {
                             actionContainer.innerHTML = `<span class="fw-bold" style="color: ${statusColor}; font-size: 0.9rem;">${statusText}</span>`;
                         }
                     }
-                    
                     item.appendChild(nameContainer);
                     item.appendChild(actionContainer);
                     listContainer.appendChild(item);
@@ -363,37 +287,22 @@ document.addEventListener("DOMContentLoaded", function() {
 
     window.respondReq = function(reqId, action) {
         fetch(`/accounts/api/swipe/respond/${reqId}/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')
-            },
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
             body: JSON.stringify({ action: action })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.status === 'success') {
-                loadFriendRequests();
-            }
-        });
+        }).then(res => res.json()).then(data => { if (data.status === 'success') { loadFriendRequests(); } });
     }
 
     window.closeManualModal = function() {
         document.getElementById('friendProfileModal').classList.remove('show', 'd-block');
-        const backdrops = document.querySelectorAll('.modal-backdrop');
-        backdrops.forEach(backdrop => backdrop.remove());
-        document.body.classList.remove('modal-open');
-        document.body.style.paddingRight = '';
+        document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
+        document.body.classList.remove('modal-open'); document.body.style.paddingRight = '';
     }
 
     document.getElementById('fr-pull-tab').addEventListener('click', function() {
         if (!drawerOpen) {
-            drawer.style.top = '60px'; 
-            icon.className = 'bi bi-chevron-up';
-            loadFriendRequests();
+            drawer.style.top = '60px'; icon.className = 'bi bi-chevron-up'; loadFriendRequests();
         } else {
-            drawer.style.top = '-400px';
-            icon.className = 'bi bi-chevron-down';
+            drawer.style.top = '-400px'; icon.className = 'bi bi-chevron-down';
         }
         drawerOpen = !drawerOpen;
     });
