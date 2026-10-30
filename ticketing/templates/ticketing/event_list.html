@@ -54,12 +54,18 @@
         .banner-drawer { width: 85vw; max-width: 320px; }
         .swiper-slide { width: 80vw !important; }
         .laris-content { white-space: normal !important; }
-        .d-flex.gap-3.mb-5 { flex-direction: column; height: auto !important; }
-        .laris-card { height: 200px; flex-grow: 1 !important; margin-bottom: 1rem; }
+        
+        /* FIX: Reset container dan paksa flex-basis kembali ke wujud aslinya */
+        .laris-container { flex-direction: column; height: auto !important; }
+        .laris-card { 
+            height: 200px !important; 
+            flex-basis: auto !important; 
+            flex-grow: 1 !important; 
+            margin-bottom: 1rem; 
+        }
     }
 </style>
 
-<!-- Banner Interaktif & Tab Presisi di Tengah -->
 <div class="banner-container mb-4">
     <h1 class="display-6 fw-bold text-dark mb-0 text-nowrap">Konser <span style="color: #FF8C00;">KU</span></h1>
     
@@ -150,7 +156,9 @@
             <h4 class="fw-bold text-white mb-1">Laris Manis</h4>
             <p class="small text-secondary">Kumpulan event-event laris manis di KonserKU yang mungkin kamu sukai</p>
         </div>
-        <div class="d-flex w-100 gap-3 mb-5" style="height: 320px;">
+        
+        <!-- FIX HTML: Class laris-container ditambahkan di sini -->
+        <div class="d-flex w-100 gap-3 mb-5 laris-container" style="height: 320px;">
             {% for event in top_events %}
             <div class="laris-card position-relative overflow-hidden shadow-sm" onclick="window.location.href='{% url 'event_detail' event.id %}'" style="border-radius: 12px; transition: flex-grow 0.8s cubic-bezier(0.25, 1, 0.5, 1); cursor: pointer; flex-basis: 0; flex-grow: 1;">
                  {% if event.poster %}
@@ -353,6 +361,7 @@
 <script src="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.js"></script>
 <script>
     function updateUrlParam(key, value) { const url = new URL(window.location); url.searchParams.set(key, value); window.history.pushState({}, '', url); }
+    
     document.addEventListener('DOMContentLoaded', function() {
         const drawer = document.getElementById('friendBannerDrawer');
         const handle = document.getElementById('pullHandle');
@@ -360,6 +369,7 @@
             handle.addEventListener('click', function (e) { e.stopPropagation(); drawer.classList.toggle('is-pulled'); });
             document.addEventListener('click', function (e) { if (!drawer.contains(e.target)) { drawer.classList.remove('is-pulled'); } });
         }
+        
         const totalSlides = document.querySelectorAll('.event-swiper .swiper-slide').length;
         if (totalSlides > 0) {
             const isLoopActive = totalSlides >= 6;
@@ -369,6 +379,27 @@
                 loop: isLoopActive, loopedSlides: isLoopActive ? totalSlides : null, resistance: true, resistanceRatio: 0.65,
                 navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' }, keyboard: { enabled: true, onlyInViewport: true }
             });
+        }
+
+        const larisCards = document.querySelectorAll('.laris-card');
+        if (larisCards.length > 0) {
+            let activeIdx = 0;
+            function updateActiveCard() {
+                larisCards.forEach((card, index) => {
+                    if (index === activeIdx) {
+                        card.style.flexGrow = '8'; 
+                        card.querySelector('.laris-content').style.opacity = '1'; 
+                    } else {
+                        card.style.flexGrow = '1'; 
+                        card.querySelector('.laris-content').style.opacity = '0'; 
+                    }
+                });
+            }
+            updateActiveCard(); 
+            setInterval(() => {
+                activeIdx = (activeIdx + 1) % larisCards.length;
+                updateActiveCard();
+            }, 3000);
         }
     });
 </script>
