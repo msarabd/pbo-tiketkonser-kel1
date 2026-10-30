@@ -9,7 +9,6 @@
     <!-- Bootstrap Icons CDN -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <style>
-        /* Penyesuaian agar konten tidak tertutup navbar jika fixed, di sini statis jadi aman */
         body { background-color: #121212; color: #ffffff; min-height: 100vh; display: flex; flex-direction: column; }
     </style>
 </head>
@@ -18,31 +17,45 @@
     <!-- Navbar Utama -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm m-0">
         <div class="container">
-            <a class="navbar-brand fw-bold fs-4" href="{% url 'event_list' %}">Konser<span style="color: #FF8C00;">KU</span></a>
+            <!-- URL Dinamis: Admin ke Dasbor, User ke Halaman Utama -->
+            <a class="navbar-brand fw-bold fs-4" href="{% if user.is_staff or user.is_superuser %}{% url 'admin_dashboard' %}{% else %}{% url 'event_list' %}{% endif %}">
+                Konser<span style="color: #FF8C00;">KU</span>
+            </a>
             
-            <!-- Tombol Hamburger untuk Mobile -->
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             
-            <!-- Menu Navbar -->
             <div class="collapse navbar-collapse" id="navbarNav">
                 <div class="navbar-nav ms-auto d-flex align-items-lg-center mt-3 mt-lg-0 gap-2 gap-lg-0">
                     {% if user.is_authenticated %}
+                        
+                        <!-- 1. MENU SPESIFIK ADMIN -->
+                        {% if user.is_staff or user.is_superuser %}
+                            <a href="{% url 'admin_dashboard' %}" class="btn btn-danger btn-sm me-lg-2 fw-bold text-start text-lg-center" style="border-radius: 6px;">
+                                <i class="bi bi-shield-lock-fill"></i> Dashboard Admin
+                            </a>
+                        {% endif %}
+
+                        <!-- 2. PROFIL (TERBUKA UNTUK ADMIN & USER) -->
                         <a href="{% url 'accounts:profile' %}" class="btn btn-outline-warning btn-sm me-lg-3 fw-bold text-start text-lg-center" style="border-radius: 6px;">
                             <i class="bi bi-person-circle"></i> {{ user.username }}
                         </a>
                         
-                        {% if request.resolver_match.url_name == 'event_list' %}
-                            <a href="{% url 'ticket_history' %}" class="btn btn-outline-light btn-sm me-lg-2 text-start text-lg-center">Pesanan Saya</a>
-                        {% else %}
-                            <a href="{% url 'event_list' %}" class="btn btn-outline-light btn-sm me-lg-2 text-start text-lg-center">Halaman Utama</a>
+                        <!-- 3. MENU SPESIFIK USER BIASA (TERSEMBUNYI DARI ADMIN) -->
+                        {% if not user.is_staff and not user.is_superuser %}
+                            {% if request.resolver_match.url_name == 'event_list' %}
+                                <a href="{% url 'ticket_history' %}" class="btn btn-outline-light btn-sm me-lg-2 text-start text-lg-center">Pesanan Saya</a>
+                            {% else %}
+                                <a href="{% url 'event_list' %}" class="btn btn-outline-light btn-sm me-lg-2 text-start text-lg-center">Halaman Utama</a>
+                            {% endif %}
+
+                            <a href="{% url 'forum_list' %}" class="btn btn-sm me-lg-2 fw-semibold text-start text-lg-center {% if request.resolver_match.url_name == 'forum_list' or request.resolver_match.url_name == 'forum_room' %}text-white{% else %}text-dark{% endif %}" style="background-color: #FF8C00; border-radius: 6px;">
+                                Forum Diskusi
+                            </a>
                         {% endif %}
 
-                        <a href="{% url 'forum_list' %}" class="btn btn-sm me-lg-2 fw-semibold text-start text-lg-center {% if request.resolver_match.url_name == 'forum_list' or request.resolver_match.url_name == 'forum_room' %}text-white{% else %}text-dark{% endif %}" style="background-color: #FF8C00; border-radius: 6px;">
-                            Forum Diskusi
-                        </a>
-
+                        <!-- 4. LOGOUT -->
                         <form action="{% url 'logout' %}" method="POST" class="d-inline text-start text-lg-center mt-1 mt-lg-0">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-sm btn-danger w-100 w-lg-auto">Keluar</button>
@@ -78,7 +91,7 @@
         {% endblock %}
     </main>
 
-    <!-- Footer Baru -->
+    <!-- Footer -->
     <footer class="mt-auto py-4 text-white" style="background-color: #212529; border-top: 1px solid #2c3034;">
         <div class="container d-flex flex-column flex-md-row justify-content-between align-items-center">
             <small class="mb-3 mb-md-0">&copy; 2026 KonserKU. Hak Cipta Dilindungi.</small>

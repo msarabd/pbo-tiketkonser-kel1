@@ -13,6 +13,7 @@
 <div class="container py-3" style="max-width: 780px;">
     <div class="card shadow-lg rounded-4 overflow-hidden" style="background-color: #161618; border: 1px solid #28282b;">
         
+        <!-- Header Forum -->
         <div class="d-flex align-items-center justify-content-between px-3 py-2" style="background-color: #0d0d0e; border-bottom: 1px solid #28282b;">
             <div class="d-flex align-items-center gap-3">
                 <a href="{% url 'forum_list' %}" class="text-white text-decoration-none fs-5 fw-bold" title="Kembali">&larr;</a>
@@ -29,7 +30,6 @@
                     <div class="d-flex align-items-center gap-2">
                         <h6 class="mb-0 fw-bold text-white">{{ event.nama_konser }}</h6>
                         
-                        <!-- Logika Label di Header -->
                         {% if event.time_status == 'UPCOMING' %}
                             <span class="badge text-warning border border-warning bg-dark">UPCOMING</span>
                         {% elif event.time_status == 'LIVE' %}
@@ -48,9 +48,11 @@
             Khusus Pemegang Tiket Konser
         </div>
 
+        <!-- Wadah Obrolan -->
         <div id="chat-messages" class="card-body p-3 d-flex flex-column gap-3" style="height: 480px; overflow-y: auto; background-color: #0d0d0e;">
             {% for msg in forum_messages %}
                 {% if msg.sender == user %}
+                    <!-- 1. PESAN USER YANG SEDANG LOGIN (DIRI SENDIRI DI KANAN) -->
                     <div class="d-flex justify-content-end align-items-end gap-2">
                         <div class="card border-0 text-white rounded-3 p-2 shadow-sm" style="max-width: 72%; background-color: #FF8C00;">
                             <div class="d-flex justify-content-between align-items-center gap-3 mb-1">
@@ -74,15 +76,65 @@
                             {% if msg.image %}<div class="my-1 rounded overflow-hidden bg-black text-center border border-dark"><img src="{{ msg.image.url }}" alt="Upload" class="img-fluid" style="max-height: 220px; object-fit: cover;"></div>{% endif %}
                             <div class="text-end" style="color: rgba(255, 255, 255, 0.8); font-size: 0.65rem;">{{ msg.timestamp|date:"H:i" }}</div>
                         </div>
-                        <div class="rounded-circle d-flex justify-content-center align-items-center fw-bold shadow-sm flex-shrink-0" style="width: 32px; height: 32px; background-color: #1f1f22; color: #FF8C00; border: 1.5px solid #FF8C00; font-size: 0.8rem;">
-                            {{ user.username|slice:":1"|upper }}
+
+                        <!-- FOTO PROFIL ANDA -->
+                        {% if user.profile.profile_picture %}
+                            <img src="{{ user.profile.profile_picture.url }}" alt="{{ user.username }}" class="rounded-circle shadow-sm flex-shrink-0" style="width: 32px; height: 32px; object-fit: cover; border: 1.5px solid #FF8C00;">
+                        {% else %}
+                            <div class="rounded-circle d-flex justify-content-center align-items-center fw-bold shadow-sm flex-shrink-0" style="width: 32px; height: 32px; background-color: #1f1f22; color: #FF8C00; border: 1.5px solid #FF8C00; font-size: 0.8rem;">
+                                {{ user.username|slice:":1"|upper }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                {% elif msg.sender.is_staff or msg.sender.is_superuser %}
+                    <!-- 2. PESAN ADMIN DILIHAT USER (KIRI - MERAH MARUN & PERISAI) -->
+                    <div class="d-flex justify-content-start align-items-end gap-2">
+                        <!-- FOTO PROFIL ADMIN -->
+                        <div class="position-relative flex-shrink-0" style="width: 34px; height: 34px;">
+                            {% if msg.sender.profile.profile_picture %}
+                                <img src="{{ msg.sender.profile.profile_picture.url }}" alt="{{ msg.sender.username }}" class="rounded-circle shadow-sm" style="width: 34px; height: 34px; object-fit: cover; border: 2px solid #FFD700;">
+                                <span class="position-absolute bottom-0 end-0 rounded-circle bg-danger text-warning d-flex align-items-center justify-content-center border border-dark" style="width: 14px; height: 14px; font-size: 0.55rem;" title="Admin">
+                                    <i class="bi bi-shield-fill"></i>
+                                </span>
+                            {% else %}
+                                <div class="rounded-circle d-flex justify-content-center align-items-center fw-bold shadow-sm" style="width: 34px; height: 34px; background-color: #78281F; color: #FFD700; border: 2px solid #FFD700; font-size: 0.9rem;" title="Administrator KonserKU">
+                                    <i class="bi bi-shield-fill-check"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="card rounded-3 p-2 shadow-sm text-white" style="max-width: 72%; background: linear-gradient(135deg, #8B0000 0%, #A93226 100%); border: 1px solid #E74C3C !important;">
+                            <div class="d-flex justify-content-between align-items-center gap-3 mb-1">
+                                <div class="d-flex align-items-center gap-1">
+                                    <span class="fw-bold" style="color: #FFD700; font-size: 0.75rem;">{{ msg.sender.username }}</span>
+                                    <span class="badge bg-warning text-dark py-0 px-1 fw-bold" style="font-size: 0.6rem; letter-spacing: 0.5px;">ADMIN</span>
+                                </div>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm p-0 border-0" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="color: #ffffff; font-size: 1.1rem; line-height: 1; font-weight: bold;">&#8942;</button>
+                                    <ul class="dropdown-menu dropdown-menu-end shadow-lg" style="background-color: #1b1b1e; border: 1px solid #38383c; min-width: 120px;">
+                                        <li><button type="button" class="dropdown-item text-white py-2" onclick="copyMessage('{{ msg.message|escapejs }}')" style="font-size: 0.85rem;">Salin</button></li>
+                                    </ul>
+                                </div>
+                            </div>
+                            {% if msg.message %}<div class="text-white mb-1" style="font-size: 0.9rem; word-break: break-word; line-height: 1.35;">{{ msg.message }}</div>{% endif %}
+                            {% if msg.image %}<div class="my-1 rounded overflow-hidden bg-black text-center border border-dark"><img src="{{ msg.image.url }}" alt="Upload" class="img-fluid" style="max-height: 220px; object-fit: cover;"></div>{% endif %}
+                            <div class="text-end" style="color: rgba(255, 255, 255, 0.75); font-size: 0.65rem;">{{ msg.timestamp|date:"H:i" }}</div>
                         </div>
                     </div>
+
                 {% else %}
+                    <!-- 3. PESAN DARI PENONTON LAIN (KIRI) -->
                     <div class="d-flex justify-content-start align-items-end gap-2">
-                        <div class="rounded-circle d-flex justify-content-center align-items-center fw-bold shadow-sm flex-shrink-0" style="width: 32px; height: 32px; background-color: #1f1f22; color: #ffffff; border: 1.5px solid #38383c; font-size: 0.8rem;">
-                            {{ msg.sender.username|slice:":1"|upper }}
-                        </div>
+                        <!-- FOTO PROFIL PENONTON LAIN -->
+                        {% if msg.sender.profile.profile_picture %}
+                            <img src="{{ msg.sender.profile.profile_picture.url }}" alt="{{ msg.sender.username }}" class="rounded-circle shadow-sm flex-shrink-0" style="width: 32px; height: 32px; object-fit: cover; border: 1.5px solid #38383c;">
+                        {% else %}
+                            <div class="rounded-circle d-flex justify-content-center align-items-center fw-bold shadow-sm flex-shrink-0" style="width: 32px; height: 32px; background-color: #1f1f22; color: #ffffff; border: 1.5px solid #38383c; font-size: 0.8rem;">
+                                {{ msg.sender.username|slice:":1"|upper }}
+                            </div>
+                        {% endif %}
+
                         <div class="card rounded-3 p-2 shadow-sm" style="max-width: 72%; background-color: #1b1b1e; border: 1px solid #2a2a2e;">
                             <div class="d-flex justify-content-between align-items-center gap-3 mb-1">
                                 <span class="fw-bold" style="color: #FF8C00; font-size: 0.75rem;">{{ msg.sender.username }}</span>
@@ -101,14 +153,13 @@
             {% endfor %}
         </div>
 
-        <!-- Logika Notifikasi dan Penutupan Input -->
+        <!-- Bagian Input Pesan -->
         {% if event.is_forum_closed %}
             <div class="p-3 text-center text-white" style="background-color: #343a40;">
                 <h5 class="mb-0">🔒 Forum Ini Telah Ditutup</h5>
             </div>
         {% else %}
             {% if event.time_status == 'EXPIRED' %}
-                <!-- Peringatan Forum Segera Ditutup -->
                 <div class="px-2 py-1 text-center" style="background-color: rgba(255, 140, 0, 0.15); border-top: 1px solid rgba(255,140,0,0.5);">
                     <small class="text-warning fw-bold">Peringatan: Forum chat akan ditutup dalam {{ event.jam_tersisa_forum }} jam.</small>
                 </div>

@@ -37,7 +37,7 @@
                     
                     {% with first_item=pesanan.orderitem_set.first %}
                         {% if first_item %}
-                        <a href="{% url 'accounts:find_friends_swipe' first_item.category.event.id %}" class="btn btn-outline-dark fw-bold py-3 shadow-sm" style="border-radius: 8px;">
+                        <a href="{% url 'accounts:swipe_friends' first_item.category.event.id %}" class="btn btn-outline-dark fw-bold py-3 shadow-sm" style="border-radius: 8px;">
                             <i class="bi bi-people-fill me-2"></i> Cari Teman Konser
                         </a>
                         {% else %}

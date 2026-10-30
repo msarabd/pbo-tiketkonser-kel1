@@ -7,6 +7,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
 from django.views.generic import CreateView, TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.views import LoginView
 from django.contrib import messages
 from django.http import JsonResponse
 from django.urls import reverse_lazy
@@ -19,6 +20,24 @@ from .services import LocationService, SwipeMatchingService
 # Deteksi OS otomatis untuk path binary Tesseract OCR
 if sys.platform.startswith('win'):
     pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+
+
+class CustomLoginView(LoginView):
+    """
+    [OOP - INHERITANCE & POLIMORFISME]
+    Menimpa LoginView bawaan Django untuk mengarahkan pengguna secara dinamis
+    berdasarkan hak akses (role) tepat setelah otentikasi berhasil.
+    """
+    template_name = 'registration/login.html'
+
+    def get_success_url(self):
+        user = self.request.user
+        # Jika akun yang masuk adalah staff/superuser, alihkan ke dashboard admin
+        if user.is_staff or user.is_superuser:
+            return reverse_lazy('admin_dashboard')
+        
+        # Pengguna biasa diarahkan ke daftar konser
+        return reverse_lazy('event_list')
 
 
 class RegisterView(CreateView):
@@ -53,13 +72,9 @@ class ProfileView(LoginRequiredMixin, View):
     dan `View` sebagai basis pemrosesan HTTP.
     """
     def get(self, request):
-        """
-        [OOP - POLIMORFISME]
-        Menangani secara spesifik request dengan metode HTTP GET.
-        """
+        # HAPUS KODE PENCEGAT ADMIN DI SINI. Biarkan admin dan user mengakses profilnya.
         profile, _ = UserProfile.objects.get_or_create(user=request.user)
         return render(request, 'accounts/profile.html', {'profile': profile})
-
 
 class EditProfileView(LoginRequiredMixin, View):
     """
