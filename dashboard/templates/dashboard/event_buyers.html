@@ -5,76 +5,79 @@
 {% block page_heading %}Data Pembeli Tiket{% endblock %}
 
 {% block content %}
-<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center pb-3 mb-4 border-bottom" style="border-color: #e2e8f0 !important;">
-    <div>
-        <h4 class="fw-bold mb-1" style="color: #0f172a;">
-            <i class="bi bi-person-lines-fill text-warning me-1"></i> {{ event.nama_konser }}
-        </h4>
-        <p class="mb-0 text-muted" style="font-size: 0.95rem;">
-            Artis: <strong style="color: #FF8C00;">{{ event.artis }}</strong> 
-            <span class="mx-1">&bull;</span> {{ event.tanggal|date:"d M Y" }}
-        </p>
+<div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 14px; background-color: #ffffff; border: 1px solid #e2e8f0 !important;">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <i class="bi bi-people-fill text-warning fs-5"></i>
+                <h4 class="fw-bold text-dark mb-0">{{ event.nama_konser }}</h4>
+            </div>
+            <p class="text-muted small mb-0">
+                <span class="text-warning fw-semibold">Artis:</span> {{ event.artis }} &bull; 
+                <i class="bi bi-calendar-event ms-1"></i> {{ event.tanggal|date:"d M Y" }}
+            </p>
+        </div>
+        <div>
+            <a href="{% url 'dashboard:kelola_event' %}" class="btn btn-sm btn-outline-secondary px-3 py-2 fw-semibold" style="border-radius: 8px;">
+                <i class="bi bi-arrow-left me-1"></i> Kembali ke Daftar Event
+            </a>
+        </div>
     </div>
-    <a href="{% url 'dashboard:kelola_event' %}" class="btn btn-sm btn-light border shadow-sm px-3 fw-semibold" style="border-radius: 8px;">
-        <i class="bi bi-arrow-left"></i> Kembali ke Daftar Event
-    </a>
 </div>
 
-<div class="card border-0 shadow-sm mb-5 overflow-hidden" style="border-radius: 12px; background-color: #ffffff; border: 1px solid #e2e8f0 !important;">
+<div class="card border-0 shadow-sm p-4" style="border-radius: 14px; background-color: #ffffff; border: 1px solid #e2e8f0 !important;">
     <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
             <thead>
                 <tr style="font-size: 0.82rem; color: #64748b; background-color: #f8fafc; border-bottom: 2px solid #e2e8f0;">
-                    <th class="py-3 ps-4">WAKTU TRANSAKSI</th>
-                    <th class="py-3">USERNAME</th>
-                    <th class="py-3">KONTAK / EMAIL</th>
-                    <th class="py-3">KATEGORI TIKET</th>
-                    <th class="py-3">KODE TIKET (QR)</th>
-                    <th class="text-center py-3 pe-4">STATUS</th>
+                    <th class="py-2 ps-3">WAKTU TRANSAKSI</th>
+                    <th class="py-2">USERNAME</th>
+                    <th class="py-2">KONTAK WHATSAPP</th>
+                    <th class="py-2">KATEGORI TIKET</th>
+                    <th class="py-2">KODE TIKET (QR)</th>
+                    <th class="py-2 text-center pe-3">STATUS</th>
                 </tr>
             </thead>
             <tbody style="font-size: 0.88rem;">
                 {% for item in sold_items %}
                 <tr style="border-bottom: 1px solid #f1f5f9;">
-                    <td class="align-middle text-muted ps-4" style="font-size: 0.85rem;">
+                    <td class="ps-3 text-muted">
                         {{ item.order.waktu_pesan|date:"d M Y, H:i" }} WITA
                     </td>
-                    <td class="align-middle fw-bold" style="color: #0f172a;">
+                    <td class="fw-bold text-dark">
                         {{ item.order.user.username }}
                     </td>
-                    <td class="align-middle">
-                        <div class="fw-semibold" style="color: #FF8C00;">
-                            <i class="bi bi-whatsapp"></i> {{ item.order.user.no_hp|default:"-" }}
-                        </div>
-                        <span class="text-muted small">
-                            {{ item.order.user.email|default:"Tidak ada email" }}
-                        </span>
+                    <td>
+                        {% if item.order.user.no_hp %}
+                            <a href="https://wa.me/{{ item.order.user.no_hp }}" target="_blank" class="text-decoration-none fw-semibold" style="color: #FF8C00;">
+                                <i class="bi bi-whatsapp me-1"></i> {{ item.order.user.no_hp }}
+                            </a>
+                        {% else %}
+                            <span class="text-muted small">-</span>
+                        {% endif %}
                     </td>
-                    <td class="align-middle">
-                        <span class="badge" style="background-color: #fff7ed; color: #FF8C00; border: 1px solid #fed7aa;">
+                    <td>
+                        <span class="badge border" style="background-color: #fff7ed; color: #FF8C00; border-color: #fed7aa !important;">
                             {{ item.category.nama_kategori }}
                         </span>
                     </td>
-                    <td class="align-middle font-monospace small" style="color: #334155;">
+                    <td>
                         {% if item.ticket %}
-                            <code>{{ item.ticket.kode_qr|slice:":16" }}...</code>
+                            <code class="text-danger fw-bold" style="font-size: 0.82rem;">{{ item.ticket.ticket_code|truncatechars:18 }}</code>
                         {% else %}
-                            <span class="text-muted fst-italic">Belum Terbit</span>
+                            <span class="text-muted small">-</span>
                         {% endif %}
                     </td>
-                    <td class="text-center align-middle pe-4">
-                        {% if item.ticket.sudah_dipakai %}
-                            <span class="badge fw-semibold px-2 py-1" style="background-color: #fef2f2; color: #dc2626; border: 1px solid #fecaca;">Terpakai</span>
-                        {% else %}
-                            <span class="badge fw-semibold px-2 py-1" style="background-color: #dcfce7; color: #15803d; border: 1px solid #bbf7d0;">Aktif</span>
-                        {% endif %}
+                    <td class="text-center pe-3">
+                        <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+                            Aktif
+                        </span>
                     </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="6" class="text-center py-5 text-muted">
-                        <i class="bi bi-inbox fs-2 d-block mb-2" style="color: #cbd5e1;"></i>
-                        Belum ada tiket lunas (PAID) yang tercatat untuk konser ini.
+                    <td colspan="6" class="text-center py-4 text-muted small">
+                        Belum ada tiket yang terjual untuk konser ini.
                     </td>
                 </tr>
                 {% endfor %}

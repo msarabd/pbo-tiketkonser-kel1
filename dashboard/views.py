@@ -10,9 +10,9 @@ from ticketing.models import Venue, Event, TicketCategory, OrderItem, ForumMessa
 from ticketing.views import MessageCensorService
 
 # Impor dari layer internal Dashboard
-from .forms import VenueForm, EventForm, TicketCategoryForm
+from .forms import VenueForm, EventForm, TicketCategoryForm, AdminUserEditForm
 from .services import DashboardAnalyticsService, DashboardModerationService
-
+from accounts.forms import UserProfileForm
 
 @staff_member_required(login_url='login')
 def dashboard_index(request):
@@ -203,16 +203,23 @@ def edit_user(request, user_id):
         return redirect('dashboard:kelola_user')
 
     if request.method == 'POST':
-        user_form = UserEditForm(request.POST, instance=target_user)
+        user_form = AdminUserEditForm(request.POST, instance=target_user)
         profile_form = UserProfileForm(request.POST, request.FILES, instance=target_profile)
         
         if user_form.is_valid() and profile_form.is_valid():
-            user_form.save()
+            user = user_form.save(commit=False)
+            new_password = user_form.cleaned_data.get('password_baru')
+            
+            # Hash password baru jika diisi
+            if new_password:
+                user.set_password(new_password)
+                
+            user.save()
             profile_form.save()
-            messages.success(request, f'Data pengguna {target_user.username} berhasil diintervensi dan diperbarui.')
+            messages.success(request, f'Data profil dan kredensial pengguna "{user.username}" berhasil diperbarui.')
             return redirect('dashboard:kelola_user')
     else:
-        user_form = UserEditForm(instance=target_user)
+        user_form = AdminUserEditForm(instance=target_user)
         profile_form = UserProfileForm(instance=target_profile)
 
     return render(request, 'dashboard/edit_user.html', {
