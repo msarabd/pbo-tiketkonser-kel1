@@ -104,3 +104,9 @@ MAILERS = {
         'BACKEND': 'django.core.mail.backends.console.EmailBackend',
     },
 }
+
+# Tambahkan baris ini di bagian paling bawah
+AUTHENTICATION_BACKENDS = [
+    'accounts.backends.MultiFieldModelBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]

@@ -1,90 +1,122 @@
 import json
 import re
 import sys
+import random
+import requests
 import pytesseract
 from PIL import Image
+from decouple import config
+from django.utils import timezone
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
 from django.views.generic import CreateView, TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LoginView
+from django.contrib.auth import login
 from django.contrib import messages
 from django.http import JsonResponse
 from django.urls import reverse_lazy
-
 from .models import UserProfile, FriendRequest, User
-from .forms import UserProfileForm, CustomUserCreationForm, UserEditForm
+from .forms import (
+    UserProfileForm, 
+    CustomUserCreationForm, 
+    UserEditForm, 
+    MultiLoginForm, 
+    ForgotPasswordForm, 
+    ResetPasswordForm
+)
 from ticketing.models import Event, OrderItem
 from .services import LocationService, SwipeMatchingService
 
-# Deteksi OS otomatis untuk path binary Tesseract OCR
 if sys.platform.startswith('win'):
     pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
-
 class CustomLoginView(LoginView):
-    """
-    [OOP - INHERITANCE & POLIMORFISME]
-    Menimpa LoginView bawaan Django untuk mengarahkan pengguna secara dinamis
-    berdasarkan hak akses (role) tepat setelah otentikasi berhasil.
-    """
     template_name = 'registration/login.html'
+    form_class = MultiLoginForm # Gunakan form kustom yang baru dibuat
 
     def get_success_url(self):
         user = self.request.user
-        # Jika akun yang masuk adalah staff/superuser, alihkan ke dashboard admin
         if user.is_staff or user.is_superuser:
             return reverse_lazy('admin_dashboard')
-        
-        # Pengguna biasa diarahkan ke daftar konser
         return reverse_lazy('event_list')
-
-
+    
 class RegisterView(CreateView):
-    """
-    Penjelasan Class: Menangani proses registrasi akun baru.
-
-    [OOP - INHERITANCE]
-    Mewarisi `CreateView` bawaan Django untuk merender dan memvalidasi formulir pendaftaran.
-    """
     form_class = CustomUserCreationForm
     template_name = 'registration/register.html'
-    success_url = reverse_lazy('login')
-
+    
     def form_valid(self, form):
-        """
-        Penjelasan Method: Dieksekusi otomatis ketika data registrasi valid.
+        user = form.save(commit=False)
+        user.is_active = False 
+        
+        otp = str(random.randint(100000, 999999))
+        user.otp_code = otp
+        user.otp_created_at = timezone.now()
+        user.save() 
 
-        [OOP - POLIMORFISME]
-        Menimpa (override) metode `form_valid()` dari class induk CreateView 
-        untuk menyisipkan Flash Message sebelum dialihkan ke halaman login.
-        """
-        messages.success(self.request, 'Akun berhasil dibuat! Silakan masuk.')
-        return super().form_valid(form)
+        fonnte_token = config('FONNTE_TOKEN') 
+        try:
+            response = requests.post(
+                'https://api.fonnte.com/send',
+                headers={
+                    'Authorization': fonnte_token
+                },
+                data={
+                    'target': user.no_hp,
+                    'message': f'Kode OTP KonserKU kamu adalah {otp}. Berlaku selama 5 menit.'
+                }
+            )
+            response_data = response.json()
+            if not response_data.get('status'):
+                messages.warning(self.request, f"Gagal mengirim pesan WA: {response_data.get('reason', 'Alasan tidak diketahui')}")
+        except Exception as e:
+            messages.error(self.request, f"Terjadi kesalahan sistem saat menghubungi API WhatsApp: {str(e)}")
 
+        self.request.session['verify_user_id'] = str(user.id)
+        return redirect('accounts:verify_wa')
+
+
+class VerifyOTPView(View):
+    def get(self, request):
+        if 'verify_user_id' not in request.session:
+            return redirect('accounts:register')
+        return render(request, 'registration/verify_wa.html')
+
+    def post(self, request):
+        user_id = request.session.get('verify_user_id')
+        if not user_id:
+            return redirect('accounts:register')
+            
+        otp_input = request.POST.get('otp')
+        user = get_object_or_404(User, id=user_id)
+
+        if user.otp_code == otp_input:
+            time_diff = timezone.now() - user.otp_created_at
+            if time_diff.total_seconds() > 300:
+                messages.error(request, "Kode OTP kedaluwarsa. Silakan daftar ulang.")
+                user.delete() 
+                del request.session['verify_user_id']
+                return redirect('accounts:register')
+
+            user.is_active = True
+            user.otp_code = None
+            user.save()
+            del request.session['verify_user_id']
+            
+            login(request, user)
+            messages.success(request, "Nomor WhatsApp berhasil diverifikasi! Selamat datang di KonserKU.")
+            return redirect('event_list') 
+            
+        messages.error(request, "Kode OTP salah. Silakan coba lagi.")
+        return render(request, 'registration/verify_wa.html')
 
 class ProfileView(LoginRequiredMixin, View):
-    """
-    Penjelasan Class: Menampilkan halaman ringkasan profil pengguna yang sedang login.
-
-    [OOP - INHERITANCE]
-    Mewarisi `LoginRequiredMixin` untuk memblokir akses tanpa autentikasi, 
-    dan `View` sebagai basis pemrosesan HTTP.
-    """
     def get(self, request):
-        # HAPUS KODE PENCEGAT ADMIN DI SINI. Biarkan admin dan user mengakses profilnya.
         profile, _ = UserProfile.objects.get_or_create(user=request.user)
         return render(request, 'accounts/profile.html', {'profile': profile})
 
 class EditProfileView(LoginRequiredMixin, View):
-    """
-    Penjelasan Class: Mengelola perubahan data akun (nomor kontak) dan profil sosial.
-    """
     def get(self, request):
-        """
-        [OOP - POLIMORFISME]
-        Menyiapkan formulir UserEditForm dan UserProfileForm terisi data saat request GET.
-        """
         profile, _ = UserProfile.objects.get_or_create(user=request.user)
         user_form = UserEditForm(instance=request.user)
         profile_form = UserProfileForm(instance=profile)
@@ -94,10 +126,6 @@ class EditProfileView(LoginRequiredMixin, View):
         })
 
     def post(self, request):
-        """
-        [OOP - POLIMORFISME]
-        Memproses validasi dan penyimpanan multi-form saat formulir disubmit (POST).
-        """
         profile, _ = UserProfile.objects.get_or_create(user=request.user)
         user_form = UserEditForm(request.POST, instance=request.user)
         profile_form = UserProfileForm(request.POST, request.FILES, instance=profile)
@@ -113,24 +141,10 @@ class EditProfileView(LoginRequiredMixin, View):
             'form': profile_form
         })
 
-
 class SwipeFriendsView(LoginRequiredMixin, TemplateView):
-    """
-    Penjelasan Class: Mengontrol render antarmuka swipe cari teman konser ala Tinder.
-
-    [OOP - INHERITANCE]
-    Mewarisi `TemplateView` untuk rendering antarmuka HTML.
-    """
     template_name = 'accounts/swipe_friends.html'
 
     def dispatch(self, request, *args, **kwargs):
-        """
-        Penjelasan Method: Menjadi pintu gerbang izin akses sebelum template dimuat.
-
-        [OOP - POLIMORFISME]
-        Menimpa metode `dispatch()` bawaan kelas induk untuk memastikan pengguna 
-        memiliki tiket lunas sebelum diperbolehkan membuka fitur cari teman.
-        """
         event_id = self.kwargs.get('event_id')
         event = get_object_or_404(Event, id=event_id)
 
@@ -147,12 +161,6 @@ class SwipeFriendsView(LoginRequiredMixin, TemplateView):
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
-        """
-        Penjelasan Method: Menyuntikkan konteks tambahan ke template.
-
-        [OOP - POLIMORFISME]
-        Menimpa `get_context_data()` untuk menyertakan objek event dan penanda tutorial.
-        """
         context = super().get_context_data(**kwargs)
         event_id = self.kwargs.get('event_id')
         event = get_object_or_404(Event, id=event_id)
@@ -162,17 +170,8 @@ class SwipeFriendsView(LoginRequiredMixin, TemplateView):
         context['show_tutorial'] = not profile.tutorial_seen_events.filter(id=event.id).exists()
         return context
 
-
 class ApiSwipeDataView(LoginRequiredMixin, View):
-    """
-    Penjelasan Class: Endpoint API untuk menyuplai daftar profil penonton lain.
-    """
     def get(self, request, event_id):
-        """
-        [OOP - ABSTRAKSI]
-        View ini mendelegasikan query filtering relasi dan kalkulasi jarak geospasial 
-        ke `SwipeMatchingService`. View hanya berfokus pada format output JSON.
-        """
         matching_service = SwipeMatchingService(request.user, event_id)
         buyers = matching_service.get_potential_matches()
 
@@ -205,11 +204,7 @@ class ApiSwipeDataView(LoginRequiredMixin, View):
 
         return JsonResponse({'profiles': data})
 
-
 class ApiSendFriendRequestView(LoginRequiredMixin, View):
-    """
-    Penjelasan Class: Endpoint API untuk mengirim permintaan swipe right (like/match).
-    """
     def post(self, request, event_id):
         try:
             data = json.loads(request.body)
@@ -238,15 +233,10 @@ class ApiSendFriendRequestView(LoginRequiredMixin, View):
                     defaults={'status': 'PENDING'}
                 )
                 return JsonResponse({'status': 'success', 'created': created})
-
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
 
-
 class ApiRespondFriendRequestView(LoginRequiredMixin, View):
-    """
-    Penjelasan Class: Endpoint API untuk menerima atau menolak permintaan pertemanan.
-    """
     def post(self, request, request_id):
         try:
             data = json.loads(request.body)
@@ -264,21 +254,11 @@ class ApiRespondFriendRequestView(LoginRequiredMixin, View):
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
 
-
 class ApiGetFriendRequestsView(LoginRequiredMixin, View):
-    """
-    Penjelasan Class: Endpoint API untuk melihat daftar permintaan masuk dan keluar.
-    """
     def _format_requests(self, queryset, direction, my_lat, my_lon):
-        """
-        [OOP - ENKAPSULASI]
-        Metode helper privat (ditandai dengan prefix underscore) untuk mengolah 
-        data JSON agar tidak diekspos langsung ke luar kelas.
-        """
         formatted = []
         for req in queryset:
             p = req.receiver.profile if direction == 'sent' else req.sender.profile
-
             dist_str = "Jarak tidak diketahui"
             if my_lat is not None and my_lon is not None and p.latitude is not None and p.longitude is not None:
                 try:
@@ -323,22 +303,14 @@ class ApiGetFriendRequestsView(LoginRequiredMixin, View):
 
         return JsonResponse({'requests': data})
 
-
 class ApiMarkTutorialSeenView(LoginRequiredMixin, View):
-    """
-    Penjelasan Class: Endpoint API untuk menandai bahwa pengguna telah melihat tutorial swipe.
-    """
     def post(self, request, event_id):
         event = get_object_or_404(Event, id=event_id)
         profile, _ = UserProfile.objects.get_or_create(user=request.user)
         profile.tutorial_seen_events.add(event)
         return JsonResponse({'status': 'success'})
 
-
 class ApiOcrKtpView(LoginRequiredMixin, View):
-    """
-    Penjelasan Class: Endpoint API untuk ekstraksi 16 digit NIK dari foto KTP menggunakan Tesseract OCR.
-    """
     def post(self, request):
         if 'image' not in request.FILES:
             return JsonResponse({'error': 'Gambar tidak ditemukan'}, status=400)
@@ -356,3 +328,99 @@ class ApiOcrKtpView(LoginRequiredMixin, View):
 
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
+
+# ================= FITUR LUPA PASSWORD =================
+class ForgotPasswordView(View):
+    def get(self, request):
+        form = ForgotPasswordForm()
+        return render(request, 'registration/forgot_password.html', {'form': form})
+
+    def post(self, request):
+        form = ForgotPasswordForm(request.POST)
+        if form.is_valid():
+            no_hp = form.cleaned_data['no_hp']
+            user = User.objects.filter(no_hp=no_hp).first()
+
+            if user:
+                otp = str(random.randint(100000, 999999))
+                user.otp_code = otp
+                user.otp_created_at = timezone.now()
+                user.save()
+
+                fonnte_token = config('FONNTE_TOKEN') 
+                try:
+                    response = requests.post(
+                        'https://api.fonnte.com/send',
+                        headers={'Authorization': fonnte_token},
+                        data={
+                            'target': user.no_hp,
+                            'message': f'Kode OTP Reset Password KonserKU kamu adalah {otp}. JANGAN BERIKAN KODE INI KE SIAPAPUN. Berlaku selama 5 menit.'
+                        }
+                    )
+                except Exception:
+                    messages.error(request, "Sistem gagal mengirim pesan WhatsApp.")
+                    return redirect('accounts:forgot_password')
+
+                request.session['reset_user_id'] = str(user.id)
+                return redirect('accounts:verify_reset_wa')
+            else:
+                messages.error(request, "Nomor WhatsApp tidak terdaftar dalam sistem.")
+        return render(request, 'registration/forgot_password.html', {'form': form})
+
+class VerifyResetOTPView(View):
+    def get(self, request):
+        if 'reset_user_id' not in request.session:
+            return redirect('accounts:forgot_password')
+        return render(request, 'registration/verify_reset_wa.html')
+
+    def post(self, request):
+        user_id = request.session.get('reset_user_id')
+        if not user_id:
+            return redirect('accounts:forgot_password')
+            
+        otp_input = request.POST.get('otp')
+        user = get_object_or_404(User, id=user_id)
+
+        if user.otp_code == otp_input:
+            time_diff = timezone.now() - user.otp_created_at
+            if time_diff.total_seconds() > 300:
+                messages.error(request, "Kode OTP kedaluwarsa. Silakan minta kode baru.")
+                del request.session['reset_user_id']
+                return redirect('accounts:forgot_password')
+
+            user.otp_code = None
+            user.save()
+            # Tandai bahwa OTP sudah valid agar bisa akses halaman ganti password
+            request.session['otp_verified_for_reset'] = True 
+            return redirect('accounts:set_new_password')
+            
+        messages.error(request, "Kode OTP salah.")
+        return render(request, 'registration/verify_reset_wa.html')
+
+class SetNewPasswordView(View):
+    def get(self, request):
+        if not request.session.get('otp_verified_for_reset'):
+            return redirect('accounts:login')
+        form = ResetPasswordForm()
+        return render(request, 'registration/set_new_password.html', {'form': form})
+
+    def post(self, request):
+        if not request.session.get('otp_verified_for_reset'):
+            return redirect('accounts:login')
+            
+        user_id = request.session.get('reset_user_id')
+        user = get_object_or_404(User, id=user_id)
+        
+        form = ResetPasswordForm(request.POST)
+        if form.is_valid():
+            user.set_password(form.cleaned_data['password'])
+            user.save()
+            
+            # Bersihkan sesi keamanan
+            del request.session['reset_user_id']
+            del request.session['otp_verified_for_reset']
+            
+            messages.success(request, "Password berhasil diubah. Silakan login dengan password baru.")
+            return redirect('accounts:login')
+            
+        return render(request, 'registration/set_new_password.html', {'form': form})

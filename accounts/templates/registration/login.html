@@ -18,22 +18,39 @@
                 <p class="text-secondary small">Silakan masuk untuk melanjutkan pemesanan</p>
             </div>
 
+            <!-- Menampilkan Flash Message (contoh: sukses reset password / registrasi) -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show p-2 small" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close p-2" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
             {% if form.errors %}
                 <div class="alert alert-danger p-2 small text-center">
-                    Username atau password salah. Silakan coba lagi.
+                    Username/Nomor WhatsApp atau password salah. Silakan coba lagi.
                 </div>
             {% endif %}
             
             <form method="POST">
                 {% csrf_token %}
                 <div class="mb-3 text-dark text-start">
-                    <label class="form-label small fw-bold">Username</label>
-                    <input type="text" name="username" class="form-control" required autofocus>
+                    <label class="form-label small fw-bold">Username atau Nomor WhatsApp</label>
+                    <input type="text" name="username" class="form-control" placeholder="Masukkan username atau no. WA" required autofocus>
                 </div>
                 
-                <div class="mb-4 text-dark text-start">
+                <div class="mb-2 text-dark text-start">
                     <label class="form-label small fw-bold">Password</label>
-                    <input type="password" name="password" class="form-control" required>
+                    <input type="password" name="password" class="form-control" placeholder="Masukkan password" required>
+                </div>
+
+                <!-- Tautan Lupa Password -->
+                <div class="d-flex justify-content-end mb-3">
+                    <a href="{% url 'accounts:forgot_password' %}" class="small fw-bold text-decoration-none" style="color: #FF8C00;">
+                        Lupa password?
+                    </a>
                 </div>
                 
                 <button type="submit" class="btn w-100 fw-bold text-white py-2 shadow-sm" style="background-color: #112250; border-radius: 8px;">Masuk</button>
@@ -47,4 +64,4 @@
     </div>
 
 </div>
-{% endblock %}  
+{% endblock %}

@@ -8,28 +8,18 @@ from PIL import Image
 from ticketing.models import Event
 
 
-# ==============================================================================
-# USER MODEL (AUTENTIKASI UTAMA)
-# ==============================================================================
 class User(AbstractUser):
-    """
-    [OOP - INHERITANCE]
-    Mewarisi kelas AbstractUser bawaan Django. 
-    Secara otomatis mendapatkan seluruh mekanisme autentikasi, hashing password, 
-    dan permission tanpa perlu menulis ulang dari nol, sambil menambahkan field kustom UUID dan no_hp.
-    """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    no_hp = models.CharField(max_length=15, blank=True)
+    no_hp = models.CharField(
+        max_length=15, 
+        unique=True, 
+        error_messages={'unique': "Nomor WhatsApp ini sudah terdaftar pada akun lain."}
+    )
+    otp_code = models.CharField(max_length=6, blank=True, null=True)
+    otp_created_at = models.DateTimeField(blank=True, null=True)
 
 
-# ==============================================================================
-# USER PROFILE (DATA SOSIAL & TINDER KONSER)
-# ==============================================================================
 class UserProfile(models.Model):
-    """
-    [OOP - INHERITANCE]
-    Mewarisi models.Model untuk representasi tabel profil pengguna di database.
-    """
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     
     nik = models.CharField(max_length=16, unique=True, blank=True, null=True, help_text="Nomor Induk Kependudukan 16 digit")
@@ -84,11 +74,6 @@ class UserProfile(models.Model):
 
     @property
     def age(self):
-        """
-        [OOP - ENKAPSULASI]
-        Membungkus logika perhitungan umur dari tanggal lahir.
-        Komponen luar hanya perlu memanggil `profile.age` layaknya membaca variabel biasa.
-        """
         if self.birth_date:
             today = date.today()
             return today.year - self.birth_date.year - ((today.month, today.day) < (self.birth_date.month, self.birth_date.day))
@@ -98,12 +83,6 @@ class UserProfile(models.Model):
         return f"Profil dari {self.user.username}"
 
     def save(self, *args, **kwargs):
-        """
-        [OOP - POLIMORFISME]
-        Melakukan override (menimpa) metode save() milik models.Model.
-        Menyuntikkan verifikasi integritas file gambar dan kompresi resolusi 
-        otomatis sebelum dan sesudah data disimpan ke database.
-        """
         image_fields = [self.profile_picture, self.profile_picture_2, self.profile_picture_3, self.background_image, self.foto_ktp]
 
         for field in image_fields:
@@ -127,14 +106,7 @@ class UserProfile(models.Model):
                     pass
 
 
-# ==============================================================================
-# FRIEND REQUEST (RELASI SWIPE MATCHING)
-# ==============================================================================
 class FriendRequest(models.Model):
-    """
-    [OOP - INHERITANCE]
-    Mewarisi models.Model untuk mencatat aksi swipe right (match/request) antar penonton konser.
-    """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     sender = models.ForeignKey(User, related_name='sent_requests', on_delete=models.CASCADE)
     receiver = models.ForeignKey(User, related_name='received_requests', on_delete=models.CASCADE)

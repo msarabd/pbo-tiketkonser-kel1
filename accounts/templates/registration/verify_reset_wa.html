@@ -1,0 +1,44 @@
+{% extends 'ticketing/base.html' %}
+{% load static %}
+
+{% block content_wrapper %}
+<div class="row g-0 flex-grow-1 w-100">
+    <!-- Kolom Kiri: Gambar Static -->
+    <div class="col-md-6 d-none d-md-block" style="background-image: url('{% static "images/login_bg.jpg" %}'); background-size: cover; background-position: center; min-height: 100%;">
+    </div>
+
+    <!-- Kolom Kanan: Form OTP -->
+    <div class="col-md-6 bg-white d-flex align-items-center justify-content-center p-4">
+        <div class="w-100" style="max-width: 450px;">
+            <div class="text-center mb-4">
+                <h2 class="fw-bold text-dark mb-1">Verifikasi OTP</h2>
+                <p class="text-secondary small">Masukkan 6 digit kode yang dikirim ke nomor WhatsApp kamu</p>
+            </div>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show p-2 small" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close p-2" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="POST" action="{% url 'accounts:verify_reset_wa' %}">
+                {% csrf_token %}
+                <div class="mb-4 text-dark text-start">
+                    <label class="form-label small fw-bold">Kode OTP (6 Digit)</label>
+                    <input type="text" name="otp" class="form-control text-center fw-bold fs-4" maxlength="6" placeholder="------" required autofocus autocomplete="off">
+                </div>
+                
+                <button type="submit" class="btn w-100 fw-bold text-white py-2 shadow-sm" style="background-color: #112250; border-radius: 8px;">Verifikasi OTP</button>
+            </form>
+
+            <div class="text-center mt-4 border-top pt-3">
+                <span class="small text-secondary">Tidak menerima kode?</span>
+                <a href="{% url 'accounts:forgot_password' %}" class="small fw-bold text-decoration-none" style="color: #FF8C00;"> Kirim ulang</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

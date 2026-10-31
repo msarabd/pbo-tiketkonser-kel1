@@ -1,10 +1,41 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import get_user_model
 from .models import UserProfile
 
 User = get_user_model()
 
+# ================= FORM MULTILOGIN =================
+class MultiLoginForm(AuthenticationForm):
+    username = forms.CharField(
+        label='Username atau Nomor WhatsApp',
+        widget=forms.TextInput(attrs={'class': 'form-control', 'autofocus': True, 'placeholder': 'Masukkan username atau nomor WA'})
+    )
+
+# ================= FORM LUPA PASSWORD =================
+class ForgotPasswordForm(forms.Form):
+    no_hp = forms.CharField(
+        label='Nomor WhatsApp terdaftar',
+        max_length=15,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Contoh: 081234567890'})
+    )
+
+class ResetPasswordForm(forms.Form):
+    password = forms.CharField(
+        label='Password Baru',
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'minlength': '8', 'maxlength': '15'})
+    )
+    confirm_password = forms.CharField(
+        label='Konfirmasi Password Baru',
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'minlength': '8', 'maxlength': '15'})
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if cleaned_data.get('password') != cleaned_data.get('confirm_password'):
+            raise forms.ValidationError("Password tidak cocok.")
+        return cleaned_data
+    
 class ModernClearableFileInput(forms.ClearableFileInput):
     template_name = 'accounts/custom_clearable_file_input.html'
 
@@ -23,12 +54,23 @@ class CustomUserCreationForm(UserCreationForm):
         self.fields['username'].max_length = 20
         self.fields['username'].widget.attrs['maxlength'] = '20'
         
+        self.fields['no_hp'].required = True
+        self.fields['no_hp'].widget.attrs.update({'placeholder': 'Contoh: 081234567890'})
+        
         if 'password1' in self.fields:
             self.fields['password1'].help_text = "Wajib 8 hingga 15 karakter."
             self.fields['password1'].widget.attrs.update({'minlength': '8', 'maxlength': '15'})
             
         if 'password2' in self.fields:
             self.fields['password2'].widget.attrs.update({'minlength': '8', 'maxlength': '15'})
+
+    def clean_no_hp(self):
+        no_hp = self.cleaned_data.get('no_hp')
+        if not no_hp.isdigit():
+            raise forms.ValidationError("Nomor WhatsApp hanya boleh berisi angka.")
+        if len(no_hp) < 10:
+            raise forms.ValidationError("Nomor WhatsApp terlalu pendek (minimal 10 digit).")
+        return no_hp
 
     def clean_password1(self):
         password = self.cleaned_data.get('password1')
@@ -58,35 +100,16 @@ class UserProfileForm(forms.ModelForm):
     class Meta:
         model = UserProfile
         fields = [
-            'nik', 
-            'nama_ktp',
-            'foto_ktp',
-            'background_image', 
-            'profile_picture', 
-            'profile_picture_2', 
-            'profile_picture_3',
-            'bio', 
-            'gender', 
-            'birth_date', 
-            'concert_vibe', 
-            'social_energy', 
-            'matching_goal',
-            'latitude',
-            'longitude'
+            'nik', 'nama_ktp', 'foto_ktp', 'background_image', 'profile_picture', 
+            'profile_picture_2', 'profile_picture_3', 'bio', 'gender', 'birth_date', 
+            'concert_vibe', 'social_energy', 'matching_goal', 'latitude', 'longitude'
         ]
         labels = {
-            'nik': 'NIK KTP',
-            'nama_ktp': 'Nama Sesuai KTP',
-            'foto_ktp': 'Foto KTP',
-            'background_image': 'Foto Background',
-            'profile_picture': 'Foto Profil Utama',
-            'profile_picture_2': 'Foto Profil 2',
-            'profile_picture_3': 'Foto Profil 3',
-            'bio': 'Tentang Saya',
-            'gender': 'Jenis Kelamin',
-            'birth_date': 'Tanggal Lahir',
-            'concert_vibe': 'Gaya Nonton Konser',
-            'social_energy': 'Energi Sosial',
+            'nik': 'NIK KTP', 'nama_ktp': 'Nama Sesuai KTP', 'foto_ktp': 'Foto KTP',
+            'background_image': 'Foto Background', 'profile_picture': 'Foto Profil Utama',
+            'profile_picture_2': 'Foto Profil 2', 'profile_picture_3': 'Foto Profil 3',
+            'bio': 'Tentang Saya', 'gender': 'Jenis Kelamin', 'birth_date': 'Tanggal Lahir',
+            'concert_vibe': 'Gaya Nonton Konser', 'social_energy': 'Energi Sosial',
             'matching_goal': 'Tujuan Cari Teman',
         }
         widgets = {
