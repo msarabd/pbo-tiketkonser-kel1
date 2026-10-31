@@ -1,0 +1,163 @@
+{% extends 'dashboard/base_admin.html' %}
+
+{% block title %}Monitor Forum - KonserKU{% endblock %}
+{% block breadcrumb %}MODERASI KOMUNITAS{% endblock %}
+{% block page_heading %}Monitor Forum: {{ event.nama_konser }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0" style="max-width: 800px; margin: 0 auto;">
+    <div class="card shadow-sm border-0 overflow-hidden" style="border-radius: 12px; background-color: #ffffff; border: 1px solid #e2e8f0 !important;">
+        
+        <!-- Header Forum Monitor -->
+        <div class="d-flex align-items-center justify-content-between px-4 py-3 border-bottom" style="background-color: #f8fafc; border-color: #e2e8f0 !important;">
+            <div class="d-flex align-items-center gap-3">
+                <a href="{% url 'dashboard:kelola_event' %}" class="text-muted text-decoration-none fs-5" title="Kembali">&larr;</a>
+                
+                <div class="rounded-circle overflow-hidden shadow-sm flex-shrink-0 border" style="width: 44px; height: 44px; border-color: #e2e8f0 !important;">
+                    {% if event.poster %}
+                        <img src="{{ event.poster.url }}" alt="{{ event.nama_konser }}" style="width: 100%; height: 100%; object-fit: cover;">
+                    {% else %}
+                        <div class="w-100 h-100 d-flex justify-content-center align-items-center bg-light fw-bold text-dark fs-5">
+                            {{ event.nama_konser|slice:":1"|upper }}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <div class="d-flex align-items-center gap-2">
+                        <h6 class="mb-0 fw-bold text-dark">{{ event.nama_konser }}</h6>
+                        
+                        {% if event.time_status == 'UPCOMING' %}
+                            <span class="badge text-primary bg-primary-subtle border border-primary-subtle">UPCOMING</span>
+                        {% elif event.time_status == 'LIVE' %}
+                            <span class="badge text-danger bg-danger-subtle border border-danger-subtle">🔴 LIVE</span>
+                        {% elif event.time_status == 'EXPIRED' %}
+                            <span class="badge text-secondary bg-secondary-subtle border border-secondary-subtle">EXPIRED</span>
+                        {% endif %}
+                    </div>
+                    <small class="text-danger fw-semibold" style="font-size: 0.75rem;">
+                        <i class="bi bi-shield-lock-fill"></i> Panel Moderasi & Pantau Forum Admin
+                    </small>
+                </div>
+            </div>
+            <div>
+                <span class="badge bg-danger text-white py-1 px-2 fw-bold" style="font-size: 0.7rem; letter-spacing: 0.5px;">AKSES MODERATOR</span>
+            </div>
+        </div>
+
+        <!-- Chat Container -->
+        <div id="chat-messages" class="card-body p-4 d-flex flex-column gap-3" style="height: 500px; overflow-y: auto; background-color: #f1f5f9;">
+            {% for msg in forum_messages %}
+                {% if msg.sender == user or msg.sender.is_staff or msg.sender.is_superuser %}
+                    <!-- PESAN ADMIN (KANAN) -->
+                    <div class="d-flex justify-content-end align-items-end gap-2">
+                        <div class="card border-0 rounded-3 p-2 shadow-sm" style="max-width: 75%; background-color: #fff7ed; border: 1px solid #fed7aa !important;">
+                            <div class="d-flex justify-content-between align-items-center gap-3 mb-1">
+                                <div class="d-flex align-items-center gap-1">
+                                    <span class="fw-bold" style="color: #ea580c; font-size: 0.75rem;">{% if msg.sender == user %}Anda{% else %}{{ msg.sender.username }}{% endif %}</span>
+                                    <span class="badge bg-danger text-white py-0 px-1 fw-bold" style="font-size: 0.6rem; letter-spacing: 0.5px;">ADMIN</span>
+                                </div>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm p-0 border-0 text-muted fw-bold" type="button" data-bs-toggle="dropdown" aria-expanded="false">&#8942;</button>
+                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0" style="font-size: 0.85rem;">
+                                        <li><button type="button" class="dropdown-item py-2" onclick="copyMessage('{{ msg.message|escapejs }}')">Salin Teks</button></li>
+                                        <li>
+                                            <form method="POST" action="{% url 'dashboard:delete_forum_message' msg.id %}" class="m-0 p-0" onsubmit="return confirm('Hapus pengumuman ini?');">
+                                                {% csrf_token %}
+                                                <button type="submit" class="dropdown-item text-danger py-2">Hapus Pesan</button>
+                                            </form>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                            {% if msg.message %}<div class="text-dark mb-1" style="font-size: 0.9rem; word-break: break-word; line-height: 1.4;">{{ msg.message }}</div>{% endif %}
+                            {% if msg.image %}<div class="my-1 rounded overflow-hidden text-center border bg-white"><img src="{{ msg.image.url }}" alt="Upload" class="img-fluid" style="max-height: 220px; object-fit: contain;"></div>{% endif %}
+                            <div class="text-end text-muted" style="font-size: 0.65rem;">{{ msg.timestamp|date:"H:i" }}</div>
+                        </div>
+
+                        <!-- FOTO PROFIL ADMIN -->
+                        <div class="position-relative flex-shrink-0" style="width: 36px; height: 36px;">
+                            {% if msg.sender.profile.profile_picture %}
+                                <img src="{{ msg.sender.profile.profile_picture.url }}" alt="Admin" class="rounded-circle shadow-sm" style="width: 36px; height: 36px; object-fit: cover; border: 2px solid #FF8C00;">
+                            {% else %}
+                                <div class="rounded-circle d-flex justify-content-center align-items-center fw-bold shadow-sm" style="width: 36px; height: 36px; background-color: #FF8C00; color: #ffffff; font-size: 0.9rem;">
+                                    <i class="bi bi-shield-fill-check"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                {% else %}
+                    <!-- PESAN PENGGUNA BIASA (KIRI) -->
+                    <div class="d-flex justify-content-start align-items-end gap-2">
+                        <!-- FOTO PROFIL PENGGUNA BIASA -->
+                        {% if msg.sender.profile.profile_picture %}
+                            <img src="{{ msg.sender.profile.profile_picture.url }}" alt="{{ msg.sender.username }}" class="rounded-circle shadow-sm flex-shrink-0" style="width: 32px; height: 32px; object-fit: cover; border: 1px solid #e2e8f0;">
+                        {% else %}
+                            <div class="rounded-circle d-flex justify-content-center align-items-center fw-bold shadow-sm flex-shrink-0" style="width: 32px; height: 32px; background-color: #e2e8f0; color: #475569; font-size: 0.8rem;">
+                                {{ msg.sender.username|slice:":1"|upper }}
+                            </div>
+                        {% endif %}
+
+                        <div class="card rounded-3 p-2 shadow-sm border-0" style="max-width: 75%; background-color: #ffffff;">
+                            <div class="d-flex justify-content-between align-items-center gap-3 mb-1">
+                                <span class="fw-bold" style="color: #334155; font-size: 0.75rem;">{{ msg.sender.username }}</span>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm p-0 border-0 text-muted fw-bold" type="button" data-bs-toggle="dropdown" aria-expanded="false">&#8942;</button>
+                                    <ul class="dropdown-menu shadow-sm border-0" style="font-size: 0.85rem;">
+                                        <li><button type="button" class="dropdown-item py-2" onclick="copyMessage('{{ msg.message|escapejs }}')">Salin Teks</button></li>
+                                        <li>
+                                            <form method="POST" action="{% url 'dashboard:delete_forum_message' msg.id %}" class="m-0 p-0" onsubmit="return confirm('Hapus pesan pengguna ini (Tindakan Moderasi)?');">
+                                                {% csrf_token %}
+                                                <button type="submit" class="dropdown-item text-danger py-2">Hapus (Moderasi)</button>
+                                            </form>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                            {% if msg.message %}<div class="text-dark mb-1" style="font-size: 0.9rem; word-break: break-word; line-height: 1.4;">{{ msg.message }}</div>{% endif %}
+                            {% if msg.image %}<div class="my-1 rounded overflow-hidden text-center border bg-light"><img src="{{ msg.image.url }}" alt="Upload" class="img-fluid" style="max-height: 220px; object-fit: contain;"></div>{% endif %}
+                            <div class="text-end text-muted" style="font-size: 0.65rem;">{{ msg.timestamp|date:"H:i" }}</div>
+                        </div>
+                    </div>
+                {% endif %}
+            {% empty %}
+                <div class="text-center my-auto text-muted">
+                    <i class="bi bi-chat-square-dots fs-1 d-block mb-2" style="color: #cbd5e1;"></i>
+                    <p class="mb-1 fw-semibold text-dark">Belum ada obrolan di forum ini.</p>
+                    <small>Kirim pesan untuk memulai diskusi dengan penonton.</small>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Form Input Pesan Khusus Admin -->
+        <div class="p-3 border-top" style="background-color: #ffffff; border-color: #e2e8f0 !important;">
+            <form id="chat-form" method="POST" enctype="multipart/form-data" class="d-flex align-items-center gap-2 m-0">
+                {% csrf_token %}
+                <label for="chat-image" class="btn d-flex align-items-center justify-content-center m-0 px-2 py-1 text-muted border-0" title="Lampirkan Gambar" style="cursor: pointer; font-size: 1.3rem;">
+                    <i class="bi bi-image"></i>
+                </label>
+                <input type="file" id="chat-image" name="image" accept="image/*" class="d-none" onchange="this.form.submit()">
+                <input type="text" name="message" id="message-input" class="form-control rounded-pill px-3 py-2 bg-light border-0" placeholder="Kirim pengumuman admin..." autocomplete="off" style="font-size: 0.9rem; box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);">
+                <button type="submit" class="btn rounded-circle d-flex align-items-center justify-content-center text-white border-0 flex-shrink-0 shadow-sm" style="width: 42px; height: 42px; background-color: #FF8C00;" title="Kirim Pesan">
+                    <i class="bi bi-send-fill" style="margin-left: -2px;"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    const chatContainer = document.getElementById('chat-messages');
+    if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
+
+    function copyMessage(text) {
+        if (!text) return;
+        navigator.clipboard.writeText(text).then(() => { 
+            alert('Pesan berhasil disalin!'); 
+        }).catch(err => { 
+            console.error('Gagal menyalin: ', err); 
+        });
+    }
+</script>
+{% endblock %}

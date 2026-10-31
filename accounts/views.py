@@ -15,7 +15,7 @@ from django.contrib.auth.views import LoginView
 from django.contrib.auth import login
 from django.contrib import messages
 from django.http import JsonResponse
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from .models import UserProfile, FriendRequest, User
 from .forms import (
     UserProfileForm, 
@@ -33,13 +33,13 @@ if sys.platform.startswith('win'):
 
 class CustomLoginView(LoginView):
     template_name = 'registration/login.html'
-    form_class = MultiLoginForm # Gunakan form kustom yang baru dibuat
+    form_class = MultiLoginForm
 
     def get_success_url(self):
-        user = self.request.user
-        if user.is_staff or user.is_superuser:
-            return reverse_lazy('admin_dashboard')
-        return reverse_lazy('event_list')
+        # Indentasi 8 spasi ke dalam dan pastikan return bertipe string murni
+        if self.request.user.is_staff or self.request.user.is_superuser:
+            return str(reverse('dashboard:index'))
+        return str(reverse('event_list'))
     
 class RegisterView(CreateView):
     form_class = CustomUserCreationForm

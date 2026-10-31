@@ -1,0 +1,122 @@
+{% extends 'dashboard/base_admin.html' %}
+
+{% block title %}Kelola Event - KonserKU{% endblock %}
+{% block breadcrumb %}MANAJEMEN EVENT{% endblock %}
+{% block page_heading %}Daftar Konser & Festival Musik{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div class="position-relative" style="max-width: 380px; width: 100%;">
+        <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+        <input type="text" id="searchEvent" class="form-control ps-5 py-2 border-0 shadow-sm" placeholder="Cari judul event atau artis..." style="border-radius: 10px;">
+    </div>
+    <div>
+        <a href="{% url 'dashboard:tambah_event' %}" class="btn fw-semibold px-3 py-2 text-dark shadow-sm d-inline-flex align-items-center gap-2" style="background-color: #d8f3dc; border-radius: 10px;">
+            <i class="bi bi-plus-lg"></i> Tambah Event Baru
+        </a>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm p-4" style="border-radius: 14px; background-color: #ffffff;">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h5 class="fw-bold text-dark mb-0">Daftar Event Terjadwal</h5>
+            <small class="text-muted">Pantau status, kuota, dan forum komunikasi penonton konser</small>
+        </div>
+        <span class="badge bg-light text-dark border px-3 py-2 rounded-pill fw-semibold">{{ events.count }} Konser</span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" id="eventTable">
+            <thead class="table-light">
+                <tr style="font-size: 0.82rem; color: #64748b;">
+                    <th class="py-2 ps-3">POSTER & EVENT</th>
+                    <th class="py-2">VENUE & LOKASI</th>
+                    <th class="py-2">JADWAL PELAKSANAAN</th>
+                    <th class="py-2">TIPE</th>
+                    <th class="py-2 text-center">STATUS</th>
+                    <th class="py-2 text-end pe-3">AKSI</th>
+                </tr>
+            </thead>
+            <tbody style="font-size: 0.88rem;">
+                {% for event in events %}
+                <tr>
+                    <td class="ps-3">
+                        <div class="d-flex align-items-center gap-3">
+                            {% if event.poster %}
+                                <img src="{{ event.poster.url }}" alt="{{ event.nama_konser }}" class="rounded object-fit-cover shadow-sm" style="width: 44px; height: 56px;">
+                            {% else %}
+                                <div class="rounded bg-light d-flex align-items-center justify-content-center text-muted" style="width: 44px; height: 56px;">
+                                    <i class="bi bi-image"></i>
+                                </div>
+                            {% endif %}
+                            <div>
+                                <div class="fw-bold text-dark">{{ event.nama_konser }}</div>
+                                <div class="text-muted small"><i class="bi bi-person me-1"></i>{{ event.artis }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="fw-semibold text-dark">{{ event.venue.nama }}</div>
+                        <div class="text-muted small">{{ event.venue.kota }}</div>
+                    </td>
+                    <td>
+                        <div class="text-dark">{{ event.tanggal|date:"d M Y" }}</div>
+                        <div class="text-muted small">{{ event.tanggal|date:"H:i" }} WITA</div>
+                    </td>
+                    <td>
+                        <span class="badge bg-light text-secondary border px-2 py-1">
+                            {{ event.get_tipe_display }}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        {% if event.time_status == 'LIVE' %}
+                            <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">LIVE</span>
+                        {% elif event.time_status == 'UPCOMING' %}
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1">UPCOMING</span>
+                        {% else %}
+                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">EXPIRED</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end pe-3">
+                        <div class="d-inline-flex gap-1">
+                            <a href="{% url 'dashboard:event_buyers' event.id %}" class="btn btn-sm btn-outline-info py-1 px-2 border-0" title="Data Pembeli">
+                                <i class="bi bi-people fs-6"></i>
+                            </a>
+                            <a href="{% url 'dashboard:forum_monitor' event.id %}" class="btn btn-sm btn-outline-secondary py-1 px-2 border-0" title="Pantau Forum Chat">
+                                <i class="bi bi-chat-left-dots fs-6"></i>
+                            </a>
+                            <a href="{% url 'dashboard:edit_event' event.id %}" class="btn btn-sm btn-outline-warning py-1 px-2 border-0" title="Edit Event">
+                                <i class="bi bi-pencil-square fs-6"></i>
+                            </a>
+                            <a href="{% url 'dashboard:hapus_event' event.id %}" class="btn btn-sm btn-outline-danger py-1 px-2 border-0" title="Hapus Event" onclick="return confirm('Menghapus event akan menghapus tiket dan riwayat forum terkait!');">
+                                <i class="bi bi-trash3 fs-6"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center py-4 text-muted small">
+                        Belum ada event konser yang terdaftar.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.getElementById('searchEvent').addEventListener('input', function() {
+        const query = this.value.toLowerCase();
+        const rows = document.querySelectorAll('#eventTable tbody tr');
+        rows.forEach(row => {
+            const text = row.innerText.toLowerCase();
+            row.style.display = text.includes(query) ? '' : 'none';
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,126 @@
+{% extends 'dashboard/base_admin.html' %}
+
+{% block title %}Kelola Pengguna - KonserKU{% endblock %}
+{% block breadcrumb %}MANAJEMEN PENGGUNA{% endblock %}
+{% block page_heading %}Kelola Anggota & Komunitas Penonton{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div class="position-relative" style="max-width: 380px; width: 100%;">
+        <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+        <input type="text" id="searchUser" class="form-control ps-5 py-2 border-0 shadow-sm" placeholder="Cari nama, username, atau no HP..." style="border-radius: 10px;">
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm p-4" style="border-radius: 14px; background-color: #ffffff; border: 1px solid #e2e8f0 !important;">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h5 class="fw-bold text-dark mb-0">Daftar Anggota Terdaftar</h5>
+            <small class="text-muted">Data pembeli tiket dan profil pencarian teman nonton</small>
+        </div>
+        <span class="badge bg-light text-dark border px-3 py-2 rounded-pill fw-semibold">{{ users.count }} Anggota</span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" id="userTable">
+            <thead>
+                <tr style="font-size: 0.82rem; color: #64748b; background-color: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+                    <th class="py-2 ps-3">PENGGUNA</th>
+                    <th class="py-2">KONTAK WHATSAPP</th>
+                    <th class="py-2">STATUS IDENTITAS (NIK/KTP)</th>
+                    <th class="py-2">TANGGAL GABUNG</th>
+                    <th class="py-2 text-center">STATUS AKUN</th>
+                    <th class="py-2 text-end pe-3">AKSI</th>
+                </tr>
+            </thead>
+            <tbody style="font-size: 0.88rem;">
+                {% for member in users %}
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                    <td class="ps-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <!-- Foto Profil / Inisial -->
+                            {% if member.profile.profile_picture %}
+                                <img src="{{ member.profile.profile_picture.url }}" alt="{{ member.username }}" class="rounded-circle shadow-sm" style="width: 38px; height: 38px; object-fit: cover; border: 1px solid #e2e8f0;">
+                            {% else %}
+                                <div class="rounded-circle fw-bold d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; background-color: #f1f5f9; color: #475569; font-size: 0.85rem;">
+                                    {{ member.username|slice:":2"|upper }}
+                                </div>
+                            {% endif %}
+                            
+                            <!-- Username Saja (Tanpa 'Tidak ada email') -->
+                            <div>
+                                <div class="fw-bold text-dark">{{ member.username }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <a href="https://wa.me/{{ member.no_hp }}" target="_blank" class="text-decoration-none fw-semibold" style="color: #10b981;">
+                            <i class="bi bi-whatsapp me-1"></i> {{ member.no_hp }}
+                        </a>
+                    </td>
+                    <td>
+                        {% if member.profile.nik %}
+                            <div class="fw-semibold text-dark">{{ member.profile.nama_ktp|default:member.username }}</div>
+                            <small class="text-muted font-monospace">{{ member.profile.nik }}</small>
+                        {% else %}
+                            <span class="badge" style="background-color: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0;">Belum Lengkap</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-muted">
+                        {{ member.date_joined|date:"d M Y" }}
+                    </td>
+                    <td class="text-center">
+                        {% if member.is_active %}
+                            <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">Aktif</span>
+                        {% else %}
+                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">Nonaktif</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end pe-3">
+                        <div class="d-inline-flex gap-1">
+                            <!-- TOMBOL EDIT PROFIL -->
+                            <a href="{% url 'dashboard:edit_user' member.id %}" class="btn btn-sm btn-outline-warning py-1 px-2 border-0" title="Edit Profil Pengguna">
+                                <i class="bi bi-pencil-square fs-6"></i>
+                            </a>
+
+                            <!-- TOMBOL TOGGLE STATUS -->
+                            <form action="{% url 'dashboard:toggle_user_status' member.id %}" method="POST" class="d-inline">
+                                {% csrf_token %}
+                                {% if member.is_active %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger py-1 px-2 border-0" title="Nonaktifkan Akun" onclick="return confirm('Nonaktifkan akun pengguna ini?');">
+                                        <i class="bi bi-person-x fs-6"></i>
+                                    </button>
+                                {% else %}
+                                    <button type="submit" class="btn btn-sm btn-outline-success py-1 px-2 border-0" title="Aktifkan Akun">
+                                        <i class="bi bi-person-check fs-6"></i>
+                                    </button>
+                                {% endif %}
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center py-4 text-muted small">
+                        Belum ada anggota terdaftar di sistem.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.getElementById('searchUser').addEventListener('input', function() {
+        const query = this.value.toLowerCase();
+        const rows = document.querySelectorAll('#userTable tbody tr');
+        rows.forEach(row => {
+            const text = row.innerText.toLowerCase();
+            row.style.display = text.includes(query) ? '' : 'none';
+        });
+    });
+</script>
+{% endblock %}

@@ -14,6 +14,8 @@ urlpatterns = [
     
     # Rute aplikasi tiketmu yang lama
     path('tickets/', include('ticketing.urls')), 
+
+    path('dashboard/', include('dashboard.urls')),
 ]
 
 # Wajib ditambahkan agar Django bisa melayani file gambar/media saat tahap development

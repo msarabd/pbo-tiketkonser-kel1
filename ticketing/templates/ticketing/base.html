@@ -18,7 +18,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm m-0">
         <div class="container">
             <!-- URL Dinamis: Admin ke Dasbor, User ke Halaman Utama -->
-            <a class="navbar-brand fw-bold fs-4" href="{% if user.is_staff or user.is_superuser %}{% url 'admin_dashboard' %}{% else %}{% url 'event_list' %}{% endif %}">
+            <a class="navbar-brand fw-bold fs-4" href="{% if user.is_staff or user.is_superuser %}{% url 'dashboard:index' %}{% else %}{% url 'event_list' %}{% endif %}">
                 Konser<span style="color: #FF8C00;">KU</span>
             </a>
             
@@ -32,7 +32,7 @@
                         
                         <!-- 1. MENU SPESIFIK ADMIN -->
                         {% if user.is_staff or user.is_superuser %}
-                            <a href="{% url 'admin_dashboard' %}" class="btn btn-danger btn-sm me-lg-2 fw-bold text-start text-lg-center" style="border-radius: 6px;">
+                            <a href="{% url 'dashboard:index' %}" class="btn btn-danger btn-sm me-lg-2 fw-bold text-start text-lg-center" style="border-radius: 6px;">
                                 <i class="bi bi-shield-lock-fill"></i> Dashboard Admin
                             </a>
                         {% endif %}

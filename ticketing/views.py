@@ -3,20 +3,18 @@ from datetime import timedelta
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views import View
 from django.views.generic import ListView, DetailView
-from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.utils import timezone
-from django.db.models import Count, Q, Min, Prefetch
-from django.urls import reverse_lazy
+from django.db.models import Count, Q, Min
 
 from .models import Event, Order, ForumMessage, OrderItem, Venue, TicketCategory, HOLD_DURATION_MINUTES
 from .services import book_ticket_securely, process_payment_and_issue_tickets
 from accounts.models import UserProfile
-from .forms import VenueForm, EventForm, TicketCategoryForm
 from django.contrib.auth import get_user_model
 User = get_user_model()
+
 
 class MessageCensorService:
     KATA_KASAR = ['anjing', 'babi', 'bangsat', 'tolol', 'goblok', 'kontol', 'memek']
@@ -34,7 +32,7 @@ class MessageCensorService:
 
 
 # ==============================================================================
-# MIXIN KEAMANAN & AKSES
+# MIXIN KEAMANAN & AKSES USER
 # ==============================================================================
 class IsNotAdminMixin(UserPassesTestMixin):
     def test_func(self):
@@ -43,13 +41,8 @@ class IsNotAdminMixin(UserPassesTestMixin):
     def handle_no_permission(self):
         if self.request.user.is_authenticated:
             messages.error(self.request, "Admin tidak diizinkan mengakses fitur transaksi dan pengguna.")
-            return redirect('admin_dashboard')
+            return redirect('dashboard:index')
         return redirect('login')
-
-
-class IsAdminMixin(UserPassesTestMixin):
-    def test_func(self):
-        return self.request.user.is_staff or self.request.user.is_superuser
 
 
 # ==============================================================================
@@ -241,7 +234,6 @@ class ForumRoomView(LoginRequiredMixin, IsNotAdminMixin, View):
 
     def get(self, request, event_id):
         event = get_object_or_404(Event, id=event_id)
-        # Gunakan sender__profile agar data profil dan foto di-join langsung
         forum_messages = event.forum_messages.select_related('sender__profile').all()
         return render(request, 'ticketing/forum_room.html', {'event': event, 'forum_messages': forum_messages})
 
@@ -285,134 +277,3 @@ class CancelOrderView(LoginRequiredMixin, IsNotAdminMixin, View):
 
     def get(self, request, order_id):
         return redirect('ticket_history')
-
-
-# ==============================================================================
-# VIEW KHUSUS ADMIN (DASHBOARD & MONITORING FORUM DENGAN FITUR CHAT & HAPUS)
-# ==============================================================================
-class AdminDashboardView(IsAdminMixin, ListView):
-    model = Event
-    template_name = 'ticketing/admin_dashboard.html'
-    context_object_name = 'events'
-
-    def get_queryset(self):
-        # Hitung jumlah tiket terjual yang status pembayarannya lunas (PAID)
-        kategori_annotated = TicketCategory.objects.annotate(
-            total_terjual=Count('orderitem', filter=Q(orderitem__order__status='PAID'))
-        )
-        return Event.objects.prefetch_related(
-            Prefetch('ticketcategory_set', queryset=kategori_annotated),
-            'venue'
-        ).order_by('-tanggal')
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['venues'] = Venue.objects.all()
-        return context
-
-
-class AdminForumMonitorView(IsAdminMixin, View):
-    def get(self, request, event_id):
-        event = get_object_or_404(Event, id=event_id)
-        # Gunakan sender__profile agar data profil dan foto di-join langsung
-        forum_messages = event.forum_messages.select_related('sender__profile').all()
-        return render(request, 'ticketing/admin_forum_monitor.html', {
-            'event': event, 
-            'forum_messages': forum_messages
-        })
-
-    def post(self, request, event_id):
-        event = get_object_or_404(Event, id=event_id)
-        pesan = request.POST.get('message')
-        gambar = request.FILES.get('image')
-
-        if pesan:
-            pesan = MessageCensorService.sensor(pesan)
-        if pesan or gambar:
-            ForumMessage.objects.create(event=event, sender=request.user, message=pesan, image=gambar)
-
-        return redirect('admin_forum_monitor', event_id=event.id)
-
-
-class AdminDeleteForumMessageView(IsAdminMixin, View):
-    def post(self, request, message_id):
-        message = get_object_or_404(ForumMessage, id=message_id)
-        event_id = message.event.id
-        message.delete()
-        messages.success(request, "Pesan forum berhasil dihapus oleh Moderator.")
-        return redirect('admin_forum_monitor', event_id=event_id)
-
-
-# --- KELAS DASAR CRUD ADMIN ---
-class AdminBaseCreateView(IsAdminMixin, CreateView):
-    template_name = 'ticketing/admin_form.html'
-    success_url = reverse_lazy('admin_dashboard')
-    def form_valid(self, form):
-        messages.success(self.request, f"Data {self.model.__name__} berhasil ditambahkan.")
-        return super().form_valid(form)
-
-class AdminBaseUpdateView(IsAdminMixin, UpdateView):
-    template_name = 'ticketing/admin_form.html'
-    success_url = reverse_lazy('admin_dashboard')
-    def form_valid(self, form):
-        messages.success(self.request, f"Data {self.model.__name__} berhasil diperbarui.")
-        return super().form_valid(form)
-
-class AdminBaseDeleteView(IsAdminMixin, DeleteView):
-    template_name = 'ticketing/admin_confirm_delete.html'
-    success_url = reverse_lazy('admin_dashboard')
-    def delete(self, request, *args, **kwargs):
-        messages.success(self.request, f"Data {self.model.__name__} berhasil dihapus.")
-        return super().delete(request, *args, **kwargs)
-
-# --- VENUE CRUD ---
-class AdminVenueCreateView(AdminBaseCreateView): model = Venue; form_class = VenueForm
-class AdminVenueUpdateView(AdminBaseUpdateView): model = Venue; form_class = VenueForm
-class AdminVenueDeleteView(AdminBaseDeleteView): model = Venue
-
-# --- EVENT CRUD ---
-class AdminEventCreateView(AdminBaseCreateView): model = Event; form_class = EventForm
-class AdminEventUpdateView(AdminBaseUpdateView): model = Event; form_class = EventForm
-class AdminEventDeleteView(AdminBaseDeleteView): model = Event
-
-# --- TICKET CATEGORY CRUD ---
-class AdminTicketCategoryCreateView(AdminBaseCreateView): model = TicketCategory; form_class = TicketCategoryForm
-class AdminTicketCategoryUpdateView(AdminBaseUpdateView): model = TicketCategory; form_class = TicketCategoryForm
-class AdminTicketCategoryDeleteView(AdminBaseDeleteView): model = TicketCategory
-
-class AdminEventBuyersView(IsAdminMixin, View):
-    def get(self, request, event_id):
-        event = get_object_or_404(Event, id=event_id)
-        # Ambil semua item pesanan yang sudah lunas (PAID) untuk konser ini
-        sold_items = OrderItem.objects.filter(
-            category__event=event,
-            order__status='PAID'
-        ).select_related('order__user__profile', 'category', 'ticket').order_by('-order__waktu_pesan')
-        
-        return render(request, 'ticketing/admin_event_buyers.html', {
-            'event': event, 
-            'sold_items': sold_items
-        })
-
-class AdminUserListView(IsAdminMixin, ListView):
-    model = User
-    template_name = 'ticketing/admin_user_list.html'
-    context_object_name = 'users'
-
-    def get_queryset(self):
-        # Sengaja menyembunyikan superuser dari daftar agar tidak terhapus oleh admin awam
-        return User.objects.filter(is_superuser=False).select_related('profile').order_by('-date_joined')
-
-class AdminUserDeleteView(IsAdminMixin, View):
-    def post(self, request, user_id):
-        user_to_delete = get_object_or_404(User, id=user_id)
-        
-        if user_to_delete.is_staff or user_to_delete.is_superuser:
-            messages.error(request, "Penolakan Sistem: Akun administrator tidak boleh dihapus dari panel ini.")
-            return redirect('admin_user_list')
-            
-        username = user_to_delete.username
-        # PERINGATAN: Tindakan ini akan memicu CASCADE DELETE pada Order, Ticket, dan ForumMessage
-        user_to_delete.delete() 
-        messages.success(request, f"Pengguna '{username}' dan seluruh riwayat datanya telah dimusnahkan secara permanen.")
-        return redirect('admin_user_list')

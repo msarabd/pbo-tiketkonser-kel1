@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
     'accounts',
     'ticketing',
+    'dashboard',
 ]
 
 MIDDLEWARE = [
@@ -90,6 +91,8 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 AUTH_USER_MODEL = 'accounts.User'
 LOGIN_REDIRECT_URL = '/tickets/'
 LOGOUT_REDIRECT_URL = '/tickets/'
+
+LOGIN_REDIRECT_URL = 'dashboard:index'
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [

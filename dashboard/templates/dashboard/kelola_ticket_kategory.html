@@ -1,0 +1,100 @@
+{% extends 'dashboard/base_admin.html' %}
+
+{% block title %}Kelola Ticket Category - KonserKU{% endblock %}
+{% block breadcrumb %}MANAJEMEN TIKET{% endblock %}
+{% block page_heading %}Kelola Kategori & Kuota Tiket{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div class="position-relative" style="max-width: 380px; width: 100%;">
+        <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+        <input type="text" id="searchCategory" class="form-control ps-5 py-2 border-0 shadow-sm" placeholder="Cari event atau nama tiket..." style="border-radius: 10px;">
+    </div>
+    <div>
+        <a href="{% url 'dashboard:tambah_ticket_kategory' %}" class="btn fw-semibold px-3 py-2 text-dark shadow-sm d-inline-flex align-items-center gap-2" style="background-color: #d8f3dc; border-radius: 10px;">
+            <i class="bi bi-plus-lg"></i> Tambah Kategori Tiket
+        </a>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm p-4" style="border-radius: 14px; background-color: #ffffff; border: 1px solid #e2e8f0 !important;">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h5 class="fw-bold text-dark mb-0">Daftar Kategori & Alokasi Tiket</h5>
+            <small class="text-muted">Pantau kuota sisa, total penjualan, dan harga satuan per tier konser</small>
+        </div>
+        <span class="badge bg-light text-dark border px-3 py-2 rounded-pill fw-semibold">{{ categories.count }} Kategori</span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" id="categoryTable">
+            <thead>
+                <tr style="font-size: 0.82rem; color: #64748b; background-color: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+                    <th class="py-2 ps-3">EVENT KONSER</th>
+                    <th class="py-2">KATEGORI TIKET</th>
+                    <th class="py-2">HARGA SATUAN</th>
+                    <th class="py-2 text-center">SISA KUOTA</th>
+                    <th class="py-2 text-center">TERJUAL</th>
+                    <th class="py-2 text-center">STATUS KETERSEDIAAN</th>
+                    <th class="py-2 text-end pe-3">AKSI</th>
+                </tr>
+            </thead>
+            <tbody style="font-size: 0.88rem;">
+                {% for category in categories %}
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                    <td class="ps-3 fw-semibold text-dark">{{ category.event.nama_konser }}</td>
+                    <td>
+                        <span class="badge border" style="background-color: #fff7ed; color: #FF8C00; border-color: #fed7aa !important;">
+                            {{ category.nama_kategori }}
+                        </span>
+                    </td>
+                    <td class="fw-bold text-dark">Rp {{ category.harga|stringformat:"d" }}</td>
+                    <td class="text-center fw-semibold {% if category.kuota == 0 %}text-danger{% else %}text-secondary{% endif %}">
+                        {{ category.kuota }}
+                    </td>
+                    <td class="text-center fw-bold" style="color: #FF8C00;">
+                        {{ category.total_terjual|default:0 }}
+                    </td>
+                    <td class="text-center">
+                        {% if category.is_available %}
+                            <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">TERSEDIA</span>
+                        {% else %}
+                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">HABIS (SOLD OUT)</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end pe-3">
+                        <div class="d-inline-flex gap-1">
+                            <a href="{% url 'dashboard:edit_ticket_kategory' category.id %}" class="btn btn-sm btn-outline-warning py-1 px-2 border-0" title="Edit Kategori">
+                                <i class="bi bi-pencil-square fs-6"></i>
+                            </a>
+                            <a href="{% url 'dashboard:hapus_ticket_kategory' category.id %}" class="btn btn-sm btn-outline-danger py-1 px-2 border-0" title="Hapus Kategori" onclick="return confirm('Yakin ingin menghapus kategori tiket ini?');">
+                                <i class="bi bi-trash3 fs-6"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center py-4 text-muted small">
+                        Belum ada kategori tiket yang dibuat.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.getElementById('searchCategory').addEventListener('input', function() {
+        const query = this.value.toLowerCase();
+        const rows = document.querySelectorAll('#categoryTable tbody tr');
+        rows.forEach(row => {
+            const text = row.innerText.toLowerCase();
+            row.style.display = text.includes(query) ? '' : 'none';
+        });
+    });
+</script>
+{% endblock %}
