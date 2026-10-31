@@ -1,14 +1,13 @@
 {% extends 'dashboard/base_admin.html' %}
 
 {% block title %}Kelola Venue - KonserKU{% endblock %}
-{% block breadcrumb %}MANAJEMEN LOKASI{% endblock %}
 {% block page_heading %}Kelola Venue & Gedung Konser{% endblock %}
 
 {% block content %}
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
     <div class="position-relative" style="max-width: 380px; width: 100%;">
-        <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
-        <input type="text" id="searchVenue" class="form-control ps-5 py-2 border-0 shadow-sm" placeholder="Cari nama venue atau kota..." style="border-radius: 10px;">
+        <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary"></i>
+        <input type="text" id="searchVenue" class="form-control ps-5 py-2" placeholder="Cari nama venue atau kota..." style="border-radius: 10px;">
     </div>
     <div>
         <a href="{% url 'dashboard:tambah_venue' %}" class="btn fw-semibold px-3 py-2 text-dark shadow-sm d-inline-flex align-items-center gap-2" style="background-color: #d8f3dc; border-radius: 10px;">
@@ -17,19 +16,21 @@
     </div>
 </div>
 
-<div class="card border-0 shadow-sm p-4" style="border-radius: 14px; background-color: #ffffff;">
+<div class="card-dark p-4 shadow-sm">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
-            <h5 class="fw-bold text-dark mb-0">Daftar Venue Terdaftar</h5>
-            <small class="text-muted">Kelola titik lokasi fisik konser musik</small>
+            <h5 class="fw-bold text-white mb-0">Daftar Venue Terdaftar</h5>
+            <small class="text-secondary">Kelola titik lokasi fisik konser musik</small>
         </div>
-        <span class="badge bg-light text-dark border px-3 py-2 rounded-pill fw-semibold">{{ venues.count }} Item</span>
+        <span class="badge border border-secondary text-light fw-normal px-3 py-2 rounded-pill" style="background-color: #27272a;">
+            {{ venues.count }} Item
+        </span>
     </div>
 
     <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0" id="venueTable">
-            <thead class="table-light">
-                <tr style="font-size: 0.82rem; color: #64748b;">
+        <table class="table table-dark-custom align-middle mb-0" id="venueTable">
+            <thead>
+                <tr>
                     <th class="py-2 ps-3">NAMA VENUE</th>
                     <th class="py-2">KOTA / KABUPATEN</th>
                     <th class="py-2 text-center">EVENT TERKAIT</th>
@@ -39,10 +40,12 @@
             <tbody style="font-size: 0.88rem;">
                 {% for venue in venues %}
                 <tr>
-                    <td class="ps-3 fw-semibold text-dark">{{ venue.nama }}</td>
-                    <td class="text-muted"><i class="bi bi-geo-alt me-1 text-secondary"></i> {{ venue.kota }}</td>
+                    <td class="ps-3 fw-bold text-white">{{ venue.nama }}</td>
+                    <td class="text-secondary">
+                        <i class="bi bi-geo-alt me-1"></i> {{ venue.kota }}
+                    </td>
                     <td class="text-center">
-                        <span class="badge bg-success-subtle text-success px-2 py-1 rounded-pill">
+                        <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
                             {{ venue.total_event|default:0 }} Konser
                         </span>
                     </td>
@@ -51,7 +54,7 @@
                             <a href="{% url 'dashboard:edit_venue' venue.id %}" class="btn btn-sm btn-outline-warning py-1 px-2 border-0" title="Edit Venue">
                                 <i class="bi bi-pencil-square fs-6"></i>
                             </a>
-                            <a href="{% url 'dashboard:hapus_venue' venue.id %}" class="btn btn-sm btn-outline-danger py-1 px-2 border-0" title="Hapus Venue" onclick="return confirm('Yakin ingin menghapus venue ini?');">
+                            <a href="{% url 'dashboard:hapus_venue' venue.id %}" class="btn btn-sm btn-outline-danger py-1 px-2 border-0" title="Hapus Venue" onclick="return confirm('Hapus venue {{ venue.nama }}?');">
                                 <i class="bi bi-trash3 fs-6"></i>
                             </a>
                         </div>
@@ -59,8 +62,8 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="4" class="text-center py-4 text-muted small">
-                        Belum ada data venue yang tersimpan.
+                    <td colspan="4" class="text-center py-4 text-secondary small">
+                        Belum ada data venue terdaftar.
                     </td>
                 </tr>
                 {% endfor %}

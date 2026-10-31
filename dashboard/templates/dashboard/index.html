@@ -1,169 +1,149 @@
 {% extends 'dashboard/base_admin.html' %}
+{% load humanize %}
 
 {% block title %}Dashboard Utama - KonserKU{% endblock %}
 {% block page_heading %}Dashboard Manajemen Konser{% endblock %}
 
 {% block content %}
-<!-- HEADER COMPACT (PENGGANTI BANNER LENTERA) -->
-<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 pb-3 mb-4 border-bottom" style="border-color: #e2e8f0 !important;">
+<!-- Section: Ringkasan Operasional -->
+<div class="d-flex justify-content-between align-items-center mb-3">
     <div>
-        <h4 class="fw-bold mb-1" style="color: #0f172a;">Ringkasan Operasional</h4>
-        <p class="text-muted small mb-0">Pantau pergerakan penjualan tiket, kapasitas panggung, dan aktivitas sistem per {% now "d F Y" %}.</p>
+        <h5 class="fw-bold text-white mb-0">Ringkasan Operasional</h5>
+        <small class="text-secondary">Pantau pergerakan penjualan tiket, kapasitas panggung, dan aktivitas sistem</small>
     </div>
-    <div class="d-flex align-items-center gap-2">
-        <span class="badge border py-2 px-3 fw-semibold text-dark shadow-sm" style="background-color: #ffffff; border-color: #e2e8f0 !important; font-size: 0.8rem;">
-            <i class="bi bi-clock-history me-1 text-warning"></i> Pembaruan Real-Time
-        </span>
-    </div>
+    <span class="badge border border-warning-subtle text-warning bg-transparent px-3 py-2 rounded-pill fw-normal">
+        <i class="bi bi-clock-history me-1"></i> Pembaruan Real-Time
+    </span>
 </div>
 
-<!-- 1. BARIS KARTU METRIK UTAMA (LIGHT CARD DENGAN ACCENT PILL) -->
+<!-- 4 KPI Metrics Card -->
 <div class="row g-3 mb-4">
-    <!-- Total Event -->
-    <div class="col-6 col-xl-3">
-        <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; background-color: #ffffff; border: 1px solid #e2e8f0 !important;">
+    <!-- Card 1: Total Event -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card-dark p-3 h-100 shadow-sm position-relative overflow-hidden">
             <div class="d-flex justify-content-between align-items-center mb-2">
-                <span class="fw-semibold small text-muted">Total Event</span>
-                <span class="p-2 rounded-3 d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background-color: #fff7ed; color: #FF8C00;">
-                    <i class="bi bi-music-note-beamed fs-6"></i>
-                </span>
+                <span class="text-secondary small fw-semibold">Total Event</span>
+                <div class="p-2 rounded-3" style="background-color: rgba(255, 140, 0, 0.12); color: #FF8C00;">
+                    <i class="bi bi-music-note fs-5"></i>
+                </div>
             </div>
-            <h2 class="fw-bold mb-1" style="color: #0f172a;">{{ total_event }}</h2>
-            <div class="d-flex align-items-center gap-1 text-muted" style="font-size: 0.75rem;">
-                <i class="bi bi-check-circle-fill text-success"></i> Konser terdaftar
-            </div>
+            <h2 class="fw-bold text-white mb-1">{{ total_event|default:0 }}</h2>
+            <small class="text-success fw-medium"><i class="bi bi-check-circle-fill me-1"></i> Konser terdaftar</small>
         </div>
     </div>
 
-    <!-- Total Venue -->
-    <div class="col-6 col-xl-3">
-        <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; background-color: #ffffff; border: 1px solid #e2e8f0 !important;">
+    <!-- Card 2: Total Venue -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card-dark p-3 h-100 shadow-sm position-relative overflow-hidden">
             <div class="d-flex justify-content-between align-items-center mb-2">
-                <span class="fw-semibold small text-muted">Total Venue</span>
-                <span class="p-2 rounded-3 d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background-color: #f1f5f9; color: #334155;">
-                    <i class="bi bi-geo-alt-fill fs-6"></i>
-                </span>
+                <span class="text-secondary small fw-semibold">Total Venue</span>
+                <div class="p-2 rounded-3" style="background-color: rgba(56, 189, 248, 0.12); color: #38bdf8;">
+                    <i class="bi bi-geo-alt fs-5"></i>
+                </div>
             </div>
-            <h2 class="fw-bold mb-1" style="color: #0f172a;">{{ total_venue }}</h2>
-            <div class="d-flex align-items-center gap-1 text-muted" style="font-size: 0.75rem;">
-                <i class="bi bi-building text-secondary"></i> Titik lokasi arena
-            </div>
+            <h2 class="fw-bold text-white mb-1">{{ total_venue|default:0 }}</h2>
+            <small class="text-info fw-medium"><i class="bi bi-pin-map-fill me-1"></i> Titik lokasi arena</small>
         </div>
     </div>
 
-    <!-- Total Anggota -->
-    <div class="col-6 col-xl-3">
-        <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; background-color: #ffffff; border: 1px solid #e2e8f0 !important;">
+    <!-- Card 3: Total Anggota -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card-dark p-3 h-100 shadow-sm position-relative overflow-hidden">
             <div class="d-flex justify-content-between align-items-center mb-2">
-                <span class="fw-semibold small text-muted">Total Anggota</span>
-                <span class="p-2 rounded-3 d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background-color: #fefce8; color: #ca8a04;">
-                    <i class="bi bi-people-fill fs-6"></i>
-                </span>
+                <span class="text-secondary small fw-semibold">Total Anggota</span>
+                <div class="p-2 rounded-3" style="background-color: rgba(234, 179, 8, 0.12); color: #eab308;">
+                    <i class="bi bi-people fs-5"></i>
+                </div>
             </div>
-            <h2 class="fw-bold mb-1" style="color: #0f172a;">{{ total_anggota }}</h2>
-            <div class="d-flex align-items-center gap-1 text-muted" style="font-size: 0.75rem;">
-                <i class="bi bi-person-check text-warning"></i> Pengguna terdaftar
-            </div>
+            <h2 class="fw-bold text-white mb-1">{{ total_anggota|default:0 }}</h2>
+            <small class="text-warning fw-medium"><i class="bi bi-person-check-fill me-1"></i> Pengguna terdaftar</small>
         </div>
     </div>
 
-    <!-- Total Terjual -->
-    <div class="col-6 col-xl-3">
-        <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; background-color: #ffffff; border: 1px solid #e2e8f0 !important;">
+    <!-- Card 4: Tiket Terjual -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card-dark p-3 h-100 shadow-sm position-relative overflow-hidden">
             <div class="d-flex justify-content-between align-items-center mb-2">
-                <span class="fw-semibold small text-muted">Tiket Terjual</span>
-                <span class="p-2 rounded-3 d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background-color: #fef2f2; color: #dc2626;">
-                    <i class="bi bi-ticket-perforated-fill fs-6"></i>
-                </span>
+                <span class="text-secondary small fw-semibold">Tiket Terjual</span>
+                <div class="p-2 rounded-3" style="background-color: rgba(239, 68, 68, 0.12); color: #ef4444;">
+                    <i class="bi bi-ticket-perforated fs-5"></i>
+                </div>
             </div>
-            <h2 class="fw-bold mb-1" style="color: #FF8C00;">{{ total_terjual }}</h2>
-            <div class="d-flex align-items-center gap-1 text-muted" style="font-size: 0.75rem;">
-                <i class="bi bi-patch-check-fill text-danger"></i> Pembayaran lunas (PAID)
-            </div>
+            <h2 class="fw-bold text-white mb-1" style="color: #FF8C00 !important;">{{ total_terjual|default:0 }}</h2>
+            <small class="text-danger fw-medium"><i class="bi bi-cash-stack me-1"></i> Pembayaran lunas (PAID)</small>
         </div>
     </div>
 </div>
 
-<!-- 2. ANALISIS TREN & LEADERBOARD EVENT -->
+<!-- Section: Grafik Tren & Event Terpopuler -->
 <div class="row g-4 mb-4">
-    <!-- Kolom Kiri: Tren Grafik Penjualan Tiket -->
-    <div class="col-lg-8">
-        <div class="card border-0 shadow-sm p-4 h-100" style="border-radius: 14px; background-color: #ffffff; border: 1px solid #e2e8f0 !important;">
-            <div class="d-flex justify-content-between align-items-center pb-3 mb-3 border-bottom" style="border-color: #f1f5f9 !important;">
+    <!-- Kolom Kiri: Tren Penjualan Tiket -->
+    <div class="col-12 col-lg-8">
+        <div class="card-dark p-4 h-100 shadow-sm">
+            <div class="d-flex justify-content-between align-items-center mb-3">
                 <div>
-                    <h6 class="fw-bold mb-1" style="color: #0f172a;">Aktivitas Pembelian Tiket</h6>
-                    <small class="text-muted">Volume transaksi lunas selama 7 hari kalender terakhir</small>
+                    <h5 class="fw-bold text-white mb-0">Aktivitas Pembelian Tiket</h5>
+                    <small class="text-secondary">Volume transaksi lunas selama 7 hari kalender terakhir</small>
                 </div>
-                <span class="badge px-3 py-2 fw-semibold" style="background-color: #fff7ed; color: #FF8C00; border: 1px solid #fed7aa;">
-                    <i class="bi bi-graph-up-arrow me-1"></i> Tren Harian
+                <span class="badge border border-warning-subtle text-warning bg-transparent px-3 py-1 fw-semibold">
+                    <i class="bi bi-graph-up me-1"></i> Tren Harian
                 </span>
             </div>
-            <div class="flex-grow-1" style="min-height: 270px; position: relative;">
+            <div style="height: 280px; width: 100%;">
                 <canvas id="salesChart"></canvas>
             </div>
         </div>
     </div>
 
-    <!-- Kolom Kanan: Leaderboard Event Terpopuler -->
-    <div class="col-lg-4">
-        <div class="card border-0 shadow-sm p-4 h-100" style="border-radius: 14px; background-color: #ffffff; border: 1px solid #e2e8f0 !important;">
-            <div class="d-flex justify-content-between align-items-center pb-3 mb-3 border-bottom" style="border-color: #f1f5f9 !important;">
-                <h6 class="fw-bold mb-0" style="color: #0f172a;">Event Terpopuler</h6>
-                <small class="text-muted">Top 5 Penjualan</small>
+    <!-- Kolom Kanan: Top 5 Event Terpopuler -->
+    <div class="col-12 col-lg-4">
+        <div class="card-dark p-4 h-100 shadow-sm">
+            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom border-secondary-subtle">
+                <h5 class="fw-bold text-white mb-0">Event Terpopuler</h5>
+                <small class="text-secondary">Top 5 Penjualan</small>
             </div>
-
             <div class="d-flex flex-column gap-3">
                 {% for event in event_terpopuler %}
-                <div class="p-2 rounded-3" style="background-color: #f8fafc; border: 1px solid #f1f5f9;">
-                    <div class="d-flex align-items-center justify-content-between mb-2">
-                        <div class="d-flex align-items-center gap-2 overflow-hidden">
-                            <span class="badge rounded-circle d-flex align-items-center justify-content-center" 
-                                  style="width: 22px; height: 22px; font-size: 0.7rem; 
-                                         {% if forloop.counter == 1 %}background-color: #fef08a; color: #854d0e; font-weight: bold;
-                                         {% elif forloop.counter == 2 %}background-color: #e2e8f0; color: #475569;
-                                         {% elif forloop.counter == 3 %}background-color: #fed7aa; color: #9a3412;
-                                         {% else %}background-color: #f1f5f9; color: #64748b;{% endif %}">
-                                {{ forloop.counter }}
-                            </span>
-                            <span class="fw-bold text-truncate" style="font-size: 0.85rem; color: #0f172a; max-width: 150px;" title="{{ event.nama_konser }}">
-                                {{ event.nama_konser }}
-                            </span>
+                <div>
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <div class="d-flex align-items-center gap-2 text-truncate" style="max-width: 70%;">
+                            <span class="badge bg-warning text-dark fw-bold" style="font-size: 0.72rem; min-width: 22px;">{{ forloop.counter }}</span>
+                            <span class="fw-semibold text-white small text-truncate" title="{{ event.nama_konser }}">{{ event.nama_konser }}</span>
                         </div>
-                        <span class="fw-bold" style="color: #FF8C00; font-size: 0.82rem;">
-                            {{ event.total_terjual }} <span class="text-muted fw-normal" style="font-size: 0.72rem;">tiket</span>
+                        <span class="badge border border-secondary text-light fw-bold" style="background-color: #27272a; font-size: 0.75rem;">
+                            {{ event.total_terjual }} tiket
                         </span>
                     </div>
-                    <div class="progress" style="height: 5px; border-radius: 4px; background-color: #e2e8f0;">
-                        <div class="progress-bar" role="progressbar" 
-                             style="background-color: #FF8C00; width: {% widthratio event.total_terjual total_terjual|default:1 100 %}%;" 
-                             aria-valuenow="{{ event.total_terjual }}" aria-valuemin="0" aria-valuemax="100">
-                        </div>
+                    <div class="progress" style="height: 5px; background-color: #27272a;">
+                        <div class="progress-bar" role="progressbar" style="background-color: #FF8C00; width: 100%;" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
                     </div>
                 </div>
                 {% empty %}
-                <div class="text-center py-4 text-muted small">Belum ada riwayat konser yang terjual.</div>
+                <div class="text-center py-4 text-secondary small">
+                    Belum ada data penjualan tiket.
+                </div>
                 {% endfor %}
             </div>
         </div>
     </div>
 </div>
 
-<!-- 3. TABEL AKTIVITAS TRANSAKSI TERBARU -->
-<div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 14px; background-color: #ffffff; border: 1px solid #e2e8f0 !important;">
-    <div class="d-flex justify-content-between align-items-center pb-3 mb-3 border-bottom" style="border-color: #f1f5f9 !important;">
+<!-- Section: Transaksi Terbaru -->
+<div class="card-dark p-4 shadow-sm mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
-            <h6 class="fw-bold mb-1" style="color: #0f172a;">Aktivitas Transaksi Terbaru</h6>
-            <small class="text-muted">Daftar pesanan tiket yang baru saja berhasil diverifikasi sistem</small>
+            <h5 class="fw-bold text-white mb-0">Aktivitas Transaksi Terbaru</h5>
+            <small class="text-secondary">Daftar pesanan tiket yang baru saja diverifikasi sistem</small>
         </div>
-        <a href="{% url 'dashboard:kelola_event' %}" class="btn btn-sm btn-light border px-3 fw-semibold text-muted" style="border-radius: 8px;">
+        <a href="{% url 'dashboard:kelola_event' %}" class="btn btn-sm btn-outline-secondary" style="border-radius: 8px;">
             Lihat Event Terkait
         </a>
     </div>
 
     <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
+        <table class="table table-dark-custom align-middle mb-0">
             <thead>
-                <tr style="font-size: 0.8rem; color: #64748b; background-color: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+                <tr>
                     <th class="py-2 ps-3">ORDER ID</th>
                     <th class="py-2">PEMBELI</th>
                     <th class="py-2">KONSER & TIER TIKET</th>
@@ -174,38 +154,37 @@
             </thead>
             <tbody style="font-size: 0.88rem;">
                 {% for order in aktivitas_terbaru %}
-                <tr style="border-bottom: 1px solid #f1f5f9;">
-                    <td class="ps-3 font-monospace text-muted" style="font-size: 0.8rem;">
+                <tr>
+                    <td class="ps-3 fw-mono text-warning font-monospace" style="font-size: 0.8rem;">
                         #{{ order.id|stringformat:"s"|slice:":8"|upper }}
                     </td>
-                    <td>
-                        <div class="fw-bold" style="color: #0f172a;">{{ order.user.username }}</div>
+                    <td class="fw-semibold text-white">
+                        {{ order.user.username }}
                     </td>
                     <td>
                         {% for item in order.orderitem_set.all %}
-                            <span class="badge border fw-semibold me-1" style="background-color: #f8fafc; color: #334155; border-color: #cbd5e1 !important;">
-                                {{ item.category.event.nama_konser }} &bull; {{ item.category.nama_kategori }}
-                            </span>
+                            <div class="text-light fw-medium">{{ item.category.event.nama_konser }}</div>
+                            <small class="text-secondary">{{ item.category.nama_kategori }} (x{{ item.jumlah|default:1 }})</small>
                         {% empty %}
-                            <span class="text-muted small">-</span>
+                            <span class="text-secondary small">Item tidak tersedia</span>
                         {% endfor %}
                     </td>
-                    <td class="fw-bold" style="color: #0f172a;">
-                        Rp {{ order.total_harga|stringformat:"d" }}
+                    <td class="fw-bold text-white">
+                        Rp {{ order.total_harga|intcomma }}
                     </td>
-                    <td class="text-muted" style="font-size: 0.82rem;">
+                    <td class="text-secondary">
                         {{ order.waktu_pesan|date:"d M Y, H:i" }} WITA
                     </td>
                     <td class="text-center pe-3">
-                        <span class="badge px-2 py-1 fw-bold" style="background-color: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; font-size: 0.72rem;">
+                        <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
                             {{ order.status }}
                         </span>
                     </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="6" class="text-center py-4 text-muted small">
-                        Belum ada data transaksi pesanan yang masuk.
+                    <td colspan="6" class="text-center py-4 text-secondary small">
+                        Belum ada riwayat transaksi lunas.
                     </td>
                 </tr>
                 {% endfor %}
@@ -217,31 +196,31 @@
 
 {% block extra_js %}
 <script>
-    const labels = {{ chart_labels|safe }};
-    const dataValues = {{ chart_data|safe }};
+    const chartLabels = JSON.parse('{{ chart_labels|safe }}');
+    const chartData = JSON.parse('{{ chart_data|safe }}');
 
     const ctx = document.getElementById('salesChart').getContext('2d');
     
-    // Gradient oranye lembut khas KonserKU
-    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-    gradient.addColorStop(0, 'rgba(255, 140, 0, 0.25)');
-    gradient.addColorStop(1, 'rgba(255, 140, 0, 0.0)');
+    // Gradient neon orange untuk dark mode
+    const orangeGradient = ctx.createLinearGradient(0, 0, 0, 260);
+    orangeGradient.addColorStop(0, 'rgba(255, 140, 0, 0.45)');
+    orangeGradient.addColorStop(1, 'rgba(255, 140, 0, 0.0)');
 
     new Chart(ctx, {
         type: 'line',
         data: {
-            labels: labels,
+            labels: chartLabels,
             datasets: [{
                 label: 'Tiket Terjual',
-                data: dataValues,
+                data: chartData,
+                backgroundColor: orangeGradient,
                 borderColor: '#FF8C00',
-                backgroundColor: gradient,
-                fill: true,
-                tension: 0.35,
                 borderWidth: 2.5,
-                pointBackgroundColor: '#ffffff',
-                pointBorderColor: '#FF8C00',
-                pointBorderWidth: 2.5,
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: '#FF8C00',
+                pointBorderColor: '#18181b',
+                pointBorderWidth: 2,
                 pointRadius: 4.5,
                 pointHoverRadius: 6.5
             }]
@@ -250,43 +229,29 @@
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: {
-                    display: false
-                },
+                legend: { display: false },
                 tooltip: {
-                    backgroundColor: '#0f172a',
-                    titleColor: '#FF8C00',
-                    bodyColor: '#ffffff',
+                    backgroundColor: '#18181b',
+                    titleColor: '#f4f4f5',
+                    bodyColor: '#FF8C00',
+                    borderColor: '#27272a',
+                    borderWidth: 1,
                     padding: 10,
-                    cornerRadius: 8,
-                    displayColors: false,
-                    callbacks: {
-                        label: function(context) {
-                            return `${context.parsed.y} Tiket Terkonfirmasi`;
-                        }
-                    }
+                    displayColors: false
                 }
             },
             scales: {
                 x: {
-                    grid: {
-                        display: false
-                    },
-                    ticks: {
-                        color: '#64748b',
-                        font: { size: 11, weight: '500' }
-                    }
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                    ticks: { color: '#a1a1aa', font: { size: 11 } }
                 },
                 y: {
                     beginAtZero: true,
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
                     ticks: {
-                        precision: 0,
-                        color: '#64748b',
-                        font: { size: 11, weight: '500' }
-                    },
-                    grid: {
-                        color: '#f1f5f9',
-                        drawBorder: false
+                        color: '#a1a1aa',
+                        font: { size: 11 },
+                        stepSize: 2
                     }
                 }
             }

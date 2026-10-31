@@ -1,251 +1,250 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Admin Panel - KonserKU{% endblock %}</title>
-    <!-- Bootstrap 5 CDN -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons CDN -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-    <!-- Chart.js CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>{% block title %}Dashboard Admin - KonserKU{% endblock %}</title>
     
+    <!-- Bootstrap 5 CSS & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <style>
         :root {
-            --body-bg: #f8fafc;
-            --card-bg: #ffffff;
-            --sidebar-bg: #ffffff;
-            --border-subtle: #e2e8f0;
-            --primary-orange: #FF8C00;
-            --primary-orange-hover: #e07b00;
-            --orange-soft: #fff7ed;
-            --text-title: #0f172a;
-            --text-body: #334155;
-            --text-muted: #64748b;
+            --bg-canvas: #121214;
+            --bg-card: #18181b;
+            --bg-card-subtle: #202024;
+            --border-color: #27272a;
+            --border-subtle: #323238;
+            --text-main: #f4f4f5;
+            --text-muted: #a1a1aa;
+            --accent-orange: #FF8C00;
+            --accent-hover: #e07b00;
         }
 
         body {
-            background-color: var(--body-bg);
-            color: var(--text-body);
-            font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-canvas);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             min-height: 100vh;
-            overflow-x: hidden;
         }
 
-        /* Sidebar Desktop */
-        .admin-sidebar {
-            width: 255px;
-            background-color: var(--sidebar-bg);
-            border-right: 1px solid var(--border-subtle);
+        /* Sidebar Styling */
+        .sidebar {
+            width: 260px;
             min-height: 100vh;
+            background-color: var(--bg-card);
+            border-right: 1px solid var(--border-color);
             position: fixed;
             top: 0;
             left: 0;
+            bottom: 0;
             z-index: 1000;
             display: flex;
             flex-direction: column;
+            justify-content: space-between;
         }
 
         .main-wrapper {
-            margin-left: 255px;
+            margin-left: 260px;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            transition: margin-left 0.2s ease-in-out;
+            background-color: var(--bg-canvas);
+        }
+
+        .top-navbar {
+            background-color: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+            height: 68px;
+            display: flex;
+            align-items: center;
+            padding: 0 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 900;
+        }
+
+        /* Nav Links */
+        .nav-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            padding: 0 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar-menu .nav-link {
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            font-weight: 500;
+            padding: 10px 16px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .sidebar-menu .nav-link:hover {
+            color: var(--text-main);
+            background-color: var(--bg-card-subtle);
+        }
+
+        .sidebar-menu .nav-link.active {
+            color: #ffffff;
+            background-color: var(--accent-orange);
+            font-weight: 600;
+            box-shadow: 0 4px 14px rgba(255, 140, 0, 0.35);
+        }
+
+        .sidebar-menu .nav-link.active i {
+            color: #ffffff !important;
+        }
+
+        /* Form Inputs & Controls */
+        .form-control, .form-select {
+            background-color: var(--bg-card-subtle) !important;
+            border-color: var(--border-color) !important;
+            color: var(--text-main) !important;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--accent-orange) !important;
+            box-shadow: 0 0 0 0.25rem rgba(255, 140, 0, 0.25) !important;
+        }
+
+        /* Cards & Tables */
+        .card-dark {
+            background-color: var(--bg-card) !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 14px;
+        }
+
+        .table-dark-custom {
+            color: var(--text-main);
+            background-color: transparent;
+        }
+
+        .table-dark-custom thead tr {
+            background-color: var(--bg-card-subtle);
+            border-bottom: 2px solid var(--border-color);
+            color: var(--text-muted);
+            font-size: 0.82rem;
+        }
+
+        .table-dark-custom tbody tr {
+            border-bottom: 1px solid var(--border-color);
+            transition: background-color 0.15s ease;
+        }
+
+        .table-dark-custom tbody tr:hover {
+            background-color: rgba(255, 255, 255, 0.03);
         }
 
         @media (max-width: 991.98px) {
-            .admin-sidebar {
-                display: none;
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            .sidebar.show {
+                transform: translateX(0);
             }
             .main-wrapper {
                 margin-left: 0;
             }
-        }
-
-        /* Navigasi Menu */
-        .nav-link-admin {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 14px;
-            color: var(--text-muted);
-            border-radius: 10px;
-            text-decoration: none;
-            font-weight: 500;
-            font-size: 0.9rem;
-            transition: all 0.15s ease-in-out;
-            margin-bottom: 4px;
-        }
-
-        .nav-link-admin:hover {
-            color: var(--primary-orange);
-            background-color: var(--orange-soft);
-        }
-
-        .nav-link-admin.active {
-            color: var(--primary-orange);
-            background-color: var(--orange-soft);
-            font-weight: 600;
-        }
-
-        .nav-link-admin i {
-            font-size: 1.15rem;
-        }
-
-        /* Topbar */
-        .admin-topbar {
-            background-color: #ffffff;
-            border-bottom: 1px solid var(--border-subtle);
-            padding: 14px 28px;
-        }
-
-        /* User Profile Pill */
-        .user-pill {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background-color: #f1f5f9;
-            padding: 5px 12px 5px 6px;
-            border-radius: 30px;
-            border: 1px solid var(--border-subtle);
-        }
-
-        .user-avatar {
-            width: 32px;
-            height: 32px;
-            background-color: var(--primary-orange);
-            color: #ffffff;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 0.8rem;
         }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
 <body>
 
-    <!-- SIDEBAR DESKTOP -->
-    <aside class="admin-sidebar p-3">
-        <div class="d-flex align-items-center justify-content-between px-2 py-3 mb-3 border-bottom" style="border-color: var(--border-subtle) !important;">
-            <span class="fs-4 fw-bold" style="color: var(--text-title);">Konser<span style="color: var(--primary-orange);">KU</span></span>
-            <span class="badge rounded-pill fw-bold" style="background-color: #fee2e2; color: #ef4444; font-size: 0.7rem;">ADMIN</span>
+    <!-- SIDEBAR -->
+    <aside class="sidebar p-3" id="adminSidebar">
+        <div>
+            <!-- Branding -->
+            <div class="d-flex align-items-center gap-2 px-2 py-3 mb-4">
+                <span class="fs-4 fw-bold text-white">Konser<span style="color: var(--accent-orange);">KU</span></span>
+                <span class="badge border border-danger-subtle bg-danger-subtle text-danger fw-bold" style="font-size: 0.68rem; letter-spacing: 0.5px;">ADMIN</span>
+            </div>
+
+            <!-- Navigation Links -->
+            <div class="nav-label">Navigasi Sistem</div>
+            <nav class="sidebar-menu">
+                <a href="{% url 'dashboard:index' %}" class="nav-link {% if active_tab == 'dashboard' %}active{% endif %}">
+                    <i class="bi bi-grid-1x2-fill"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{% url 'dashboard:kelola_venue' %}" class="nav-link {% if active_tab == 'venue' %}active{% endif %}">
+                    <i class="bi bi-geo-alt"></i>
+                    <span>Kelola Venue</span>
+                </a>
+                <a href="{% url 'dashboard:kelola_event' %}" class="nav-link {% if active_tab == 'event' %}active{% endif %}">
+                    <i class="bi bi-music-note-beamed"></i>
+                    <span>Kelola Event</span>
+                </a>
+                <a href="{% url 'dashboard:kelola_ticket_kategory' %}" class="nav-link {% if active_tab == 'ticket_kategory' %}active{% endif %}">
+                    <i class="bi bi-ticket-perforated"></i>
+                    <span>Kelola Ticket Category</span>
+                </a>
+                <a href="{% url 'dashboard:kelola_user' %}" class="nav-link {% if active_tab == 'user' %}active{% endif %}">
+                    <i class="bi bi-people"></i>
+                    <span>Kelola Pengguna</span>
+                </a>
+            </nav>
         </div>
 
-        <nav class="flex-grow-1">
-            <div class="text-uppercase fw-bold px-2 mb-2" style="font-size: 0.7rem; letter-spacing: 0.75px; color: #94a3b8;">Navigasi Sistem</div>
-            <a href="{% url 'dashboard:index' %}" class="nav-link-admin {% if active_tab == 'dashboard' %}active{% endif %}">
-                <i class="bi bi-grid-1x2-fill"></i> Dashboard
-            </a>
-            <a href="{% url 'dashboard:kelola_venue' %}" class="nav-link-admin {% if active_tab == 'venue' %}active{% endif %}">
-                <i class="bi bi-geo-alt-fill"></i> Kelola Venue
-            </a>
-            <a href="{% url 'dashboard:kelola_event' %}" class="nav-link-admin {% if active_tab == 'event' %}active{% endif %}">
-                <i class="bi bi-music-note-beamed"></i> Kelola Event
-            </a>
-            <a href="{% url 'dashboard:kelola_ticket_kategory' %}" class="nav-link-admin {% if active_tab == 'ticket_kategory' %}active{% endif %}">
-                <i class="bi bi-ticket-detailed-fill"></i> Kelola Ticket Category
-            </a>
-            <a href="{% url 'dashboard:kelola_user' %}" class="nav-link-admin {% if active_tab == 'user' %}active{% endif %}">
-                <i class="bi bi-people-fill"></i> Kelola User
-            </a>
-        </nav>
-
-        <div class="pt-3 border-top d-flex align-items-center justify-content-between" style="border-color: var(--border-subtle) !important;">
-            <div class="d-flex align-items-center gap-2 overflow-hidden">
-                <div class="user-avatar">
-                    {{ request.user.username|slice:":2"|upper }}
+        <!-- Footer User Info -->
+        <div class="pt-3 border-top border-secondary-subtle d-flex align-items-center justify-content-between px-2">
+            <div class="d-flex align-items-center gap-2">
+                <div class="rounded-circle fw-bold d-flex align-items-center justify-content-center shadow-sm" style="width: 38px; height: 38px; background-color: var(--accent-orange); color: #fff; font-size: 0.85rem;">
+                    AD
                 </div>
-                <div class="text-truncate">
-                    <div class="fw-bold text-truncate" style="font-size: 0.88rem; color: var(--text-title);">{{ request.user.username }}</div>
-                    <div class="small" style="font-size: 0.72rem; color: var(--text-muted);">Super Moderator</div>
+                <div>
+                    <div class="fw-bold text-white small lh-1">{{ request.user.username }}</div>
+                    <small class="text-secondary" style="font-size: 0.72rem;">Super Moderator</small>
                 </div>
             </div>
             <form action="{% url 'logout' %}" method="POST" class="m-0">
                 {% csrf_token %}
-                <button type="submit" class="btn btn-sm btn-outline-danger border-0" title="Keluar">
+                <button type="submit" class="btn btn-sm btn-link text-danger p-1" title="Keluar">
                     <i class="bi bi-power fs-5"></i>
                 </button>
             </form>
         </div>
     </aside>
 
-    <!-- OFFCANVAS SIDEBAR (MOBILE VIEW) -->
-    <div class="offcanvas offcanvas-start" tabindex="-1" id="mobileAdminSidebar" aria-labelledby="mobileAdminSidebarLabel" style="width: 275px; background-color: #ffffff;">
-        <div class="offcanvas-header border-bottom" style="border-color: var(--border-subtle) !important;">
-            <h5 class="offcanvas-title fw-bold" id="mobileAdminSidebarLabel" style="color: var(--text-title);">Konser<span style="color: var(--primary-orange);">KU</span></h5>
-            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-        </div>
-        <div class="offcanvas-body d-flex flex-column justify-content-between p-3">
-            <nav>
-                <div class="text-uppercase fw-bold px-2 mb-2" style="font-size: 0.7rem; letter-spacing: 0.75px; color: #94a3b8;">Navigasi Sistem</div>
-                <a href="{% url 'dashboard:index' %}" class="nav-link-admin {% if active_tab == 'dashboard' %}active{% endif %}">
-                    <i class="bi bi-grid-1x2-fill"></i> Dashboard
-                </a>
-                <a href="{% url 'dashboard:kelola_venue' %}" class="nav-link-admin {% if active_tab == 'venue' %}active{% endif %}">
-                    <i class="bi bi-geo-alt-fill"></i> Kelola Venue
-                </a>
-                <a href="{% url 'dashboard:kelola_event' %}" class="nav-link-admin {% if active_tab == 'event' %}active{% endif %}">
-                    <i class="bi bi-music-note-beamed"></i> Kelola Event
-                </a>
-                <a href="{% url 'dashboard:kelola_ticket_kategory' %}" class="nav-link-admin {% if active_tab == 'ticket_kategory' %}active{% endif %}">
-                    <i class="bi bi-ticket-detailed-fill"></i> Kelola Ticket Category
-                </a>
-                <a href="{% url 'dashboard:kelola_user' %}" class="nav-link-admin {% if active_tab == 'user' %}active{% endif %}">
-                    <i class="bi bi-people-fill"></i> Kelola Pengguna
-                </a>
-            </nav>
-            <div class="pt-3 border-top d-flex align-items-center justify-content-between" style="border-color: var(--border-subtle) !important;">
-                <div class="d-flex align-items-center gap-2">
-                    <div class="user-avatar">
-                        {{ request.user.username|slice:":2"|upper }}
-                    </div>
-                    <div>
-                        <div class="fw-bold" style="font-size: 0.88rem; color: var(--text-title);">{{ request.user.username }}</div>
-                        <div class="small" style="font-size: 0.72rem; color: var(--text-muted);">Super Moderator</div>
-                    </div>
-                </div>
-                <form action="{% url 'logout' %}" method="POST" class="m-0">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-sm btn-outline-danger border-0">
-                        <i class="bi bi-power fs-5"></i>
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- AREA KONTEN UTAMA -->
+    <!-- MAIN CONTENT WRAPPER -->
     <div class="main-wrapper">
-        <header class="admin-topbar d-flex align-items-center justify-content-between">
+        <!-- Top Navbar -->
+        <header class="top-navbar justify-content-between">
             <div class="d-flex align-items-center gap-3">
-                <button class="btn btn-sm btn-light border d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileAdminSidebar">
+                <button class="btn btn-sm btn-outline-secondary d-lg-none" type="button" onclick="document.getElementById('adminSidebar').classList.toggle('show')">
                     <i class="bi bi-list fs-5"></i>
                 </button>
                 <div>
-                    <h5 class="fw-bold mb-0" style="color: var(--text-title);">{% block page_heading %}Pusat Operasional Platform{% endblock %}</h5>
+                    <h5 class="fw-bold text-white mb-0">{% block page_heading %}Dashboard Manajemen Konser{% endblock %}</h5>
                 </div>
             </div>
-            
-            <div class="d-flex align-items-center gap-2">
-                <div class="user-pill d-none d-sm-flex">
-                    <div class="user-avatar">
-                        {{ request.user.username|slice:":2"|upper }}
-                    </div>
-                    <span class="fw-semibold" style="font-size: 0.85rem; color: var(--text-title);">{{ request.user.username }}</span>
-                </div>
+            <div class="d-flex align-items-center gap-3">
+                <a href="{% url 'event_list' %}" class="btn btn-sm btn-outline-warning d-flex align-items-center gap-1" style="border-radius: 8px;">
+                    <i class="bi bi-box-arrow-up-right"></i>
+                    <span>Lihat Halaman Publik</span>
+                </a>
             </div>
         </header>
 
-        <!-- Pesan Notifikasi -->
-        <div class="px-4 pt-3">
+        <!-- Alerts -->
+        <div class="container-fluid px-4 pt-3">
             {% if messages %}
                 {% for message in messages %}
-                    <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show shadow-sm mb-0" role="alert" style="border-radius: 10px;">
+                    <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show shadow-sm" role="alert">
                         {{ message }}
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
@@ -253,12 +252,13 @@
             {% endif %}
         </div>
 
-        <main class="p-4 flex-grow-1">
+        <!-- Dynamic Content -->
+        <main class="container-fluid px-4 py-3 flex-grow-1">
             {% block content %}{% endblock %}
         </main>
     </div>
 
-    <!-- Bootstrap 5 Script -->
+    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     {% block extra_js %}{% endblock %}
 </body>
