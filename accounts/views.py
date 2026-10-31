@@ -36,7 +36,6 @@ class CustomLoginView(LoginView):
     form_class = MultiLoginForm
 
     def get_success_url(self):
-        # Indentasi 8 spasi ke dalam dan pastikan return bertipe string murni
         if self.request.user.is_staff or self.request.user.is_superuser:
             return str(reverse('dashboard:index'))
         return str(reverse('event_list'))
@@ -188,7 +187,7 @@ class ApiSwipeDataView(LoginRequiredMixin, View):
             if p.profile_picture_3: images.append(p.profile_picture_3.url)
 
             data.append({
-                'id': p.user.id,
+                'id': str(p.user.id),
                 'username': p.user.username,
                 'age': p.age or '',
                 'nama_ktp': p.nama_ktp or '',
@@ -255,53 +254,94 @@ class ApiRespondFriendRequestView(LoginRequiredMixin, View):
             return JsonResponse({'error': str(e)}, status=400)
 
 class ApiGetFriendRequestsView(LoginRequiredMixin, View):
+    def _to_float(self, val):
+        if val is None or val == '':
+            return None
+        try:
+            return float(val)
+        except (ValueError, TypeError):
+            return None
+
     def _format_requests(self, queryset, direction, my_lat, my_lon):
         formatted = []
+        my_lat_val = self._to_float(my_lat)
+        my_lon_val = self._to_float(my_lon)
+
         for req in queryset:
-            p = req.receiver.profile if direction == 'sent' else req.sender.profile
+            target_user = req.receiver if direction == 'sent' else req.sender
+            if not target_user:
+                continue
+
+            try:
+                p = target_user.profile
+            except (UserProfile.DoesNotExist, AttributeError):
+                p, _ = UserProfile.objects.get_or_create(user=target_user)
+
             dist_str = "Jarak tidak diketahui"
-            if my_lat is not None and my_lon is not None and p.latitude is not None and p.longitude is not None:
+            target_lat = self._to_float(p.latitude)
+            target_lon = self._to_float(p.longitude)
+
+            if None not in (my_lat_val, my_lon_val, target_lat, target_lon):
                 try:
                     dist = LocationService.haversine_distance(
-                        float(my_lat), float(my_lon), float(p.latitude), float(p.longitude)
+                        my_lat_val, my_lon_val, target_lat, target_lon
                     )
                     dist_str = f"{round(dist, 1)} km dari lokasimu"
-                except TypeError:
-                    pass
+                except Exception:
+                    dist_str = "Jarak tidak diketahui"
+
+            profile_pic_url = None
+            if p.profile_picture:
+                try:
+                    profile_pic_url = p.profile_picture.url
+                except Exception:
+                    profile_pic_url = None
+
+            bg_image_url = None
+            if p.background_image:
+                try:
+                    bg_image_url = p.background_image.url
+                except Exception:
+                    bg_image_url = None
+
+            event_title = req.event.nama_konser if req.event else "Konser"
 
             formatted.append({
-                'req_id': req.id,
+                'req_id': str(req.id),
                 'direction': direction,
                 'status': req.status,
-                'user_id': p.user.id,
-                'username': p.user.username,
-                'event_name': req.event.nama_konser,
-                'profile_pic': p.profile_picture.url if p.profile_picture else None,
-                'no_hp': p.user.no_hp if req.status in ['ACCEPTED', 'MUTUAL'] else None,
-                'age': p.age,
-                'bio': p.bio,
-                'gender': p.get_gender_display(),
-                'vibe': p.get_concert_vibe_display(),
-                'energy': p.get_social_energy_display(),
-                'goal': p.get_matching_goal_display(),
+                'user_id': str(target_user.id),
+                'username': target_user.username,
+                'event_name': event_title,
+                'profile_pic': profile_pic_url,
+                'no_hp': target_user.no_hp if req.status in ['ACCEPTED', 'MUTUAL'] else None,
+                'age': p.age or '',
+                'bio': p.bio or 'Belum ada bio.',
+                'gender': p.get_gender_display() or '',
+                'vibe': p.get_concert_vibe_display() or '',
+                'energy': p.get_social_energy_display() or '',
+                'goal': p.get_matching_goal_display() or '',
                 'distance': dist_str,
-                'bg_image': p.background_image.url if p.background_image else None
+                'bg_image': bg_image_url
             })
         return formatted
 
     def get(self, request):
-        sent = FriendRequest.objects.filter(sender=request.user).select_related('receiver__profile', 'event')
-        received = FriendRequest.objects.filter(receiver=request.user).select_related('sender__profile', 'event')
+        try:
+            my_profile, _ = UserProfile.objects.get_or_create(user=request.user)
+            my_lat = my_profile.latitude
+            my_lon = my_profile.longitude
 
-        my_profile = getattr(request.user, 'profile', None)
-        my_lat = my_profile.latitude if my_profile else None
-        my_lon = my_profile.longitude if my_profile else None
+            sent = FriendRequest.objects.filter(sender=request.user).select_related('receiver__profile', 'event')
+            received = FriendRequest.objects.filter(receiver=request.user).select_related('sender__profile', 'event')
 
-        data = []
-        data.extend(self._format_requests(sent, 'sent', my_lat, my_lon))
-        data.extend(self._format_requests(received, 'received', my_lat, my_lon))
+            data = []
+            data.extend(self._format_requests(sent, 'sent', my_lat, my_lon))
+            data.extend(self._format_requests(received, 'received', my_lat, my_lon))
 
-        return JsonResponse({'requests': data})
+            return JsonResponse({'requests': data})
+        except Exception as e:
+            return JsonResponse({'requests': [], 'error': str(e)}, status=200)
 
 class ApiMarkTutorialSeenView(LoginRequiredMixin, View):
     def post(self, request, event_id):
@@ -390,7 +430,6 @@ class VerifyResetOTPView(View):
 
             user.otp_code = None
             user.save()
-            # Tandai bahwa OTP sudah valid agar bisa akses halaman ganti password
             request.session['otp_verified_for_reset'] = True 
             return redirect('accounts:set_new_password')
             
@@ -416,7 +455,6 @@ class SetNewPasswordView(View):
             user.set_password(form.cleaned_data['password'])
             user.save()
             
-            # Bersihkan sesi keamanan
             del request.session['reset_user_id']
             del request.session['otp_verified_for_reset']
             

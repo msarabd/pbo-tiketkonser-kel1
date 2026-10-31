@@ -154,7 +154,6 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     {% if not user.is_staff and not user.is_superuser %}
-    // Skrip Laci & Friend Request hanya dijalankan untuk penonton/user biasa
     let drawerOpen = false;
     const drawer = document.getElementById('fr-drawer');
     const icon = document.getElementById('fr-pull-icon');
@@ -169,7 +168,10 @@ document.addEventListener("DOMContentLoaded", function() {
             const cookies = document.cookie.split(';');
             for (let i = 0; i < cookies.length; i++) {
                 const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) { cookieValue = decodeURIComponent(cookie.substring(name.length + 1)); break; }
+                if (cookie.substring(0, name.length + 1) === (name + '=')) { 
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1)); 
+                    break; 
+                }
             }
         }
         return cookieValue;
@@ -183,8 +185,12 @@ document.addEventListener("DOMContentLoaded", function() {
         loadingEl.classList.remove('d-none');
         listContainer.innerHTML = '';
         
-        fetch('/accounts/api/swipe/list/')
-            .then(res => res.json())
+        // Perbaikan URL: Menggunakan rute dinamis accounts:api_friend_requests
+        fetch("{% url 'accounts:api_friend_requests' %}")
+            .then(res => {
+                if (!res.ok) throw new Error("Status respons server: " + res.status);
+                return res.json();
+            })
             .then(data => {
                 loadingEl.classList.add('d-none');
                 
@@ -224,21 +230,33 @@ document.addEventListener("DOMContentLoaded", function() {
                     leftWrapper.appendChild(nameSpan);
 
                     const arrowIcon = document.createElement('i');
-                    if (req.status === 'MUTUAL') { arrowIcon.className = 'bi bi-arrow-left-right me-2'; arrowIcon.style.color = '#198754'; } 
-                    else { arrowIcon.className = req.direction === 'sent' ? 'bi bi-arrow-right me-2' : 'bi bi-arrow-left me-2'; arrowIcon.style.color = '#FF8C00'; }
+                    if (req.status === 'MUTUAL') { 
+                        arrowIcon.className = 'bi bi-arrow-left-right me-2'; 
+                        arrowIcon.style.color = '#198754'; 
+                    } else { 
+                        arrowIcon.className = req.direction === 'sent' ? 'bi bi-arrow-right me-2' : 'bi bi-arrow-left me-2'; 
+                        arrowIcon.style.color = '#FF8C00'; 
+                    }
                     
                     nameContainer.appendChild(leftWrapper);
                     nameContainer.appendChild(arrowIcon);
 
                     if (req.status === 'REJECTED') {
-                        nameContainer.style.backgroundColor = '#2b2b2b'; nameContainer.style.cursor = 'not-allowed';
-                        nameSpan.style.textDecoration = 'line-through'; nameSpan.style.color = '#666';
-                        const lockIcon = document.createElement('i'); lockIcon.className = 'bi bi-lock-fill ms-1'; lockIcon.style.color = '#666'; lockIcon.style.fontSize = '0.75rem';
+                        nameContainer.style.backgroundColor = '#2b2b2b'; 
+                        nameContainer.style.cursor = 'not-allowed';
+                        nameSpan.style.textDecoration = 'line-through'; 
+                        nameSpan.style.color = '#666';
+                        const lockIcon = document.createElement('i'); 
+                        lockIcon.className = 'bi bi-lock-fill ms-1'; 
+                        lockIcon.style.color = '#666'; 
+                        lockIcon.style.fontSize = '0.75rem';
                         nameSpan.appendChild(lockIcon);
                         nameContainer.onclick = function(e) { e.preventDefault(); };
                     } else {
-                        nameContainer.style.backgroundColor = '#2b2b2b'; nameContainer.style.cursor = 'pointer';
-                        nameContainer.setAttribute('data-bs-toggle', 'modal'); nameContainer.setAttribute('data-bs-target', '#friendProfileModal');
+                        nameContainer.style.backgroundColor = '#2b2b2b'; 
+                        nameContainer.style.cursor = 'pointer';
+                        nameContainer.setAttribute('data-bs-toggle', 'modal'); 
+                        nameContainer.setAttribute('data-bs-target', '#friendProfileModal');
                         nameContainer.addEventListener('click', function() {
                             document.getElementById('fp-image').src = req.profile_pic ? req.profile_pic : `https://ui-avatars.com/api/?name=${encodeURIComponent(req.username)}&background=random&size=400`;
                             document.getElementById('fp-name').innerText = req.username;
@@ -259,9 +277,13 @@ document.addEventListener("DOMContentLoaded", function() {
                             if ((req.status === 'ACCEPTED' || req.status === 'MUTUAL') && req.no_hp) {
                                 let phone = req.no_hp;
                                 if (phone.startsWith('0')) { phone = '62' + phone.slice(1); }
-                                const waBtn = document.createElement('a'); waBtn.href = `https://wa.me/${phone}`; waBtn.target = '_blank';
+                                const waBtn = document.createElement('a'); 
+                                waBtn.href = `https://wa.me/${phone}`; 
+                                waBtn.target = '_blank';
                                 waBtn.className = 'btn w-100 rounded-pill fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2 py-3';
-                                waBtn.style.backgroundColor = '#25D366'; waBtn.style.color = 'white'; waBtn.style.border = 'none';
+                                waBtn.style.backgroundColor = '#25D366'; 
+                                waBtn.style.color = 'white'; 
+                                waBtn.style.border = 'none';
                                 waBtn.innerHTML = '<i class="bi bi-whatsapp fs-5"></i> Hubungi via WhatsApp';
                                 actionContainerModal.appendChild(waBtn);
                             }
@@ -292,29 +314,49 @@ document.addEventListener("DOMContentLoaded", function() {
                     item.appendChild(actionContainer);
                     listContainer.appendChild(item);
                 });
+            })
+            .catch(err => {
+                loadingEl.classList.add('d-none');
+                listContainer.innerHTML = '<p class="text-center mt-4 small text-danger fw-semibold">Gagal memuat permintaan teman.</p>';
             });
     }
 
     window.respondReq = function(reqId, action) {
-        fetch(`/accounts/api/swipe/respond/${reqId}/`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+        // Perbaikan URL: Mengarah ke rute api_respond_friend_request
+        fetch(`/accounts/api/respond-friend-request/${reqId}/`, {
+            method: 'POST', 
+            headers: { 
+                'Content-Type': 'application/json', 
+                'X-CSRFToken': getCookie('csrftoken') 
+            },
             body: JSON.stringify({ action: action })
-        }).then(res => res.json()).then(data => { if (data.status === 'success') { loadFriendRequests(); } });
+        })
+        .then(res => res.json())
+        .then(data => { 
+            if (data.status === 'success') { 
+                loadFriendRequests(); 
+            } 
+        })
+        .catch(err => console.error("Error merespons request:", err));
     }
 
     window.closeManualModal = function() {
         document.getElementById('friendProfileModal').classList.remove('show', 'd-block');
         document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
-        document.body.classList.remove('modal-open'); document.body.style.paddingRight = '';
+        document.body.classList.remove('modal-open'); 
+        document.body.style.paddingRight = '';
     }
 
     const pullTab = document.getElementById('fr-pull-tab');
     if (pullTab) {
         pullTab.addEventListener('click', function() {
             if (!drawerOpen) {
-                drawer.style.top = '60px'; icon.className = 'bi bi-chevron-up'; loadFriendRequests();
+                drawer.style.top = '60px'; 
+                icon.className = 'bi bi-chevron-up'; 
+                loadFriendRequests();
             } else {
-                drawer.style.top = '-400px'; icon.className = 'bi bi-chevron-down';
+                drawer.style.top = '-400px'; 
+                icon.className = 'bi bi-chevron-down';
             }
             drawerOpen = !drawerOpen;
         });

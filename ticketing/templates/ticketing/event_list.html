@@ -522,40 +522,54 @@
         <div class="filter-bar p-4 mb-4">
             <form method="GET" class="row g-3" id="filterForm">
                 <input type="hidden" name="tab" value="jelajah">
+                
+                <!-- 1. LOKASI -->
                 <div class="col-12 col-md-3">
                     <label class="form-label text-secondary small mb-1 fw-bold">Lokasi</label>
                     <select name="lokasi" class="form-select custom-select" onchange="this.form.submit()">
-                        <option value="">Pilih Lokasi</option>
-                        {% for kota in lokasi_list %}<option value="{{ kota }}" {% if request.GET.lokasi == kota %}selected{% endif %}>{{ kota }}</option>{% endfor %}
+                        <option value="">Semua Lokasi</option>
+                        {% for kota in lokasi_list %}
+                            <option value="{{ kota }}" {% if request.GET.lokasi == kota %}selected{% endif %}>{{ kota }}</option>
+                        {% endfor %}
                     </select>
                 </div>
+
+                <!-- 2. KATEGORI -->
                 <div class="col-12 col-md-2">
                     <label class="form-label text-secondary small mb-1 fw-bold">Kategori</label>
                     <select name="kategori" class="form-select custom-select" onchange="this.form.submit()">
-                        <option value="">Pilih Kategori</option>
-                        {% for value, label in kategori_list %}<option value="{{ value }}" {% if request.GET.kategori == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+                        <option value="">Semua Kategori</option>
+                        {% for value, label in kategori_list %}
+                            <option value="{{ value }}" {% if request.GET.kategori == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
                     </select>
                 </div>
+
+                <!-- 3. WAKTU -->
                 <div class="col-12 col-md-2">
                     <label class="form-label text-secondary small mb-1 fw-bold">Waktu</label>
                     <select name="waktu" class="form-select custom-select" onchange="this.form.submit()">
-                        <option value="">Pilih Waktu</option>
+                        <option value="">Semua Waktu</option>
                         <option value="minggu_ini" {% if request.GET.waktu == 'minggu_ini' %}selected{% endif %}>Minggu Ini</option>
                         <option value="minggu_depan" {% if request.GET.waktu == 'minggu_depan' %}selected{% endif %}>Minggu Depan</option>
                         <option value="bulan_ini" {% if request.GET.waktu == 'bulan_ini' %}selected{% endif %}>Bulan Ini</option>
                         <option value="bulan_depan" {% if request.GET.waktu == 'bulan_depan' %}selected{% endif %}>Bulan Depan</option>
                     </select>
                 </div>
+
+                <!-- 4. HARGA -->
                 <div class="col-12 col-md-2">
                     <label class="form-label text-secondary small mb-1 fw-bold">Harga</label>
                     <select name="harga" class="form-select custom-select" onchange="this.form.submit()">
-                        <option value="">Pilih Harga</option>
+                        <option value="">Semua Rentang Harga</option>
                         <option value="<200" {% if request.GET.harga == '<200' %}selected{% endif %}>Di bawah 200rb</option>
                         <option value="<500" {% if request.GET.harga == '<500' %}selected{% endif %}>Di bawah 500rb</option>
                         <option value="<1000" {% if request.GET.harga == '<1000' %}selected{% endif %}>Di bawah 1 Juta</option>
                         <option value=">1000" {% if request.GET.harga == '>1000' %}selected{% endif %}>Di atas 1 Juta</option>
                     </select>
                 </div>
+
+                <!-- 5. URUTKAN -->
                 <div class="col-12 col-md-3">
                     <label class="form-label text-secondary small mb-1 fw-bold">Urutkan</label>
                     <select name="sort" class="form-select custom-select" onchange="this.form.submit()">
@@ -565,13 +579,69 @@
                         <option value="termahal" {% if request.GET.sort == 'termahal' %}selected{% endif %}>Harga Termahal</option>
                     </select>
                 </div>
+
+                <!-- 6. PENCARIAN TEKS & TOMBOL AKSI -->
                 <div class="col-12 mt-3">
                     <div class="input-group">
-                        <span class="input-group-text bg-transparent border-end-0" style="border-color: #444; color: #aaa;"><i class="bi bi-search"></i></span>
+                        <span class="input-group-text bg-transparent border-end-0" style="border-color: #444; color: #aaa;">
+                            <i class="bi bi-search"></i>
+                        </span>
                         <input type="text" name="q" value="{{ request.GET.q }}" class="form-control custom-input border-start-0" placeholder="Cari konser atau artis..." onkeypress="if(event.keyCode == 13) { this.form.submit(); return false; }">
                         <button class="btn text-white fw-bold px-4" type="submit" style="background-color: #FF8C00;">Terapkan</button>
+                        {% if request.GET.lokasi or request.GET.kategori or request.GET.waktu or request.GET.harga or request.GET.q %}
+                            <a href="{% url 'event_list' %}?tab=jelajah" class="btn btn-outline-danger fw-semibold px-3 d-flex align-items-center gap-1" title="Reset Semua Filter">
+                                <i class="bi bi-trash3"></i> Reset Semua
+                            </a>
+                        {% endif %}
                     </div>
                 </div>
+
+                <!-- 7. ACTIVE FILTER CHIPS (HANYA MUNCUL JIKA ADA FILTER AKTIF) -->
+                {% if request.GET.lokasi or request.GET.kategori or request.GET.waktu or request.GET.harga or request.GET.q %}
+                <div class="col-12 mt-2 pt-2 border-top border-dark d-flex flex-wrap align-items-center gap-2">
+                    <span class="text-secondary small fw-semibold me-1" style="font-size: 0.78rem;">Filter Aktif:</span>
+
+                    <!-- Chip Lokasi -->
+                    {% if request.GET.lokasi %}
+                        <a href="?tab=jelajah{% if request.GET.kategori %}&kategori={{ request.GET.kategori }}{% endif %}{% if request.GET.waktu %}&waktu={{ request.GET.waktu }}{% endif %}{% if request.GET.harga %}&harga={{ request.GET.harga }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" 
+                           class="badge text-decoration-none px-2 py-1 d-inline-flex align-items-center gap-1" style="background-color: #27272a; color: #f4f4f5; border: 1px solid #3f3f46; font-size: 0.8rem;">
+                            📍 {{ request.GET.lokasi }} <i class="bi bi-x fs-6"></i>
+                        </a>
+                    {% endif %}
+
+                    <!-- Chip Kategori -->
+                    {% if request.GET.kategori %}
+                        <a href="?tab=jelajah{% if request.GET.lokasi %}&lokasi={{ request.GET.lokasi }}{% endif %}{% if request.GET.waktu %}&waktu={{ request.GET.waktu }}{% endif %}{% if request.GET.harga %}&harga={{ request.GET.harga }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" 
+                           class="badge text-decoration-none px-2 py-1 d-inline-flex align-items-center gap-1" style="background-color: #27272a; color: #FF8C00; border: 1px solid #FF8C00; font-size: 0.8rem;">
+                            🏷️ {{ request.GET.kategori }} <i class="bi bi-x fs-6"></i>
+                        </a>
+                    {% endif %}
+
+                    <!-- Chip Waktu -->
+                    {% if request.GET.waktu %}
+                        <a href="?tab=jelajah{% if request.GET.lokasi %}&lokasi={{ request.GET.lokasi }}{% endif %}{% if request.GET.kategori %}&kategori={{ request.GET.kategori }}{% endif %}{% if request.GET.harga %}&harga={{ request.GET.harga }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" 
+                           class="badge text-decoration-none px-2 py-1 d-inline-flex align-items-center gap-1" style="background-color: #27272a; color: #f4f4f5; border: 1px solid #3f3f46; font-size: 0.8rem;">
+                            🕒 {{ request.GET.waktu|title }} <i class="bi bi-x fs-6"></i>
+                        </a>
+                    {% endif %}
+
+                    <!-- Chip Harga -->
+                    {% if request.GET.harga %}
+                        <a href="?tab=jelajah{% if request.GET.lokasi %}&lokasi={{ request.GET.lokasi }}{% endif %}{% if request.GET.kategori %}&kategori={{ request.GET.kategori }}{% endif %}{% if request.GET.waktu %}&waktu={{ request.GET.waktu }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" 
+                           class="badge text-decoration-none px-2 py-1 d-inline-flex align-items-center gap-1" style="background-color: #27272a; color: #f4f4f5; border: 1px solid #3f3f46; font-size: 0.8rem;">
+                            💰 {{ request.GET.harga }} <i class="bi bi-x fs-6"></i>
+                        </a>
+                    {% endif %}
+
+                    <!-- Chip Query Kata Kunci -->
+                    {% if request.GET.q %}
+                        <a href="?tab=jelajah{% if request.GET.lokasi %}&lokasi={{ request.GET.lokasi }}{% endif %}{% if request.GET.kategori %}&kategori={{ request.GET.kategori }}{% endif %}{% if request.GET.waktu %}&waktu={{ request.GET.waktu }}{% endif %}{% if request.GET.harga %}&harga={{ request.GET.harga }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}" 
+                           class="badge text-decoration-none px-2 py-1 d-inline-flex align-items-center gap-1" style="background-color: #27272a; color: #f4f4f5; border: 1px solid #3f3f46; font-size: 0.8rem;">
+                            🔍 "{{ request.GET.q }}" <i class="bi bi-x fs-6"></i>
+                        </a>
+                    {% endif %}
+                </div>
+                {% endif %}
             </form>
         </div>
         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 mb-5">
