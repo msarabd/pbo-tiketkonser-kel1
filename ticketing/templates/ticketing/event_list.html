@@ -5,104 +5,411 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.css" />
 
 <style>
-    .banner-container {
-        position: relative; background: linear-gradient(135deg, #FFF9F0 0%, #FFFFFF 100%);
-        border-left: 5px solid #FF8C00; border-radius: 12px; min-height: 90px;
-        overflow: hidden; display: flex; align-items: center; justify-content: space-between;
-        padding: 1.25rem 1.75rem; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    /* ==========================================================================
+       1. DESKTOP INTERACTIVE CONTROL DECK (>= 992px)
+       ========================================================================== */
+    .deck-container-desktop {
+        background: radial-gradient(circle at 85% 50%, rgba(255, 140, 0, 0.08) 0%, rgba(24, 24, 27, 0.95) 70%);
+        border: 1px solid rgba(255, 140, 0, 0.25);
+        border-radius: 18px;
+        padding: 1rem 1.5rem;
+        box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.7), 0 0 20px rgba(255, 140, 0, 0.08);
+        backdrop-filter: blur(12px);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1.5rem;
+        position: relative;
     }
-    .konserku-tabs-wrapper { position: absolute; left: 50%; transform: translateX(-50%); display: flex; justify-content: center; z-index: 5; }
-    .konserku-tabs { background-color: #1a1a1a; border-radius: 50px; padding: 5px; border: 1px solid #333; display: flex; margin: 0; }
-    .konserku-tabs .nav-link { color: #aaaaaa; border-radius: 50px; font-weight: 600; padding: 8px 20px; transition: all 0.3s ease; font-size: 0.9rem; cursor: pointer; white-space: nowrap; }
-    .konserku-tabs .nav-link:hover { color: #ffffff; }
-    .konserku-tabs .nav-link.active { background-color: #FF8C00; color: #ffffff; }
-    .banner-drawer { position: absolute; top: 0; right: 0; bottom: 0; width: 320px; background: #1a1a1a; border-left: 4px solid #FF8C00; transform: translateX(calc(100% - 46px)); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); display: flex; align-items: center; z-index: 10; box-shadow: -5px 0 15px rgba(0,0,0,0.5); }
-    .banner-drawer.is-pulled { transform: translateX(0); }
-    .pull-handle { width: 46px; height: 100%; background-color: #FF8C00; color: #ffffff; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; user-select: none; transition: background-color 0.2s ease; }
-    .pull-handle:hover { background-color: #e07b00; }
-    .pull-handle i { font-size: 1.25rem; transition: transform 0.3s ease; }
-    .banner-drawer.is-pulled .pull-handle i { transform: rotate(180deg); }
-    .drawer-content { flex-grow: 1; padding: 0 1.25rem; display: flex; align-items: center; justify-content: center; }
+
+    /* Equalizer Mini Animation */
+    .equalizer-icon {
+        display: flex;
+        align-items: flex-end;
+        gap: 3px;
+        height: 18px;
+    }
+    .equalizer-bar {
+        width: 3px;
+        background-color: #FF8C00;
+        border-radius: 2px;
+        animation: eqPulse 1.2s ease-in-out infinite alternate;
+    }
+    .equalizer-bar:nth-child(1) { height: 40%; animation-delay: 0.1s; }
+    .equalizer-bar:nth-child(2) { height: 100%; animation-delay: 0.3s; }
+    .equalizer-bar:nth-child(3) { height: 60%; animation-delay: 0.2s; }
+    .equalizer-bar:nth-child(4) { height: 85%; animation-delay: 0.4s; }
+
+    @keyframes eqPulse {
+        0% { height: 25%; }
+        100% { height: 100%; }
+    }
+
+    /* Tab Switcher Tengah (Floating Pill) */
+    .deck-tabs {
+        background: rgba(15, 15, 18, 0.85);
+        border: 1px solid #2e2e34;
+        padding: 6px;
+        border-radius: 50px;
+        display: inline-flex;
+        gap: 6px;
+        box-shadow: inset 0 2px 5px rgba(0,0,0,0.4);
+    }
+    .deck-tab-btn {
+        background: transparent;
+        border: none;
+        color: #a1a1aa;
+        font-size: 0.88rem;
+        font-weight: 600;
+        padding: 8px 18px;
+        border-radius: 50px;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        white-space: nowrap;
+    }
+    .deck-tab-btn i {
+        font-size: 0.95rem;
+        transition: transform 0.2s ease;
+    }
+    .deck-tab-btn:hover {
+        color: #ffffff;
+        background: rgba(255, 255, 255, 0.05);
+    }
+    .deck-tab-btn:hover i {
+        transform: scale(1.15);
+    }
+    .deck-tab-btn.active {
+        background: linear-gradient(135deg, #FF8C00 0%, #e07b00 100%);
+        color: #ffffff;
+        box-shadow: 0 4px 15px rgba(255, 140, 0, 0.45);
+    }
+
+    /* Radar Cari Teman Widget (Kanan) */
+    .radar-card-hub {
+        background: rgba(25, 25, 30, 0.9);
+        border: 1px solid rgba(255, 140, 0, 0.35);
+        border-radius: 14px;
+        padding: 8px 14px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        text-decoration: none;
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        position: relative;
+        overflow: hidden;
+    }
+    .radar-card-hub::before {
+        content: '';
+        position: absolute;
+        top: 0; left: -100%; width: 100%; height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 140, 0, 0.15), transparent);
+        transition: left 0.6s ease;
+    }
+    .radar-card-hub:hover::before {
+        left: 100%;
+    }
+    .radar-card-hub:hover {
+        border-color: #FF8C00;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(255, 140, 0, 0.25);
+    }
+
+    /* Tumpukan Avatar Interaktif */
+    .avatar-stack {
+        display: flex;
+        align-items: center;
+    }
+    .avatar-stack-item {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        border: 2px solid #18181b;
+        margin-left: -10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: 700;
+        background-color: #27272a;
+        color: #fff;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+    }
+    .avatar-stack-item:first-child {
+        margin-left: 0;
+    }
+
+    /* Radar Ping Dot */
+    .radar-pulse-dot {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        width: 8px;
+        height: 8px;
+        background-color: #22c55e;
+        border-radius: 50%;
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+        animation: radarPulse 1.8s infinite;
+    }
+    @keyframes radarPulse {
+        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+        70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
+        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+    }
+
+    /* ==========================================================================
+       2. MOBILE HEADER & OFFCANVAS (< 992px)
+       ========================================================================== */
+    .banner-container-mobile {
+        background: #18181b;
+        border: 1px solid #2e2e34;
+        border-radius: 14px;
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    }
+    .mobile-menu-btn {
+        background-color: #242428;
+        color: #ffffff;
+        border: 1.5px solid #FF8C00;
+        border-radius: 50px;
+        padding: 8px 16px;
+        font-weight: 600;
+        font-size: 0.88rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s ease;
+    }
+    .mobile-menu-btn:active {
+        background-color: #FF8C00;
+        transform: scale(0.96);
+    }
+    .mobile-tab-item {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 14px 18px;
+        background-color: #242428;
+        border: 1px solid #333338;
+        border-radius: 12px;
+        color: #ffffff;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+    .mobile-tab-item i {
+        font-size: 1.25rem;
+        color: #a1a1aa;
+    }
+    .mobile-tab-item.active {
+        background-color: #fff7ed;
+        color: #FF8C00;
+        border-color: #FF8C00;
+    }
+    .mobile-tab-item.active i {
+        color: #FF8C00;
+    }
+
+    /* ==========================================================================
+       3. FILTER & JELAJAH
+       ========================================================================== */
     .filter-bar { background-color: #1a1a1a; border-radius: 12px; border: 1px solid #333; }
     .custom-input, .custom-select { background-color: #2a2a2a; border: 1px solid #444; color: #fff; font-size: 0.9rem; }
-    .custom-input:focus, .custom-select:focus { background-color: #333; border-color: #FF8C00; box-shadow: 0 0 0 0.25rem rgba(255, 140, 0, 0.25); color: #fff; }
+    .custom-input:focus, .custom-select:focus { 
+        background-color: #333; 
+        border-color: #FF8C00; 
+        box-shadow: 0 0 0 0.25rem rgba(255, 140, 0, 0.25); 
+        color: #fff; 
+    }
     .jelajah-card { background-color: #ffffff; border-radius: 12px; overflow: hidden; border: none; transition: transform 0.2s ease, box-shadow 0.2s ease; }
     .jelajah-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(255, 140, 0, 0.15); }
     .jelajah-img-wrap { width: 100%; aspect-ratio: 21/9; overflow: hidden; background-color: #f8f9fa; }
     .jelajah-img-wrap img { width: 100%; height: 100%; object-fit: cover; }
+
+    /* ==========================================================================
+       4. CAROUSEL SWIPER
+       ========================================================================== */
     .swiper-outer-container { position: relative; width: 100%; }
     .event-swiper { width: 100%; padding-top: 15px; padding-bottom: 50px; overflow: hidden; }
     .swiper-slide { width: 350px; height: auto; opacity: 0.35; filter: blur(3px); transition: opacity 0.4s ease, filter 0.4s ease; }
     .swiper-slide-active { opacity: 1; filter: blur(0); z-index: 10; }
     .swiper-wrapper { cursor: grab; }
     .swiper-wrapper:active { cursor: grabbing; }
-    .custom-nav-btn { width: 52px; height: 52px; background: rgba(17, 34, 80, 0.75); border: 2px solid #FF8C00; border-radius: 50%; color: #FF8C00; backdrop-filter: blur(4px); transition: all 0.3s ease; z-index: 30; }
-    .custom-nav-btn::after { font-size: 20px; font-weight: bold; }
-    .custom-nav-btn:hover { background: #FF8C00; color: #ffffff; transform: scale(1.1); box-shadow: 0 0 15px rgba(255, 140, 0, 0.6); }
-    .swiper-button-prev { left: 20px; }
-    .swiper-button-next { right: 20px; }
+
+    .custom-nav-btn { 
+        width: 48px; 
+        height: 48px; 
+        background: rgba(20, 20, 24, 0.85); 
+        border: 2px solid #FF8C00; 
+        border-radius: 50%; 
+        color: #FF8C00; 
+        backdrop-filter: blur(4px); 
+        transition: all 0.3s ease; 
+        z-index: 30; 
+    }
+    .custom-nav-btn::after { font-size: 18px; font-weight: bold; }
+    .custom-nav-btn:hover { 
+        background: #FF8C00; 
+        color: #ffffff; 
+        transform: scale(1.08); 
+        box-shadow: 0 0 15px rgba(255, 140, 0, 0.6); 
+    }
+    .swiper-button-prev { left: 15px; }
+    .swiper-button-next { right: 15px; }
+
     @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
     .terdekat-img-wrapper { height: 140px; padding: 12px; display: flex; align-items: center; justify-content: center; overflow: hidden; background-color: #fff; }
     .terdekat-img { width: 100%; height: 100%; object-fit: contain; border-radius: 6px; transition: transform 0.4s ease; }
     .terdekat-card:hover .terdekat-img { transform: scale(1.08); }
 
-    /* --- RESPONSIVE FIX --- */
-    @media (max-width: 768px) {
-        .banner-container { flex-direction: column; align-items: flex-start; padding: 1rem; padding-right: 46px; }
-        .konserku-tabs-wrapper { position: relative; left: 0; transform: none; width: 100%; margin-top: 1rem; overflow-x: auto; padding-bottom: 5px; justify-content: flex-start; -webkit-overflow-scrolling: touch; }
-        .konserku-tabs { width: max-content; flex-wrap: nowrap; }
-        .banner-drawer { width: 85vw; max-width: 320px; }
-        .swiper-slide { width: 80vw !important; }
-        .laris-content { white-space: normal !important; }
-        
-        /* FIX: Reset container dan paksa flex-basis kembali ke wujud aslinya */
-        .laris-container { flex-direction: column; height: auto !important; }
-        .laris-card { 
-            height: 200px !important; 
-            flex-basis: auto !important; 
-            flex-grow: 1 !important; 
-            margin-bottom: 1rem; 
+    /* Media Query HP (< 992px) */
+    @media (max-width: 991.98px) {
+        .swiper-slide { width: 85vw !important; max-width: 320px; }
+        .swiper-slide .card-body { padding: 1.15rem !important; }
+        .custom-nav-btn {
+            width: 38px !important;
+            height: 38px !important;
+            top: 75px !important;
+            transform: translateY(-50%) !important;
+            background: rgba(0, 0, 0, 0.75) !important;
+            border: 1.5px solid #FF8C00 !important;
         }
+        .custom-nav-btn::after { font-size: 14px !important; }
+        .swiper-button-prev { left: 6px !important; }
+        .swiper-button-next { right: 6px !important; }
+
+        .laris-container { flex-direction: column; height: auto !important; }
+        .laris-card { height: 190px !important; flex-basis: auto !important; flex-grow: 1 !important; margin-bottom: 0.75rem; }
+        .laris-content { opacity: 1 !important; white-space: normal !important; bottom: 14px !important; left: 14px !important; right: 14px !important; }
     }
 </style>
 
-<div class="banner-container mb-4">
-    <h1 class="display-6 fw-bold text-dark mb-0 text-nowrap">Konser <span style="color: #FF8C00;">KU</span></h1>
-    
-    <div class="konserku-tabs-wrapper">
-        <ul class="nav nav-pills konserku-tabs shadow-sm flex-nowrap" id="mainTab" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link {% if active_tab == 'beranda' %}active{% endif %}" id="beranda-tab" data-bs-toggle="tab" data-bs-target="#beranda" type="button" role="tab" onclick="updateUrlParam('tab', 'beranda')">Beranda</button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link {% if active_tab == 'jelajah' %}active{% endif %}" id="jelajah-tab" data-bs-toggle="tab" data-bs-target="#jelajah" type="button" role="tab" onclick="updateUrlParam('tab', 'jelajah')">Jelajah</button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link {% if active_tab == 'tentang' %}active{% endif %}" id="tentang-tab" data-bs-toggle="tab" data-bs-target="#tentang" type="button" role="tab" onclick="updateUrlParam('tab', 'tentang')">Tentang</button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link {% if active_tab == 'hubungi' %}active{% endif %}" id="hubungi-tab" data-bs-toggle="tab" data-bs-target="#hubungi" type="button" role="tab" onclick="updateUrlParam('tab', 'hubungi')">Hubungi Kami</button>
-            </li>
-        </ul>
+<!-- 1. HEADER INTERACTIVE CONTROL DECK (DESKTOP >= 992px) -->
+<div class="deck-container-desktop mb-4 d-none d-lg-flex">
+    <div class="d-flex align-items-center gap-3">
+        <div class="p-2 rounded-3" style="background-color: rgba(255, 140, 0, 0.12); border: 1px solid rgba(255, 140, 0, 0.3);">
+            <div class="equalizer-icon" title="Konser Live System Active">
+                <div class="equalizer-bar"></div>
+                <div class="equalizer-bar"></div>
+                <div class="equalizer-bar"></div>
+                <div class="equalizer-bar"></div>
+            </div>
+        </div>
+        <div>
+            <div class="fs-4 fw-bold text-white lh-1">Konser<span style="color: #FF8C00;">KU</span></div>
+            <small class="text-secondary" style="font-size: 0.72rem; letter-spacing: 0.5px;">LIVE SOUND & TICKETING</small>
+        </div>
     </div>
 
-    <div class="banner-drawer" id="friendBannerDrawer">
-        <div class="pull-handle" id="pullHandle" title="Klik atau tarik untuk Cari Teman">
-            <i class="bi bi-chevron-left" id="pullIcon"></i>
-            <span style="font-size: 0.65rem; font-weight: 700; text-orientation: mixed; writing-mode: vertical-rl; letter-spacing: 1px; margin-top: 4px;">TARIK</span>
+    <!-- Tab Navigasi Gliding -->
+    <div class="deck-tabs">
+        <button class="deck-tab-btn tab-nav-btn {% if active_tab == 'beranda' %}active{% endif %}" data-tab="beranda" onclick="switchGlobalTab('beranda')">
+            <i class="bi bi-disc-fill"></i> Beranda
+        </button>
+        <button class="deck-tab-btn tab-nav-btn {% if active_tab == 'jelajah' %}active{% endif %}" data-tab="jelajah" onclick="switchGlobalTab('jelajah')">
+            <i class="bi bi-search"></i> Jelajah
+        </button>
+        <button class="deck-tab-btn tab-nav-btn {% if active_tab == 'tentang' %}active{% endif %}" data-tab="tentang" onclick="switchGlobalTab('tentang')">
+            <i class="bi bi-info-circle-fill"></i> Tentang
+        </button>
+        <button class="deck-tab-btn tab-nav-btn {% if active_tab == 'hubungi' %}active{% endif %}" data-tab="hubungi" onclick="switchGlobalTab('hubungi')">
+            <i class="bi bi-headset"></i> Hubungi Kami
+        </button>
+    </div>
+
+    <!-- Radar Teman Nonton Widget -->
+    <a href="{% url 'choose_friend_concert' %}" class="radar-card-hub" title="Buka Radar Teman Nonton">
+        <div class="radar-pulse-dot" title="Sistem Radar Aktif"></div>
+        <div class="avatar-stack">
+            <div class="avatar-stack-item" style="background: linear-gradient(135deg, #FF8C00, #b45309);">M</div>
+            <div class="avatar-stack-item" style="background: linear-gradient(135deg, #0284c7, #0369a1);">K</div>
+            <div class="avatar-stack-item" style="background: linear-gradient(135deg, #10b981, #047857);">T</div>
         </div>
-        <div class="drawer-content">
-            <a href="{% url 'choose_friend_concert' %}" class="btn fw-bold w-100 py-2 shadow" style="background-color: #FF8C00; color: #ffffff; border-radius: 8px; border: none; font-size: 0.95rem;">
-                <i class="bi bi-people-fill me-1"></i> CARI TEMAN
-            </a>
+        <div class="text-start">
+            <div class="d-flex align-items-center gap-1">
+                <span class="fw-bold text-white" style="font-size: 0.88rem;">Cari Teman</span>
+                <i class="bi bi-arrow-right-short text-warning fs-5"></i>
+            </div>
+            <div class="text-secondary" style="font-size: 0.72rem;">Radar Nonton Bareng</div>
+        </div>
+    </a>
+</div>
+
+<!-- 2. HEADER COMPACT (TABLET & HP < 992px) -->
+<div class="banner-container-mobile mb-4 d-flex d-lg-none">
+    <div class="d-flex align-items-center gap-2">
+        <span class="fs-4 fw-bold text-white">Konser<span style="color: #FF8C00;">KU</span></span>
+        <span class="badge border border-secondary text-light fw-normal py-1 px-2" id="mobileActiveBadge" style="font-size: 0.72rem; background-color: #27272a;">
+            {{ active_tab|title }}
+        </span>
+    </div>
+
+    <button class="mobile-menu-btn" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileNavOffcanvas" aria-controls="mobileNavOffcanvas">
+        <i class="bi bi-grid-fill" style="color: #FF8C00;"></i>
+        <span>Menu</span>
+    </button>
+</div>
+
+<!-- OFFCANVAS BOTTOM SHEET KHUSUS MOBILE -->
+<div class="offcanvas offcanvas-bottom text-white" tabindex="-1" id="mobileNavOffcanvas" aria-labelledby="mobileNavOffcanvasLabel" style="height: auto; max-height: 85vh; background-color: #18181b; border-top: 3px solid #FF8C00; border-radius: 20px 20px 0 0;">
+    <div style="width: 44px; height: 5px; background: #3f3f46; border-radius: 4px; margin: 10px auto 4px auto;"></div>
+    
+    <div class="offcanvas-header pb-2 pt-2 border-bottom border-dark">
+        <h6 class="offcanvas-title fw-bold" id="mobileNavOffcanvasLabel" style="color: #f4f4f5;">
+            <i class="bi bi-compass me-1 text-warning"></i> Navigasi & Menu Cepat
+        </h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+
+    <div class="offcanvas-body p-4 pt-3 d-flex flex-column gap-3">
+        <a href="{% url 'choose_friend_concert' %}" class="btn py-3 fw-bold text-white shadow d-flex align-items-center justify-content-center gap-2" style="background: linear-gradient(135deg, #FF8C00 0%, #d97706 100%); border-radius: 14px; font-size: 1rem; border: none;">
+            <i class="bi bi-people-fill fs-5"></i>
+            <span>Cari Teman Nonton Konser</span>
+        </a>
+
+        <div class="text-uppercase small fw-bold mt-2" style="font-size: 0.72rem; letter-spacing: 0.8px; color: #71717a;">Pilih Halaman</div>
+
+        <div class="d-flex flex-column gap-2">
+            <div class="mobile-tab-item tab-nav-btn {% if active_tab == 'beranda' %}active{% endif %}" data-tab="beranda" onclick="switchGlobalTab('beranda')" data-bs-dismiss="offcanvas">
+                <i class="bi bi-house-door-fill"></i>
+                <span>Beranda Konser</span>
+            </div>
+            <div class="mobile-tab-item tab-nav-btn {% if active_tab == 'jelajah' %}active{% endif %}" data-tab="jelajah" onclick="switchGlobalTab('jelajah')" data-bs-dismiss="offcanvas">
+                <i class="bi bi-search"></i>
+                <span>Jelajah & Filter Konser</span>
+            </div>
+            <div class="mobile-tab-item tab-nav-btn {% if active_tab == 'tentang' %}active{% endif %}" data-tab="tentang" onclick="switchGlobalTab('tentang')" data-bs-dismiss="offcanvas">
+                <i class="bi bi-info-circle-fill"></i>
+                <span>Tentang KonserKU</span>
+            </div>
+            <div class="mobile-tab-item tab-nav-btn {% if active_tab == 'hubungi' %}active{% endif %}" data-tab="hubungi" onclick="switchGlobalTab('hubungi')" data-bs-dismiss="offcanvas">
+                <i class="bi bi-telephone-fill"></i>
+                <span>Hubungi Kami</span>
+            </div>
         </div>
     </div>
 </div>
 
+<!-- ==========================================================================
+     KONTEN 4 TAB UTAMA
+     ========================================================================== -->
 <div class="tab-content" id="mainTabContent">
     <!-- TAB BERANDA -->
     <div class="tab-pane fade {% if active_tab == 'beranda' %}show active{% endif %}" id="beranda" role="tabpanel">
-        <h4 class="fw-bold mb-3 text-white">Rekomendasi Konser</h4>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="fw-bold text-white mb-0">Rekomendasi Konser</h4>
+            <span class="badge border border-secondary text-secondary d-none d-md-inline-block" style="font-size: 0.75rem;">
+                Gunakan <kbd class="bg-dark text-white border border-secondary px-1">←</kbd> <kbd class="bg-dark text-white border border-secondary px-1">→</kbd> & tekan <kbd class="bg-warning text-dark px-1 fw-bold">Enter ↵</kbd> untuk memilih
+            </span>
+        </div>
+
         <div class="swiper-outer-container">
             <div class="swiper-button-prev custom-nav-btn"></div>
             <div class="swiper event-swiper">
@@ -137,7 +444,7 @@
                                     <p class="small text-secondary mb-3"><i class="bi bi-mic"></i> {{ event.artis }}</p>
                                 </div>
                                 <div class="mt-auto">
-                                    <a href="{% url 'event_detail' event.id %}" class="btn w-100 fw-bold text-white shadow-sm py-2" style="background-color: #FF8C00; border-radius: 8px;">Pilih Event</a>
+                                    <a href="{% url 'event_detail' event.id %}" class="btn w-100 fw-bold text-white shadow-sm py-2 btn-pilih-event" style="background-color: #FF8C00; border-radius: 8px;">Pilih Event</a>
                                 </div>
                             </div>
                         </div>
@@ -157,7 +464,6 @@
             <p class="small text-secondary">Kumpulan event-event laris manis di KonserKU yang mungkin kamu sukai</p>
         </div>
         
-        <!-- FIX HTML: Class laris-container ditambahkan di sini -->
         <div class="d-flex w-100 gap-3 mb-5 laris-container" style="height: 320px;">
             {% for event in top_events %}
             <div class="laris-card position-relative overflow-hidden shadow-sm" onclick="window.location.href='{% url 'event_detail' event.id %}'" style="border-radius: 12px; transition: flex-grow 0.8s cubic-bezier(0.25, 1, 0.5, 1); cursor: pointer; flex-basis: 0; flex-grow: 1;">
@@ -360,27 +666,127 @@
 
 <script src="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.js"></script>
 <script>
-    function updateUrlParam(key, value) { const url = new URL(window.location); url.searchParams.set(key, value); window.history.pushState({}, '', url); }
+    function updateUrlParam(key, value) { 
+        const url = new URL(window.location); 
+        url.searchParams.set(key, value); 
+        window.history.pushState({}, '', url); 
+    }
+
+    // --- SYNTHESIZER SFX GANTI KARAKTER / SWIPE (WEB AUDIO API) ---
+    let audioCtx = null;
+
+    function playSwitchSound() {
+        try {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(520, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(140, audioCtx.currentTime + 0.08);
+
+            gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.08);
+        } catch (e) {
+            // Autoplay policy browser
+        }
+    }
+
+    // Fungsi Pengalih Tab Terpadu (Sinkron Desktop & Mobile)
+    function switchGlobalTab(tabId) {
+        const targetPane = document.getElementById(tabId);
+        if (targetPane) {
+            document.querySelectorAll('#mainTabContent .tab-pane').forEach(p => {
+                p.classList.remove('show', 'active');
+            });
+            targetPane.classList.add('show', 'active');
+        }
+
+        document.querySelectorAll('.tab-nav-btn').forEach(btn => {
+            if (btn.getAttribute('data-tab') === tabId) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+
+        const badge = document.getElementById('mobileActiveBadge');
+        if (badge) {
+            const labels = {
+                'beranda': 'Beranda',
+                'jelajah': 'Jelajah',
+                'tentang': 'Tentang',
+                'hubungi': 'Hubungi'
+            };
+            badge.textContent = labels[tabId] || tabId;
+        }
+
+        updateUrlParam('tab', tabId);
+    }
     
     document.addEventListener('DOMContentLoaded', function() {
-        const drawer = document.getElementById('friendBannerDrawer');
-        const handle = document.getElementById('pullHandle');
-        if (drawer && handle) {
-            handle.addEventListener('click', function (e) { e.stopPropagation(); drawer.classList.toggle('is-pulled'); });
-            document.addEventListener('click', function (e) { if (!drawer.contains(e.target)) { drawer.classList.remove('is-pulled'); } });
-        }
-        
+        // Swiper Carousel
         const totalSlides = document.querySelectorAll('.event-swiper .swiper-slide').length;
         if (totalSlides > 0) {
             const isLoopActive = totalSlides >= 6;
             new Swiper('.event-swiper', {
-                effect: 'coverflow', grabCursor: true, centeredSlides: true, slidesPerView: 'auto', speed: 600,
+                effect: 'coverflow', 
+                grabCursor: true, 
+                centeredSlides: true, 
+                slidesPerView: 'auto', 
+                speed: 500,
                 coverflowEffect: { rotate: 0, stretch: 0, depth: 130, modifier: 1.3, slideShadows: false },
-                loop: isLoopActive, loopedSlides: isLoopActive ? totalSlides : null, resistance: true, resistanceRatio: 0.65,
-                navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' }, keyboard: { enabled: true, onlyInViewport: true }
+                loop: isLoopActive, 
+                loopedSlides: isLoopActive ? totalSlides : null, 
+                resistance: true, 
+                resistanceRatio: 0.65,
+                navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' }, 
+                keyboard: { enabled: true, onlyInViewport: true },
+                on: {
+                    slideChange: function () {
+                        playSwitchSound();
+                    }
+                }
             });
         }
 
+        // --- KEYBOARD LISTENER UNTUK TOMBOL ENTER (PILIH EVENT AKTIF) ---
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                // Abaikan jika fokus sedang berada pada input, select, textarea, atau modal aktif
+                const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+                if (['input', 'textarea', 'select'].includes(activeTag)) {
+                    return;
+                }
+
+                // Hanya eksekusi jika tab Beranda sedang aktif
+                const berandaPane = document.getElementById('beranda');
+                if (berandaPane && berandaPane.classList.contains('active')) {
+                    const activeSlide = document.querySelector('.event-swiper .swiper-slide-active');
+                    if (activeSlide) {
+                        const selectBtn = activeSlide.querySelector('.btn-pilih-event');
+                        if (selectBtn) {
+                            e.preventDefault();
+                            selectBtn.click();
+                        }
+                    }
+                }
+            }
+        });
+
+        // Laris Manis Expand Card
         const larisCards = document.querySelectorAll('.laris-card');
         if (larisCards.length > 0) {
             let activeIdx = 0;
